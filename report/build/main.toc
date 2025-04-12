@@ -1,0 +1,17 @@
+\contentsline {subsection}{\textit {Conventions and Notation}}{iii}{section*.1}%
+\contentsline {subsection}{\textit {Acronyms}}{iii}{Item.1}%
+\contentsline {subsection}{\textit {List of Figures}}{iii}{Item.1}%
+\contentsline {subsection}{\textit {List of Tables}}{iii}{Item.1}%
+\contentsline {subsection}{\textit {Acknowledgements}}{iv}{section*.2}%
+\contentsline {subsection}{\textit {Preface}}{iv}{section*.3}%
+\contentsline {part}{Main Content}{1}{section*.4}%
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Subsection 1}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Subsection 2}{1}{subsection.1.2}%
+\contentsline {subsubsection}{\numberline {1.2.1}Subsubsection 2.1}{1}{subsubsection.1.2.1}%
+\contentsline {section}{\numberline {2}A Title with maths, $y=mx+c$}{1}{section.2}%
+\contentsline {section}{\numberline {3}Third Example}{2}{section.3}%
+\contentsline {part}{Appendices}{3}{section.3}%
+\contentsline {section}{\numberline {A}Example 1}{3}{appendix.A}%
+\contentsline {section}{\numberline {B}Example 2}{3}{appendix.B}%
+\contentsline {part}{\textit {Bibliography}}{4}{appendix.B}%

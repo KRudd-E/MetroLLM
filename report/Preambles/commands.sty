@@ -1,0 +1,94 @@
+\usepackage[utf8]{inputenc}
+\usepackage{blindtext}                              %Just for the template
+\usepackage{setspace}
+\usepackage{mathbbol}
+\usepackage{amsmath, amssymb, cancel}               %Define maths areas 
+\allowdisplaybreaks             
+%Allow align environments etc to cross pages. To disallow a certain linebreak use \\*
+\setlength{\jot}{10pt} 
+%Sets distance between equations to reduce clutter
+\numberwithin{equation}{section} %So equations are sub numbered
+
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}} %So you can number individual equations in align* modes, just add \numberthis before \\
+
+\usepackage[hidelinks,unicode]{hyperref} %Allows hyperlinks
+\newcommand{\tx}[2]{\texorpdfstring{#1}{#2}} 
+
+\hypersetup{pdfauthor={Name}}
+\usepackage{pgfplots, pgfplotstable} %plot packages
+\usepackage{float} %so you can use [H] to force figure locations
+\usepackage{svg} %allows use of svg figures
+\usepackage[font=small]{caption} %obvious
+\captionsetup{width=0.8\textwidth}
+
+\usepackage[symbol]{footmisc} %Allows variation in footnote symbols, necessary for thanks
+\usepackage{subcaption} %for subcaptions
+\usepackage{enumerate} %different enumerate options
+\usepackage{multicol} %multiple columns
+\usepackage[none]{hyphenat} %Prevents word hyphenation over lines
+\usepackage{tocloft}
+\usepackage{parskip} %allows variation on paragraph spacing
+
+\usepackage[acronym]{glossaries} %For Acronyms section and possibly glossary
+\makeglossaries
+\newcommand{\ac}[1]{\acrshort{#1}}
+
+\usepackage[
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm
+]{geometry}
+%If this is to be bound, use horizontal margins of 4cm.
+%\usepackage{showframe} %To show bounding margins for hbox errors
+
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{}{}{} 
+%Removes the References Title so it can be altered later.
+
+\usepackage[immediate]{silence}
+\WarningFilter[temp]{latex}{Command} %Silence the warning
+\usepackage{sectsty}
+\DeactivateWarningFilters[temp] %So nothing unrelated gets silenced
+\sectionfont{\centering}
+\partfont{\centering}
+
+ %Following block produces shorthand commands for things I use often
+\newcommand{\pfrac}[2]{\dfrac{\partial #1}{\partial #2}}
+\newcommand{\diffrac}[2]{\dfrac{d #1}{d #2}} 
+\renewcommand{\cal}[1]{\mathcal{#1}}
+\renewcommand{\Re}[1]{\mathbb{R}}
+\newcommand{\lf}{\left}
+\newcommand{\rt}{\right}
+\newcommand{\mbf}{\mathbf}
+\newcommand{\mathsmall}{\scriptscriptstyle}
+\renewcommand{\d}{\text{d}}
+\DeclareSymbolFontAlphabet{\amsmathbb}{AMSb}%
+
+\renewcommand{\cfttoctitlefont}{\hspace*{\fill}\LARGE\bfseries}
+\renewcommand{\cftaftertoctitle}{\hspace*{\fill}}
+\renewcommand{\contentsname}{Table of Contents}
+
+\renewcommand{\cftlottitlefont}{\hspace*{\fill}\Large\bfseries}
+\renewcommand{\cftafterlottitle}{\hspace*{\fill}}
+
+\renewcommand{\cftloftitlefont}{\hspace*{\fill}\Large\bfseries}
+\renewcommand{\cftafterloftitle}{\hspace*{\fill}}
+
+
+%Choice of numbering styles
+\newcommand{\thenewsection}{\arabic{section}.}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\arabic{section}.\arabic{subsection}.\arabic{subsubsection}}
+\renewcommand{\theequation}{\thenewsection\arabic{equation}}
+
+
+%For consistent labelling
+\newcommand{\tableref}[1]{Table.#1}
+\newcommand{\appendixref}[1]{Appx.#1}
+\newcommand{\figureref}[1]{Fig.#1}
+\newcommand{\secref}[1]{\S#1}
+
+%Define bibliography style
+\bibliographystyle{unsrt}

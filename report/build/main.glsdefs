@@ -1,0 +1,28 @@
+\glsdefs@newdocentry{acrlabel}%
+{%
+name={\acronymfont {\glsentryshort {acrlabel}}},%
+sort={ABC},%
+type={acronym},%
+first={ABC},%
+firstplural={ABCs},%
+text={ABC},%
+plural={ABCs},%
+description={Definition},%
+descriptionplural={Definition},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Definition},%
+longplural={Definitions},%
+short={ABC},%
+shortplural={ABCs},%
+counter={page},%
+parent={},%
+%
+}%
+

@@ -5,3 +5,6 @@ def save_checkpoint(model, path):
 def load_checkpoint(path):
     print(f"Loading model from {path}")
     # Actual loading logic here
+
+def format_prompt(instruction, input_text=""):
+    return f"{instruction}\n{input_text}"

@@ -2,8 +2,7 @@
 
 Ensure conda environment is active.
 Run the program via terminal:
-    user@Mac MetroLLM % code/
-
+    user@Mac MetroLLM % code/modelDev/
 
 """
 

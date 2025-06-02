@@ -10,7 +10,7 @@ config = {
         'data_path'         : 'data/original/caseStudies',
         'output_path'       : 'data/new/caseStudies',
         
-        'debug'             : True,
+        'debug'             : False,
     },
 
     #****** Definitions DB ******#
@@ -19,7 +19,7 @@ config = {
         'data_path'         : 'data/original/definitions',
         'output_path'       : 'data/new/definitions',
 
-        'debug'             : True,
+        'debug'             : False,
     },
 
     #****** Companies DB ******#
@@ -28,7 +28,7 @@ config = {
         'data_path'         : 'data/original/companies',
         'output_path'       : 'data/new/companies',
         
-        'debug'             : True,
+        'debug'             : False,
     },
 
     'sleep' :  3,

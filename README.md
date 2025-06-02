@@ -9,7 +9,7 @@ Has its own section because lord knows preprocessing is the hard bit.
 
 ## modelDev
 
-Aims to create a model. 
+Aims to fine tune a model with data in dataDev
 
 # Code Layout
 ```

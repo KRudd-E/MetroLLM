@@ -3,3 +3,4 @@ reportV1/*
 reportV2/*
 **/__pycache__/*
 .DS_Store
+data/*

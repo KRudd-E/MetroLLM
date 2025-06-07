@@ -61,3 +61,13 @@ class Applications_Reformat:
                         doc.close()
                     except Exception as e:
                         img_errors += 1
+            
+        # Print summary of errors
+        if self.config.get('debug', True):
+            print(f">>Finished processing {len(subfolder_directories)} subfolders.")
+            if text_errors > 0:
+                print(f">>Text extraction errors: {text_errors}")
+            if img_errors > 0:
+                print(f">>Image extraction errors: {img_errors}")
+            if text_errors == 0 and img_errors == 0:
+                print(">>No errors encountered during processing.")

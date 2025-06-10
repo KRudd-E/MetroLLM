@@ -1,42 +1,56 @@
-""" 
+''' 
 For storing settings and paramters used in the dataDev script
 All paths are relative to the root of the repository.
-"""
+'''
 
 config = {
     
-    #****** Applications DB ******#
-    'run_applications_db' : True,
-    'applications_db'     : {
-        'data_path'         : '/data/applicationsDB/original',
-        'output_path'       : '/data/applicationsDB/new',
+    #****** Text2Text Generation ******#
+    'run_text2textGen'  : True,
+    'text2textGen'      : {
+        'data_path'         : '/data/applicationsDB/new/',
+        'output_file'       : '/data/text2textGen.csv',
+        'csv_header'        : 'id,subdir,file,task,input,output',
         
-        'pdf-txt'           : True, # To convert PDFs text to .txt files.
-        'pdf-img'           : True, # To pull images from PDFs.
+        'use_applicationsDB': True,
+        'use_companiesDB'   : False,
+        'use_definitionsDB' : False,
         
-        'debug'             : True, # Useful for extended outputs. 
+        'method'            : 'overwrite', # append or overwrite
+        'source'            : 'OpenAI',
+        'model'             : 'gpt-4o-mini',
+        'api_key'           : '', # Leave empty to use environment variable OPENAI_API_KEY
+        'window_size'       : 600, 
+        'stride'            : 200, # stride for sliding window
+        'prompt'            : 'You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).\n\nGiven the following raw case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, not specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, or related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.\n\n Target tasks include: summarisation, question answering, classification, or instruction following — all expressed in text-to-text format.\n\n Use this format exactly (no numbering):\n<task>: <input> => <output>\n\nHere is the text:\n\'\'\'',
+        'debug'              : True, 
     },
 
+    #****** Text Generation ******#
+    'run_textGen'       : False,
+    'textGen'           : {
+        'data_path'         : '/data/applicationsDB/new/',
+        'output_file'       : '/data/textGen.csv', 
+        
+        'use_applicationsDB': True,
+        'use_companiesDB'   : False,
+        'use_definitionsDB' : False,
+        
+        'debug'             : False,
+    },
 
-    #****** Definitions DB ******#
-    'run_definitions_db': False,
-    'definitions_db'    : {
-        'data_path'         : 'data/original/definitions',
-        'output_path'       : 'data/new/definitions',
-
+    #****** Text Classification ******#
+    'run_textClass'     : False,
+    'textClass'         : {
+        'data_path'         : '/data/applicationsDB/new/',
+        'output_file'       : '/data/textClass.csv', 
+        
+        'use_applicationsDB': True,
+        'use_companiesDB'   : False,
+        'use_definitionsDB' : False,
+        
         'debug'             : False, 
     },
-
-
-    #****** Companies DB ******#
-    'run_companies_db'  : False,
-    'companies_db'      : {
-        'data_path'         : 'data/original/companies',
-        'output_path'       : 'data/new/companies',
-
-        'debug'             : False, 
-    },
-
-    'sleep' :  1,
-
+    
+    'sleep' : 1
 }

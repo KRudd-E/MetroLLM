@@ -1,39 +1,38 @@
-"""
-Controller class for top-level management of the data processing.
-"""
 
+
+
+from src.text2textGen import Text2TextGen
+from src.textGen import TextGen
+from src.textClass import TextClass
 import time
 
 class Controller:
     def __init__(self, config):
         self.config = config
-    
+        self.text2textGen = Text2TextGen(self.config['text2textGen'])
+        self.textGen = TextGen(self.config['textGen'])
+        self.textClass = TextClass(self.config['textClass'])
+
     def run(self):
-        #************ Applications ************#
-        if self.config['run_applications_db'] == True:
-            print("\n>> Processing Case Studies Database...")
-            from src.applications import Applications_Reformat
-            applications = Applications_Reformat(self.config['applications_db'])
-            applications.run()
-            print(">> Applications completed.\n")
-            time.sleep(self.config['sleep'])
-        
-        #************ Definitions ************#
-        if self.config['run_definitions_db'] == True:
-            print(">> Processing Definitions Database...")
-            from src.definitions import Definitions_Reformat
-            definitions = Definitions_Reformat(self.config['definitions_db'])
-            definitions.run()
-            print(">> Definitions completed.\n")
+        #************ Text2Text Generation ************#
+        if self.config['run_text2textGen']:
+            print("\n>> Processing Text2Text Generation")
+            self.text2textGen.run()
+            print(">> Completed Text2Text Generation\n")
             time.sleep(self.config['sleep'])
 
-        #************ Companies ************#
-        if self.config['run_companies_db'] == True:
-            print(">> Processing Companies Database...")
-            from src.companies import Companies_Reformat
-            companies = Companies_Reformat(self.config['companies_db'])
-            companies.run()
-            print(">> Companies completed.\n")
+        #************ Text Generation ************#
+        if self.config['run_textGen']:
+            print(">> Processing Text Generation")
+            self.textGen.run()
+            print(">> Completed Text Generation\n")
             time.sleep(self.config['sleep'])
 
-        print(">> Data processing completed.\n")
+        #************ Text Classification ************#
+        if self.config['run_textClass']:
+            print(">> Processing Text Classification")
+            self.textClass.run()
+            print(">> Completed Text Classification\n")
+            time.sleep(self.config['sleep'])
+
+        print(">> dataDev Done.\n")

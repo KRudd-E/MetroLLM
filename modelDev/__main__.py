@@ -1,13 +1,6 @@
-"""
-
-Ensure conda environment is active.
-Run the program via terminal:
-    user@Mac MetroLLM % code/modelDev/
-
-"""
-
-from src.control import Controller
+from modelDev.src._control import Controller
+from config import config
 
 if __name__ == '__main__':
-    controller = Controller()
+    controller = Controller(config)
     controller.run()

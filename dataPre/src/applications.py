@@ -6,12 +6,16 @@ import pypdf
 import os
 from tqdm import tqdm
 import fitz
+import logging
 
 class Applications_Reformat:
     def __init__(self, config):
         self.config = config
         if self.config.get('debug', True):
             print(f'Applications_Reformat initialized with config:\n {self.config}')
+        else:
+            logging.getLogger("pypdf").setLevel(logging.ERROR)
+            fitz.TOOLS.mupdf_display_errors(False)
 
     def run(self):
 

@@ -5,3 +5,4 @@ reportV2/*
 .DS_Store
 data/*
 **.env
+_misc/csvAnalysis/data/*

@@ -13,16 +13,19 @@ config = {
         'csv_header'        : 'id,subdir,file,task,input,output',
         
         'use_applicationsDB': True,
+            'beginning_subfolder': '', # e.g. '3D_scanning', leave empty to use all subfolders
         'use_companiesDB'   : False,
         'use_definitionsDB' : False,
         
-        'method'            : 'overwrite', # append or overwrite
+        'method'            : 'overwrite', # append / overwrite
         'source'            : 'OpenAI',
         'model'             : 'gpt-4o-mini',
         'api_key'           : '', # Leave empty to use environment variable OPENAI_API_KEY
         'window_size'       : 600, 
         'stride'            : 200, # stride for sliding window
-        'prompt'            : 'You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).\n\nGiven the following raw case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, not specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, or related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.\n\n Target tasks include: summarisation, question answering, classification, or instruction following — all expressed in text-to-text format.\n\n Use this format exactly (no numbering):\n<task>: <input> => <output>\n\nHere is the text:\n\'\'\'',
+        'tasks'             : ['summarisation (less than 30 words and avoid case-specific details)', 'question answering', 'classification', 'explanation', 'comparison', 'benefit analysis', 'limitation', 'procedure', 'instruction following'],
+        'prompt'            : 'You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).\n\nGiven the following case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, not specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, or related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.\n\n Target tasks include: {task1}, {task2}, and {task3} — all expressed in text-to-text format.\n\nUse this format exactly (no numbering):\n<task>: <input> => <output>\n\nHere is the text:\n\'\'\'\n{window}\n\'\'\'\n\nGenerate the training pairs.',
+        
         'debug'              : True, 
     },
 

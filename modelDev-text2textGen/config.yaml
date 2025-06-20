@@ -1,0 +1,23 @@
+model:
+  name: "google/flan-t5-small"
+  max_input_length: 512
+  max_target_length: 128
+  save_dir: "./checkpoints"
+
+training:
+  batch_size: 16
+  epochs: 5
+  lr: 3e-5
+  weight_decay: 0.01
+  output_dir: "./outputs"
+
+data:
+  train_path: "data/text2textGen.csv"
+  max_seq_length: 512
+  prefix: "Pleaese answer the following question: "
+  input_col: "input"
+  target_col: "output"
+
+logging:
+  log_dir: "./logs"
+  log_interval: 100

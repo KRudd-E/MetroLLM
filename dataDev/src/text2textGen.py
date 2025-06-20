@@ -129,7 +129,7 @@ class Text2TextGen:
                                     output_txt = output_txt.replace('<task>', '').replace('<input>', '').replace('<output>', '').strip().replace('"', '""')
                                     if task and input_txt and output_txt:
                                         with open(os.getcwd() + self.config['output_file'], 'a', encoding='utf-8') as fo:
-                                            fo.write(f"A{id:05},{subfolder_name},{text_file},\"{task}\",\"{input_txt}\",\"{output_txt}\"\n")
+                                            fo.write(f"A{id:08},\"{subfolder_name}\",\"{text_file}\",\"{task}\",\"{input_txt}\",\"{output_txt}\"\n")
                                             fo.close()
                                     else:
                                         if self.config['debug']:

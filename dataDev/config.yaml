@@ -1,0 +1,87 @@
+
+#! ****** Text2Text Generation ****** !#
+run_text2textGen: True
+text2textGen:
+    #****** Data Paths and Files ******#
+    data_path: '/data/applicationsDB/new/'
+    output_file: '/data/text2textGen.csv'
+    csv_header: 'id,subdir,file,task,input,output'
+
+    #****** Sources and Methods ******#
+    use_applicationsDB: True
+    applicationsDB_beginning_subfolder: 'Faro Scanner - TLS 03 - UNPROCESSED' # e.g. '3D_scanning', leave empty to use all subfolders
+    applicationsDB_method: 'append' # append / overwrite
+    
+    use_companiesDB: False
+    companiesDB_beginning_subfolder: ''
+    use_companiesDB_method: 'append'
+    
+    use_definitionsDB: False
+    definitionsDB_beginning_subfolder: ''
+    definitionsDB_method: 'append'
+
+    #****** Model and Parameters ******#
+    source: 'OpenAI'
+    model: 'gpt-4o-mini'
+    api_key: '' # Leave empty to use environment variable OPENAI_API_KEY
+    
+    #****** Text2Text Generation Parameters ******#
+    window_size: 600
+    stride: 200 # stride for sliding window
+    tasks: 
+      - 'summarisation (less than 30 words and avoid case-specific details)'
+      - 'question answering'
+      - 'classification'
+      - 'explanation'
+      - 'comparison'
+      - 'benefit analysis'
+      - 'limitation'
+      - 'procedure'
+      - 'instruction following'
+    prompt: |
+      You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
+
+      Given the following case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, not specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, or related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.
+
+      Target tasks include: {task1}, {task2}, and {task3} — all expressed in text-to-text format.
+
+      Use this format exactly (no numbering):
+      <task>: <input> => <output>
+
+      Here is the text:
+      '''
+      {window}
+      '''
+
+      Generate the training pairs.
+
+    debug: True
+
+
+#! ****** Text Generation ****** !#
+run_textGen: False
+textGen:
+    data_path: '/data/applicationsDB/new/'
+    output_file: '/data/textGen.csv'
+
+    use_applicationsDB: True
+    use_companiesDB: False
+    use_definitionsDB: False
+
+    debug: False
+
+
+#! ****** Text Classification ****** !#
+run_textClass: False
+textClass:
+    data_path: '/data/applicationsDB/new/'
+    output_file: '/data/textClass.csv'
+
+    use_applicationsDB: True
+    use_companiesDB: False
+    use_definitionsDB: False
+
+    debug: False
+
+
+sleep: 1

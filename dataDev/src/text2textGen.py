@@ -11,10 +11,10 @@ class Text2TextGen:
         self.config = config
 
         while True:
-            if not self.config['beginning_subfolder']:
-                user_input = input(f"You are about to {self.config['method'].upper()} '{self.config['output_file']}'. Do you wish to continue? (y/n): ")
+            if not self.config['applicationsDB_beginning_subfolder']:
+                user_input = input(f"You are about to {self.config['applicationsDB_method'].upper()} '{self.config['output_file']}'. Do you wish to continue? (y/n): ")
             else:
-                user_input = input(f"You are about to {self.config['method'].upper()} '{self.config['output_file']}', beginning at subfolder '{self.config['beginning_subfolder']}'. Do you wish to continue? (y/n): ")
+                user_input = input(f"You are about to {self.config['applicationsDB_method'].upper()} '{self.config['output_file']}', beginning at subfolder '{self.config['applicationsDB_beginning_subfolder']}'. Do you wish to continue? (y/n): ")
             if user_input in ['Y', 'y', 'N', 'n']:
                 if user_input in ['N', 'n']:
                     print("Exiting the script.")
@@ -36,44 +36,57 @@ class Text2TextGen:
             subfolder_directories = sorted([x[0] for x in os.walk(os.getcwd() + self.config['data_path'])][1:])
             subfolder_names = sorted([x[1] for x in os.walk(os.getcwd() + self.config['data_path']) if x[1] != []][0])
             
-            # Adjust subfolder array if beginning_subfolder is set
-            if self.config['beginning_subfolder']:
+            # Adjust subfolder array if applicationsDB_applicationsDB_beginning_subfolder is set
+            if self.config['applicationsDB_beginning_subfolder']:
                 try:
-                    sbf_idx = subfolder_names.index(self.config['beginning_subfolder'])
+                    sbf_idx = subfolder_names.index(self.config['applicationsDB_beginning_subfolder'])
                     subfolder_directories = subfolder_directories[sbf_idx:]
                     subfolder_names = subfolder_names[sbf_idx:]
-                    print(f">> Beginning at subfolder: {self.config['beginning_subfolder']}")
+                    print(f">> Beginning at subfolder: {self.config['applicationsDB_beginning_subfolder']}")
                 except IndexError:
-                    print(f"Beginning subfolder {self.config['beginning_subfolder']} is out of range. Using all subfolders.")
+                    print(f">> Beginning subfolder {self.config['applicationsDB_beginning_subfolder']} is bad. Using all subfolders.")
                     exit()
             
             if self.config['debug']:
                 print(f">> Found {len(subfolder_directories)} subfolders in {self.config['data_path']}")
 
             # Overwrite setup
-            if self.config['method'] == 'overwrite':
+            if self.config['applicationsDB_method'] == 'overwrite':
+                # if it exists, remove it
                 if os.path.exists(self.config['output_file']):
                     os.remove(self.config['output_file'])
-                
+                # create a new file with the header
                 with open(os.getcwd() + self.config['output_file'], 'w', encoding='utf-8') as f:
                     f.write(f"{self.config['csv_header']}\n")
+                id = 1
+            
             # Append setup
-            elif self.config['method'] == 'append':
+            elif self.config['applicationsDB_method'] == 'append':
+                # if it does not exist, create it
                 if not os.path.exists(os.path.join(os.getcwd() + self.config['output_file'])):
                     with open(os.path.join(os.getcwd() + self.config['output_file']), 'w', encoding='utf-8') as f:
                         f.write(f"{self.config['csv_header']}\n")
+                # if it exists, check if the header is correct
                 else:
                     with open(os.path.join(os.getcwd() + self.config['output_file']), 'r', encoding='utf-8') as f:
                         if f.readline().strip() != f"{self.config['csv_header']}":
                             print("Output file format is incorrect. Please check the file.")
                             exit()
+                # get the last id from the file, or set to 1
+                with open(os.path.join(os.getcwd() + self.config['output_file']), 'r', encoding='utf-8') as f:
+                    #get final line for id
+                    lines = f.readlines()
+                    if lines:
+                        last_line = lines[-1]
+                        id = int(last_line.split(',')[0][1:]) + 1
+                    else:
+                        id = 1
 
             else:
-                print(f"Unknown method: {self.config['method']}")
+                print(f"Unknown method: {self.config['applicationsDB_method']}")
                 print("Please use either 'overwrite' or 'append'.")
                 exit()
 
-            id = 1
             # get text files
             for subfolder_dir, subfolder_name in tqdm(zip(subfolder_directories, subfolder_names),
                                                       total=len(subfolder_directories),
@@ -141,7 +154,6 @@ class Text2TextGen:
                                         tqdm.write(f"Skipping badly formatted pair: {pair}")
 
                             
-
 
 
         #*** DefinitionsDB ***#

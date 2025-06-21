@@ -1,6 +1,3 @@
-
-
-
 from src.text2textGen import Text2TextGen
 from src.textGen import TextGen
 from src.textClass import TextClass

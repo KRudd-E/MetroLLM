@@ -1,6 +1,5 @@
 from src.applications import Applications_Reformat
 from src.definitions import Definitions_Reformat        
-from src.companies import Companies_Reformat
 from src.utils import applicationsDB_initialisation_query, companiesDB_initialisation_query, definitionsDB_initialisation_query
 
 class Controller:
@@ -24,10 +23,10 @@ class Controller:
             definitions.run()
             print(">> Completed Definitions\n")
 
-        #************ Companies ************#
-        if self.config['run_companies_db'] == True:
-            companiesDB_initialisation_query()
-            print(">> Processing Companies")
-            companies = Companies_Reformat(self.config['companies_db'])
-            companies.run()
-            print(">> Completed Companies\n")
+        # #************ Companies ************#
+        # if self.config['run_companies_db'] == True:
+        #     companiesDB_initialisation_query()
+        #     print(">> Processing Companies")
+        #     companies = Companies_Reformat(self.config['companies_db'])
+        #     companies.run()
+        #     print(">> Completed Companies\n")

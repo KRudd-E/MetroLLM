@@ -1,7 +1,7 @@
 #****** Applications DB ******#
 run_applications_db: False
 applications_db: 
-  data_path: /data/applicationsDB/original
+  data_path: /data/1-original/applicationsDB
   output_path: /data/applicationsDB/new
   
   pdf-txt: True # To convert PDFs text to .txt files.
@@ -12,15 +12,15 @@ applications_db:
 #****** Definitions DB ******#
 run_definitions_db: True
 definitions_db: 
-  data_path: data/definitionsDB/original/definitions.docx
-  output_path: data/definitionsDB/new/definitions.csv
+  data_path: data/1-original/definitionsDB/definitions.docx
+  output_path: data/2-decomposed/definitionsDB/definitions.csv
   
   debug: False 
 
-#****** Companies DB ******#
-run_companies_db: False
-companies_db: 
-  data_path: data/original/companies
-  output_path: data/new/companies
+# #****** Companies DB ******#
+# run_companies_db: False
+# companies_db: 
+#   data_path: data/1-original/companies
+#   output_path: data/2-decomposed/companies
   
-  debug: False
+#   debug: False

@@ -1,7 +1,3 @@
-"""
-This module defines the Applications class, which reformats the data into a useful format for modelDev.
-"""
-
 import pypdf
 import os
 from tqdm import tqdm

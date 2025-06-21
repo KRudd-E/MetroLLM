@@ -1,6 +1,7 @@
 from src._control import Controller
-from config import config
+from src.utils import get_config
 
 if __name__ == '__main__':
-    controller = Controller(config=config)
+    config = get_config("dataPre/config.yaml")
+    controller = Controller(config)
     controller.run()

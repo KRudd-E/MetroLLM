@@ -1,39 +1,33 @@
-"""
-Controller class for top-level management of the data processing.
-"""
-
 from src.applications import Applications_Reformat
 from src.definitions import Definitions_Reformat        
 from src.companies import Companies_Reformat
-import time
+from src.utils import applicationsDB_initialisation_query, companiesDB_initialisation_query, definitionsDB_initialisation_query
 
 class Controller:
     def __init__(self, config):
         self.config = config
-        self.applications = Applications_Reformat(self.config['applications_db'])
-        self.definitions = Definitions_Reformat(self.config['definitions_db'])
-        self.companies = Companies_Reformat(self.config['companies_db'])
     
     def run(self):
         #************ Applications ************#
         if self.config['run_applications_db'] == True:
+            applicationsDB_initialisation_query()
             print("\n>> Processing Applications")
-            self.applications.run()
+            applications = Applications_Reformat(self.config['applications_db'])
+            applications.run()
             print(">> Completed Applications\n")
-            time.sleep(self.config['sleep'])
         
         #************ Definitions ************#
         if self.config['run_definitions_db'] == True:
+            definitionsDB_initialisation_query()
             print(">> Processing Definitions")
-            self.definitions.run()
+            definitions = Definitions_Reformat(self.config['definitions_db'])
+            definitions.run()
             print(">> Completed Definitions\n")
-            time.sleep(self.config['sleep'])
 
         #************ Companies ************#
         if self.config['run_companies_db'] == True:
+            companiesDB_initialisation_query()
             print(">> Processing Companies")
-            self.companies.run()
+            companies = Companies_Reformat(self.config['companies_db'])
+            companies.run()
             print(">> Completed Companies\n")
-            time.sleep(self.config['sleep'])
-
-        print(">> dataPre Done.\n")

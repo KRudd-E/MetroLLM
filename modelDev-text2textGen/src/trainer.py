@@ -18,12 +18,12 @@ class Trainer:
 
     def train(self):
         training_args = Seq2SeqTrainingArguments(
-            output_dir="./results",
-            evaluation_strategy="epoch",
-            learning_rate=self.config["training"].get("lr", 3e-4),
+            output_dir="/results",
+            eval_strategy="epoch",
+            learning_rate=float(self.config["training"].get("lr", 3e-4)),
             per_device_train_batch_size=self.config["training"].get("batch_size", 8),
             per_device_eval_batch_size=self.config["training"].get("eval_batch_size", 4),
-            weight_decay=self.config["training"].get("weight_decay", 0.01),
+            weight_decay=float(self.config["training"].get("weight_decay", 0.01)),
             save_total_limit=self.config["training"].get("save_total_limit", 3),
             num_train_epochs=self.config["training"].get("epochs", 3),
             predict_with_generate=True,

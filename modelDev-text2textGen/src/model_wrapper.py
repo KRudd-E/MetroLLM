@@ -10,7 +10,7 @@ class FlanT5Wrapper:
         self.max_target_length = config["model"].get("max_target_length", 128)
 
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
 

@@ -1,14 +1,7 @@
 from src.pipeline import FinetunePipeline
-import yaml
-
-def main():
-    config = load_config()
-    pipeline = FinetunePipeline(config)
-    pipeline.run()
-
-def load_config(path="modelDev-text2textGen/config.yaml"):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+from src.utils.misc import get_config
 
 if __name__ == "__main__":
-    main()
+    config = get_config("modelDev-text2textGen/config.yaml")
+    pipeline = FinetunePipeline(config)
+    pipeline.run()

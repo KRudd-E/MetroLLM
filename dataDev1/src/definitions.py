@@ -32,7 +32,7 @@ class Definitions_Reformat:
             if 'Heading 1' in style:
                 if name and definition:
                     cleaned_def = self.clean_definition(definition)
-                    entry_id = f"{1}{counter:03d}" if current_letter == '123' else f"{current_letter}{counter:03d}"
+                    entry_id = f"{1}{counter:07d}" if current_letter == '123' else f"{current_letter}{counter:07d}"
                     data.append({
                         'id': entry_id,
                         'name': name.strip(),
@@ -49,7 +49,7 @@ class Definitions_Reformat:
             elif 'Heading 2' in style:
                 if name and definition:
                     cleaned_def = self.clean_definition(definition)
-                    entry_id = f"{1}{counter:03d}" if current_letter == '123' else f"{current_letter}{counter:03d}"
+                    entry_id = f"{1}{counter:07d}" if current_letter == '123' else f"{current_letter}{counter:07d}"
                     data.append({
                         'id': entry_id,
                         'name': name.strip(),
@@ -67,7 +67,7 @@ class Definitions_Reformat:
         # Handle final entry
         if name and definition:
             cleaned_def = self.clean_definition(definition)
-            entry_id = f"{1}{counter:03d}" if current_letter == '123' else f"{current_letter}{counter:03d}"
+            entry_id = f"{1}{counter:07d}" if current_letter == '123' else f"{current_letter}{counter:07d}"
             data.append({
                 'id': entry_id,
                 'name': name.strip(),

@@ -1,3 +1,8 @@
+# This file is used to configure the data processing pipeline.
+# It contains settings for the applications, definitions, and companies DBs.
+# To run the pipeline, set the `run_*_db` variables to True, 
+# and specify respective configurations for each database.
+
 #****** Applications DB ******#
 run_applications_db: False
 applications_db: 
@@ -12,15 +17,15 @@ applications_db:
 #****** Definitions DB ******#
 run_definitions_db: True
 definitions_db: 
-  data_path: data/1-original/definitionsDB/definitions.docx
-  output_path: data/2-decomposed/definitionsDB/definitions.csv
+  data_path: data/1-original/definitionsDB/definitionsDB.docx
+  output_path: data/2-decomposed/definitionsDB/definitionsDB.csv
   
   debug: False 
 
-# #****** Companies DB ******#
-# run_companies_db: False
-# companies_db: 
-#   data_path: data/1-original/companies
-#   output_path: data/2-decomposed/companies
-  
-#   debug: False
+#****** Companies DB ******#
+run_companies_db: False
+companies_db: 
+  data_path: data/1-original/companies
+  output_path: data/2-decomposed/companies
+
+  debug: False

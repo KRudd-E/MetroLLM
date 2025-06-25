@@ -3,7 +3,7 @@ This module defines the Definitions class, which reformats the data into a usefu
 """
 from docx import Document
 import pandas as pd
-import time
+import re
 
 
 class Definitions_Reformat:
@@ -20,6 +20,7 @@ class Definitions_Reformat:
         name = ''
         definition = ''
         counter = 1
+        collecting_definition = False
 
         for para in doc.paragraphs:
             if not para.text.strip():
@@ -29,34 +30,63 @@ class Definitions_Reformat:
 
             # Heading 1: grouping letter
             if 'Heading 1' in style:
-                current_letter = para.text.strip().upper()
-                counter = 1
-
-            # Heading 2: name
-            elif 'Heading 2' in style:
-                name = para.text.strip()
-
-            # Normal: definition
-            elif 'Normal' in style:
-                definition = para.text.strip()
-                if current_letter and name:
-                    if current_letter == '123':
-                        entry_id = f"{1}{counter:03d}"
-                    else:
-                        entry_id = f"{current_letter}{counter:03d}"
+                if name and definition:
+                    cleaned_def = self.clean_definition(definition)
+                    entry_id = f"{1}{counter:03d}" if current_letter == '123' else f"{current_letter}{counter:03d}"
                     data.append({
                         'id': entry_id,
-                        'name': name,
-                        'definition': definition
+                        'name': name.strip(),
+                        'definition': cleaned_def
                     })
                     counter += 1
                     name = ''
                     definition = ''
+                current_letter = para.text.strip().upper()
+                counter = 1
+                collecting_definition = False
+
+            # Heading 2: name
+            elif 'Heading 2' in style:
+                if name and definition:
+                    cleaned_def = self.clean_definition(definition)
+                    entry_id = f"{1}{counter:03d}" if current_letter == '123' else f"{current_letter}{counter:03d}"
+                    data.append({
+                        'id': entry_id,
+                        'name': name.strip(),
+                        'definition': cleaned_def
+                    })
+                    counter += 1
+                name = para.text.strip()
+                definition = ''
+                collecting_definition = True
+
+            # Normal: part of definition
+            elif collecting_definition:
+                definition += ' ' + para.text.strip()
+
+        # Handle final entry
+        if name and definition:
+            cleaned_def = self.clean_definition(definition)
+            entry_id = f"{1}{counter:03d}" if current_letter == '123' else f"{current_letter}{counter:03d}"
+            data.append({
+                'id': entry_id,
+                'name': name.strip(),
+                'definition': cleaned_def
+            })
 
         df = pd.DataFrame(data).set_index('id')
-
         output_path = self.config.get('output_path')
 
         df.to_csv(output_path, encoding='utf-8-sig')
         if self.config.get('debug', True):
             print(f'Data reformatted and saved to {output_path}')
+            
+            
+    def clean_definition(self, text):
+        # Replace +word+[word] → word
+        text = re.sub(r"\+([^\[\]+]+)\+\[\1\]", r"\1", text)
+        # Remove all [anything]
+        text = re.sub(r"\[[^\[\]]*\]", "", text)
+        # Remove standalone +...+ markup
+        text = re.sub(r"\+([^\+]+)\+", r"\1", text)
+        return text.strip()

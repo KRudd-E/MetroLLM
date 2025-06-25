@@ -19,7 +19,7 @@ class Applications_Reformat:
         subfolder_directories = sorted([x[0] for x in os.walk(os.getcwd() + self.config['data_path'])][1:])
         subfolder_names = sorted([x[1] for x in os.walk(os.getcwd() + self.config['data_path']) if x[1] != []][0])
         if self.config.get('debug', True):
-            print(f">>Found {len(subfolder_directories)} subfolders in {self.config['data_path']}")
+            print(f"Found {len(subfolder_directories)} subfolders in {self.config['data_path']}")
 
         # Iterate through each subfolder and respective PDF files
         text_errors, img_errors = 0, 0 # Error counters
@@ -28,7 +28,7 @@ class Applications_Reformat:
             # Get all PDF files in the current subfolder
             pdf_files = [f for f in os.listdir(subfolder_dir) if f.endswith('.pdf')]
             if self.config.get('debug', True):
-                 tqdm.write(f">>Processing {len(pdf_files):03} PDF files in {subfolder_name}.")
+                 tqdm.write(f"Processing {len(pdf_files):03} PDF files in {subfolder_name}.")
             
             # Create output directories if they do not exist
             if not os.path.exists(f"{os.getcwd()}{self.config['output_path']}/{subfolder_name}"):
@@ -64,10 +64,10 @@ class Applications_Reformat:
             
         # Print summary of errors
         if self.config.get('debug', True):
-            print(f">>Finished processing {len(subfolder_directories)} subfolders.")
+            print(f"Finished processing {len(subfolder_directories)} subfolders.")
             if text_errors > 0:
-                print(f">>Text extraction errors: {text_errors}")
+                print(f"Text extraction errors: {text_errors}")
             if img_errors > 0:
-                print(f">>Image extraction errors: {img_errors}")
+                print(f"Image extraction errors: {img_errors}")
             if text_errors == 0 and img_errors == 0:
-                print(">>No errors encountered during processing.")
+                print("No errors encountered during processing.")

@@ -1,15 +1,16 @@
 
-#! ****** Text2Text Generation ****** !#
+
+
+# ****** Text2Text Generation ****** #
 run_text2textGen: True
 text2textGen:
     
     #****** text2text settings ******#
-    csv_header: 'id,subdir,file,task,input,output'
     debug: True
-
+    api_key: '' # Leave empty to use environment variable OPENAI_API_KEY
 
     #****** CompaniesDB ******#
-    use_companiesDB: False
+    run_companiesDB: False
     companiesDB:
       source: '/data/2-decomposed/companiesDB/'
       output: '/data/3-formatted/t2tGen/t2tGen-companiesDB.csv'
@@ -17,27 +18,28 @@ text2textGen:
 
 
     #****** DefinitionsDB ******#
-    use_definitionsDB: False
+    run_definitionsDB: True
     definitionsDB:
-      source: '/data/2-decomposed/definitions/definitionsDB.csv'
+      source: '/data/2-decomposed/definitionsDB/definitionsDB.csv'
       output: '/data/3-formatted/t2tGen/t2tGen-definitionsDB.csv'
+      csv_header: 'id,task,input,output'
       method: 'overwrite'
 
 
     #****** ApplicationsDB ******#
-    use_applicationsDB: True
+    run_applicationsDB: False
     applicationsDB:
       source: '/data/2-decomposed/applicationsDB/'
       output: '/data/3-formatted/t2tGen/t2tGen-applicationsDB.csv'
-      beginning_subfolder: '...' # e.g. '3D_scanning', leave empty to use all subfolders
+      beginning_subfolder: 'Survice - UNPROCESSED' # e.g. '3D_scanning', leave empty to use all subfolders
+      csv_header: 'id,subdir,file,task,input,output'
       method: 'append' # append / overwrite
 
-      source: 'OpenAI'
+      model_source: 'OpenAI'
       model: 'gpt-4o-mini'
-      api_key: '' # Leave empty to use environment variable OPENAI_API_KEY
       
-      window_size: 600
-      stride: 200 # stride for sliding window
+      window_size: 800
+      stride: 1600 # stride for sliding window
       tasks: 
         - 'summarisation (less than 30 words and avoid case-specific details)'
         - 'question answering'
@@ -51,7 +53,7 @@ text2textGen:
       prompt: |
         You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
 
-        Given the following case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, not specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, or related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.
+        Given the following case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, NOT specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, and related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.
 
         Target tasks include: {task1}, {task2}, and {task3} — all expressed in text-to-text format.
 
@@ -66,7 +68,7 @@ text2textGen:
         Generate the training pairs.
 
 
-#! ****** Text Generation ****** !#
+# ****** Text Generation ****** #
 run_textGen: False
 textGen:
     data_path: '/data/applicationsDB/new/'
@@ -79,7 +81,7 @@ textGen:
     debug: False
 
 
-#! ****** Text Classification ****** !#
+# ****** Text Classification ****** #
 run_textClass: False
 textClass:
     data_path: '/data/applicationsDB/new/'

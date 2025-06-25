@@ -12,9 +12,9 @@ training:
   output_dir: "./outputs"
 
 data:
-  train_path: "data/text2textGen.csv"
+  train_path: "data/3-formatted/t2tGen/temp.csv"
   max_seq_length: 512
-  prefix: "Pleaese answer the following question: "
+  prefix: "Please answer the following question: "
   input_col: "input"
   target_col: "output"
 

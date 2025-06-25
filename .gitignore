@@ -6,3 +6,4 @@ reportV2/*
 data/*
 **.env
 _misc/csvAnalysis/data/*
+**/results/*

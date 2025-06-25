@@ -6,7 +6,7 @@ class DatasetLoader:
         self.train_path = config["data"]["train_path"]
         #self.val_path = config["data"].get("val_path")
         self.input_col = config["data"].get("input_col", "input")
-        self.target_col = config["data"].get("target_col", "target")
+        self.target_col = config["data"].get("target_col", "output")
         self.prefix = config["data"].get("prefix", "")
 
         self.model_name = config["model"]["name"]
@@ -17,6 +17,7 @@ class DatasetLoader:
 
     def load(self):
         dataset = load_dataset("csv", data_files=self.train_path)["train"]
+
         train_dataset, val_dataset = dataset.train_test_split(test_size=0.3).values()
 
         tokenized_train = train_dataset.map(self.preprocess_function, batched=True)

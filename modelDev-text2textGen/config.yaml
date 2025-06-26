@@ -1,23 +1,49 @@
-model:
-  name: "google/flan-t5-small"
-  max_input_length: 512
-  max_target_length: 128
-  save_dir: "./checkpoints"
 
-training:
-  batch_size: 16
-  epochs: 5
-  lr: 3e-5
-  weight_decay: 0.01
-  output_dir: "./outputs"
+train_or_eval: "eval"  # Options: "train", "eval"
 
-data:
-  train_path: "data/3-formatted/t2tGen/temp.csv"
-  max_seq_length: 512
-  prefix: "Please answer the following question: "
-  input_col: "input"
-  target_col: "output"
 
-logging:
-  log_dir: "./logs"
-  log_interval: 100
+train:
+  data:
+    path: "data/3-formatted/t2tGen/t2tGen_train.csv"
+    max_seq_length: 1024
+    prefix: "Please answer the following question: "
+    input_col: "input"
+    target_col: "output"
+
+  model:
+    name: "google/flan-t5-small"
+    max_input_length: 1024
+    max_target_length: 1024
+    save_dir: "./checkpoints"
+
+  training_args:
+    output_dir: "modelDev-text2textGen/results"
+    lr: 1e-5
+    batch_size: 4
+    eval_batch_size: 4
+    weight_decay: 0.01
+    save_total_limit: 3
+    epochs: 12
+    metric_for_best_model: "eval_rouge1"
+    log_path: "modelDev-text2textGen/results/logs.json"
+
+
+
+eval:
+  data:
+    path: "data/3-formatted/t2tGen/t2tGen_test.csv"
+    max_seq_length: 1024
+    prefix: "Please answer the following question: "
+    input_col: "input"
+    target_col: "output"
+
+  model:
+    path: "modelDev-text2textGen/results/checkpoint-67320"
+    max_input_length: 1024
+    max_target_length: 1024
+    load_dir: "./checkpoints"
+
+  eval_args:
+    metric: "rouge"
+    batch_size: 8
+    output_dir: "modelDev-text2textGen/results/final_results.json"

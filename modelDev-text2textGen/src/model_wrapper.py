@@ -4,13 +4,12 @@ import torch
 
 class FlanT5Wrapper:
     def __init__(self, config):
-        
-        model_name = config["model"]["name"]
-        self.max_input_length = config["model"].get("max_input_length", 512)
-        self.max_target_length = config["model"].get("max_target_length", 128)
+        self.config = config
 
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
+        assert 'train_or_eval' in self.config, "Configuration must contain 'train_or_eval' key."
+        if self.config['train_or_eval'] == 'train': self.model = AutoModelForSeq2SeqLM.from_pretrained(self.config['train']['model']['name'],)
+        else: self.model = AutoModelForSeq2SeqLM.from_pretrained(self.config['eval']['model']['path'],)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.config['train']['model']['name'], use_fast=True)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
 

@@ -56,6 +56,6 @@ class Evaluator:
 
         eval_to_jsonl(
             self.metric.compute(),
-            self.config["eval"]["eval_args"]["output_path"],
+            self.config["eval"]["eval_args"]["output_dir"],
         )
         print("Evaluation metrics:", self.metric.compute())

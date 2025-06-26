@@ -53,8 +53,7 @@ class Trainer:
             tokenizer=self.tokenizer,
             data_collator=self.data_collator,
             compute_metrics=self.compute_metrics,
-            callbacks=[LoggingCallback(log_path=self.config["train"]['training_args'].get("log_path", "modelDev-text2textGen/results/logs.json")),
-                        DebugCallback()]
+            callbacks=[LoggingCallback(log_path=self.config["train"]['training_args'].get("log_path", "modelDev-text2textGen/results/logs.json"))]
         )
 
         trainer.train()

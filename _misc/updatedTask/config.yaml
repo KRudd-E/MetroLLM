@@ -1,0 +1,134 @@
+file_dir: /_misc/updatedTask/data/temp.xlsx
+csv_dir: /_misc/updatedTask/data/log{datetime}.csv
+txt_grandparent_dir: /data/2-decomposed/applicationsDB/
+
+model_source: OpenAI
+model: gpt-4o-mini
+api_key: 
+
+prompt: | 
+  Based on the following text extract from a metrological case study, identify either one or two tasks from the proceeding task list which best represent the task that has been performed, the task that the technology enables to be performed, etc. Refrain from selecting two tasks when one task alone is encompassing of the case study. While making your selection, take consdierable note that the case study was previously categorised by hand as '{origTask}'. Return only the selected tasks. 
+
+  Case study text:
+  {txt}
+
+  Task list (format: 'section:[task1,task2,...]'):
+  {task_list}
+
+
+  
+  
+
+
+column_start: E
+
+original_tasks:
+  - 3D modelling
+  - 3D shape
+  - Align
+  - Align & 3D model
+  - Align & assemble
+  - Align & inspect
+  - Assembly
+  - Augmented Reality
+  - Automation
+  - Build & Inspection
+  - Build/set
+  - CAD Compare
+  - Calibration
+  - Certification
+  - Crash testing
+  - Deformation
+  - Deformation + Strain
+  - Design
+  - Diverse
+  - Dynamic Monitoring
+  - Dynamic tracking
+  - Feature location
+  - Guidance
+  - Inspect
+  - Inspect & adjust
+  - Machine/mill
+  - MeasTechnology
+  - Pipe meas
+  - Positioning
+  - Quality control
+  - R&R
+  - RevEng
+  - RevEng & Inspect
+  - Robot control
+
+
+updated_tasks:
+  - Standard eng. tasks:
+    - Reverse engineering
+    - CAD comparison
+    - Verification
+    - Inspection
+    - Build
+    - 3D modelling
+    - 3D location
+    - 3D/6D single object tracking
+    - Surface recording (form, feature, flaw)
+    - Surface roughness (surface texture)
+    - Gap & flush
+    - Pipework measurement
+    - Tube shape and size
+    - Profiles & X sections (manuf., constr,. mining)
+    - Volume estimation
+  - Multiple component manufact.:
+    - Assembly - large parts
+    - Assembly - small parts
+    - Alignment
+  - Movement/Deformation:
+    - Tracking single/mulitple objects in 3D/6D
+    - Trajectory measurement (balls parachutes)
+    - Monitoring (buildings, large structures)
+    - Deformation meas. ^ anal.
+    - Strain & stress
+  - Production Lines: 
+    - Sample 3D checking
+    - Inline 3D checking
+    - Quality management (SPC, Predictive maint.)
+    - Metrology data management
+  - Real plus digital:
+    - Projected AR (onto object surface)
+    - AR - Augmented Reality
+    - VR - Virtual Reality
+  - Robots & Machines:
+    - Machine vision
+    - Robot & machine control/guidance (manuf.)
+    - Robot and machine calibration
+    - On-machine Inspection
+  - Vehicles:
+    - (Autonomous) Vehicle guidance
+    - Spatial sensing for autonomous driving
+    - Crash testing
+  - Built environment / AEC:
+    - As-build recording (process plant, etc.)
+    - Indoor navigation
+    - Mobile mapping
+    - City modelling
+    - Machine control/guidance (construction)
+    - Drawings (plan, evelation, other)
+    - BIM (Building Information Management)
+  - Heritage recording:
+    - Historic buildings
+    - Museum artefacts
+    - Works of art
+    - Archeology & Anthropology finds
+    - Industrial artefacts
+  - Human body, dental & medical:
+    - Motion & gesture capture
+    - Guided surgery 
+    - Dental scanning
+  - Law enforcement:
+    - Forensic analysis
+    - Crime-scene analysis
+    - Vehicle accident analysis
+  - Agriculture:
+    - Machine control/guidance (agricultural)
+    - Resource Monitoring
+  - Alternative & specialist:
+    - Underwater
+    - NDT (Non-Destructive Testing)

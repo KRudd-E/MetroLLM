@@ -130,8 +130,8 @@ class Text2TextGen:
             
             df = pd.DataFrame({
                 "id": ["D" + str(idx) for idx in df.index],
-                "task": "define",
-                "input": ["define " + name for name in df["name"]],
+                "task": "definition",
+                "input": ["Define: " + name for name in df["name"]],
                 "output": [definition for definition in df["definition"]]
             }).set_index('id')
 

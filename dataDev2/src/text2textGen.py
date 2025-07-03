@@ -13,33 +13,26 @@ import json
 from datetime import datetime
 
 class Text2TextGen:
-    def __init__(self, config):
+    def __init__(self, config, src=None):
         self.config = config
-        if self.config['run_applicationsDB']: self.applicationsDB_Gen(config=config['applicationsDB'])
-        if self.config['run_definitionsDB']: self.definitionsDB_Gen(config=config['definitionsDB'])
-        if self.config['run_companiesDB']: self.companiesDB_Gen(config=config['companiesDB'])
+        if src.lower() == 'applications' or src.lower() == 'a': self.applicationsDB_Gen(config['applicationsDB'])
+        if src.lower() == 'definitions' or src.lower() == 'd': self.definitionsDB_Gen(config['definitionsDB'])
+        if src.lower() == 'companies' or src.lower() == 'c': self.companiesDB_Gen(config['companiesDB'])
         # NB: avoided using self.config for readability. 
 
 
     def applicationsDB_Gen(self, config):
         
         # Confirmation message
-        t2t_app_query(config['beginning_subfolder'], config['output_dir'], config['method'])
+        t2t_app_query(config['starting_subfolder'], config['output_dir'], config['method'])
         
         # Get Subfolder directories and names
         subdirs = sorted([x[0] for x in os.walk(os.getcwd() + config['source_dir'])][1:])
         subdir_names = sorted([x[1] for x in os.walk(os.getcwd() + config['source_dir']) if x[1] != []][0])
         
-        # Adjust subfolder array if applicationsDB_applicationsDB_beginning_subfolder is set
-        if config['beginning_subfolder']:
-            try:
-                sbf_idx = subdir_names.index(config['beginning_subfolder'])
-                subdirs = subdirs[sbf_idx:]
-                subdir_names = subdir_names[sbf_idx:]
-                print(f"Beginning at subfolder: {config['beginning_subfolder']}")
-            except IndexError:
-                print(f"Error with beginning_subfolder: {config['beginning_subfolder']}")
-                exit()
+        # Adjust subfolder array if starting_subfolder is set
+        if config['starting_subfolder']:
+            subdir_names, subdirs = self.starting_subfolder_manager(config['starting_subfolder'], subdir_names, subdirs)
         
         # Method handling
         if config['method'] == 'overwrite': self.overwrite_manager(self, config, config['output_dir'], config['log_dir'], config['csv_header'])
@@ -62,7 +55,8 @@ class Text2TextGen:
                                     total=len(text_files),
                                     position=1,
                                     leave=False,
-                                    dynamic_ncols=True):
+                                    dynamic_ncols=True,
+                                    colour='green'):
                 # Get text
                 with open(os.path.join(subfolder_dir + '/' + text_file), 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -73,7 +67,8 @@ class Text2TextGen:
                                 desc=f"Processing {text_file}",
                                 position=2,
                                 leave=False,
-                                dynamic_ncols=True):
+                                dynamic_ncols=True,
+                                colour='yellow'):
 
                     # Prepare window and AI prompt
                     window = content[i*config['stride']:(i*config['stride'] + config['window_size'])]
@@ -157,6 +152,19 @@ class Text2TextGen:
                 print(f"\nError loading API key: {e}")
                 exit()
 
+
+    @staticmethod
+    def starting_subfolder_manager(starting_subfolder: str, subdir_names: list, subdirs: list) -> tuple:
+        """ Adjusts subdirs and subdir_names to start from the specified starting_subfolder.
+        """
+        if starting_subfolder not in subdir_names:
+            raise ValueError(f"Starting subfolder '{starting_subfolder}' not found in subdir_names\n Check config.yaml and data.")
+        sbf_idx = subdir_names.index(starting_subfolder)
+        subdirs = subdirs[sbf_idx:]
+        subdir_names = subdir_names[sbf_idx:]    
+        return subdir_names, subdirs
+
+
     @staticmethod
     def output_cleanup(output: str) -> str:
         """ Cleans output string by removing various unwanted characters and formatting.
@@ -194,7 +202,7 @@ class Text2TextGen:
         with open(os.path.join(os.getcwd() + output_dir), 'w', encoding='utf-8') as f:
             f.write(f"{csv_header}\n")
         # Log the configuration
-        self.log_updater(log_dir, config)
+        self.log_updater(self, log_dir, output_dir, config)
 
 
     @staticmethod
@@ -215,10 +223,10 @@ class Text2TextGen:
         #  If it exists, check if the header is correct
         else:
             with open(os.path.join(os.getcwd() + output_dir), 'r', encoding='utf-8') as f:
-                if f.readline().strip() != f"{csv_header}":
+                if f.readline().strip().replace('"','').replace("'","") != f"{csv_header}":
                     raise ValueError("Output file format is incorrect. Please check the file.")
         # Log the configuration
-        self.log_updater(log_dir, config)
+        self.log_updater(self, log_dir, output_dir, config)
                     
 
     @staticmethod
@@ -260,7 +268,7 @@ class Text2TextGen:
             exit()
     
     @staticmethod
-    def log_updater(log_dir: str, config: dict) -> None:
+    def log_updater(self, log_dir: str, output_dir: str, config: dict) -> None:
         """Updates the log file with the current configuration and timestamp.
         """
         # Get existing log data or create new 
@@ -272,9 +280,22 @@ class Text2TextGen:
                     z = {}
         else:
             z = {}
-        # Update log with current configuration and timestamp
-        dt = {datetime.now().strftime("%Y-%m-%d %H:%M:%S"): config}
+        
+        row_count = self.get_file_row_count(output_dir)
+        print(row_count)
+        # Update log with starting line, timestamp, and config
+        dt = {f'linestart~{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}': row_count,
+              f'config~{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}': config}
         z.update(dt)
+
         # Write updated log to file
         with open(os.path.join(os.getcwd() + log_dir), 'w', encoding='utf-8') as f:
             json.dump(z, f, indent=4)
+    
+    @staticmethod
+    def get_file_row_count(file_path: str) -> int:
+        """Returns the number of rows in a file."""
+        if not os.path.exists(os.path.join(os.getcwd() + file_path)):
+            return 0
+        with open(os.path.join(os.getcwd() + file_path), 'r', encoding='utf-8') as f:
+            return sum(1 for line in f)

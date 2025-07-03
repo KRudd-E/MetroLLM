@@ -2,7 +2,6 @@
 
 
 # ****** Text2Text Generation ****** #
-run_text2textGen: True
 text2textGen:
     
     api_key:  # Leave empty to use environment variable OPENAI_API_KEY
@@ -31,15 +30,15 @@ text2textGen:
       output_dir: /data/3-formatted/t2tGen/temp.csv
       log_dir:    /data/3-formatted/t2tGen/log.json
 
-      beginning_subfolder: CSMC 00 # e.g. 3D_scanning, leave empty to use all subfolders
+      method: append 
+      starting_subfolder: CMSC 01 
       csv_header: id,subdir,file,task,input,output
-      method: append # append / overwrite
 
       model_source: OpenAI
       model: gpt-4o-mini
       
       window_size: 1000
-      stride: 1400 # stride for sliding window
+      stride: 1200 # stride for sliding window
       tasks: 
         - summarisation (≤30w, no case details)
         - question answering (1-3 sentences)
@@ -72,7 +71,6 @@ text2textGen:
 
 
 # ****** Text Generation ****** #
-run_textGen: False
 textGen:
     data_path: /data/applicationsDB/new/
     output_file: /data/textGen.csv
@@ -85,7 +83,6 @@ textGen:
 
 
 # ****** Text Classification ****** #
-run_textClass: False
 textClass:
     data_path: /data/applicationsDB/new/
     output_file: /data/textClass.csv
@@ -96,8 +93,6 @@ textClass:
 
     debug: False
 
-
-sleep: 1
 
 
 

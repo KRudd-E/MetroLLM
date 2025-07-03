@@ -1,28 +1,26 @@
 from src.text2textGen import Text2TextGen
 from src.textGen import TextGen
 from src.textClass import TextClass
-import time
+from src.utils import dataDev2_query, parser, get_config
 
 class Controller:
-    def __init__(self, config):
-        self.config = config
-        self.text2textGen = Text2TextGen(self.config['text2textGen'])
-        self.textGen = TextGen(self.config['textGen'])
-        self.textClass = TextClass(self.config['textClass'])
-
+    def __init__(self):
+        self.config = get_config()
+        
     def run(self):
+        args = parser().parse_args()
+        dataDev2_query(args.model_type, args.data_source)
+        
         #************ Text2Text Generation ************#
-        if self.config['run_text2textGen']:
-            self.text2textGen.run()
-            time.sleep(self.config['sleep'])
+        if args.model_type.lower == 'text2text' or args.model_type.lower() == 't2t':
+            self.text2textGen = Text2TextGen(config=self.config['text2textGen'], src=args.data_source)
 
         #************ Text Generation ************#
-        if self.config['run_textGen']:
-            self.textGen.run()
-            time.sleep(self.config['sleep'])
+        if args.model_type.lower() == 'textgen' or args.model_type.lower() == 'tg':
+            self.textGen = TextGen(config=self.config['textGen'], src=args.data_source)
 
         #************ Text Classification ************#
-        if self.config['run_textClass']:
-            self.textClass.run()
+        if args.model_type.lower() == 'textclass' or args.model_type.lower() == 'tc':
+            self.textClass = TextClass(config=self.config['textClass'], src=args.data_source)
 
         print("dataDev Done.\n")

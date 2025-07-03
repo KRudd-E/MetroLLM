@@ -5,41 +5,41 @@
 run_text2textGen: True
 text2textGen:
     
-    #****** text2text settings ******#
-    debug: True
     api_key:  # Leave empty to use environment variable OPENAI_API_KEY
 
     #****** CompaniesDB ******#
     run_companiesDB: False
     companiesDB:
-      source: /data/2-decomposed/companiesDB/
-      output: /data/3-formatted/t2tGen/t2tGen-companiesDB.csv
+      source_dir: /data/2-decomposed/companiesDB/
+      output_dir: /data/3-formatted/t2tGen/t2tGen-companiesDB.csv
       method: append
 
 
     #****** DefinitionsDB ******#
-    run_definitionsDB: True
+    run_definitionsDB: False
     definitionsDB:
-      source: /data/2-decomposed/definitionsDB/definitionsDB.csv
-      output: /data/3-formatted/t2tGen/t2tGen-definitionsDB.csv
+      source_dir: /data/2-decomposed/definitionsDB/definitionsDB.csv
+      output_dir: /data/3-formatted/t2tGen/t2tGen-definitionsDB.csv
       csv_header: id,task,input,output
       method: overwrite
 
 
     #****** ApplicationsDB ******#
-    run_applicationsDB: False
+    run_applicationsDB: True
     applicationsDB:
-      source: /data/2-decomposed/applicationsDB/
-      output: /data/3-formatted/t2tGen/t2tGen-applicationsDB.csv
-      beginning_subfolder: Survice - UNPROCESSED # e.g. 3D_scanning, leave empty to use all subfolders
+      source_dir: /data/2-decomposed/applicationsDB/
+      output_dir: /data/3-formatted/t2tGen/temp.csv
+      log_dir:    /data/3-formatted/t2tGen/log.json
+
+      beginning_subfolder: CSMC 00 # e.g. 3D_scanning, leave empty to use all subfolders
       csv_header: id,subdir,file,task,input,output
       method: append # append / overwrite
 
       model_source: OpenAI
       model: gpt-4o-mini
       
-      window_size: 800
-      stride: 1600 # stride for sliding window
+      window_size: 1000
+      stride: 1400 # stride for sliding window
       tasks: 
         - summarisation (≤30w, no case details)
         - question answering (1-3 sentences)
@@ -55,10 +55,11 @@ text2textGen:
 
         Given the following case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, NOT specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, and related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.
 
-        Target tasks include: {task1}, {task2}, and {task3} — all expressed in text-to-text format.
+        Use the following patterns exactly. Substitute content for the curly brackets accordingly. DO NOT add any additional punctuation. Always answer with a full sentence, rather than A, B, 1, or 2.
+        {p1_in} => {p1_out}
+        {p2_in} => {p2_out}
+        {p3_in} => {p3_out}
 
-        Use this format exactly (no numbering):
-        <task>: <input> => <output>
 
         Here is the text:
         
@@ -66,6 +67,8 @@ text2textGen:
         
 
         Generate the training pairs.
+      
+      datetime: 
 
 
 # ****** Text Generation ****** #
@@ -95,3 +98,42 @@ textClass:
 
 
 sleep: 1
+
+
+
+
+
+
+
+
+
+
+# prompt: |
+        # You are a domain expert creating generalisable **classification** training examples
+        # for a text-to-text model (e.g. FLAN-T5), in the field of **3D metrology**.
+
+        # Your goal is to generate standalone classification examples based on general principles,
+        # tools, materials, challenges, and workflows in laser scanning, photogrammetry,
+        # dimensional analysis, and related measurement techniques.
+
+        # Each training example must consist of:
+        #   - **Input**: A natural-language question with multiple labelled options (e.g. [A], [B], [C])
+        #   - **Output**: The correct option’s text (e.g. "photogrammetry")
+
+        # Do NOT include:x
+        #   - Any context paragraph
+        #   - Project-specific data, named locations, companies, or case results
+        #   - Definitions in the output
+
+        # Output format (strict):
+        #   Classification: <input> => <outputt>
+
+        # Examples:
+
+        # Classification: Which method is most suitable for scanning shiny or reflective surfaces? Contact-based CMM, Photogrammetry, Laser scanning, or Structured light => Laser scanning
+
+        # Classification: What type of data is typically produced by a 3D scanner before meshing? Mesh, CAD model, Point cloud, or Parametric model => Point cloud
+
+        # Classification: Which error source is most associated with temperature fluctuations during scanning? Calibration, Environment, Surface reflectivity, or Operator error => Environment
+
+        # Classification: What material is most likely to require anti-reflective coating during 3D scanning? Composite, Plastic, Glass, or Ceramic => Glass

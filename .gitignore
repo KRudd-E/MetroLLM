@@ -7,3 +7,4 @@ data/*
 **.env
 _misc/csvAnalysis/data/*
 **/results/*
+_misc/updatedTask/data/*

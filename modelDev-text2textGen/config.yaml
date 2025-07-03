@@ -1,46 +1,42 @@
-
-train_or_eval: "eval"  # Options: "train", "eval"
-
-
 train:
   data:
-    path: "data/3-formatted/t2tGen/t2tGen_train.csv"
-    max_seq_length: 1024
-    prefix: "Please answer the following question: "
+    dir: "data/3-formatted/t2tGen/archive/t2tGen_train_short.csv"
+    task_col: "task"
     input_col: "input"
-    target_col: "output"
+    output_col: "output"
+    max_seq_length: 256
 
   model:
-    name: "google/flan-t5-small"
-    max_input_length: 1024
-    max_target_length: 1024
+    name: "google/flan-t5-large"
+    max_input_length: 256
+    max_target_length: 128
     save_dir: "./checkpoints"
 
   training_args:
     output_dir: "modelDev-text2textGen/results"
-    lr: 1e-5
+    lr: 3e-4
     batch_size: 4
     eval_batch_size: 4
     weight_decay: 0.01
     save_total_limit: 3
-    epochs: 12
+    epochs: 5
     metric_for_best_model: "eval_rouge1"
-    log_path: "modelDev-text2textGen/results/logs.json"
+    log_path: "modelDev-text2textGen/results/logs.csv"
 
 
 
 eval:
   data:
-    path: "data/3-formatted/t2tGen/t2tGen_test.csv"
-    max_seq_length: 1024
-    prefix: "Please answer the following question: "
+    dir: "data/3-formatted/t2tGen/archive/t2tGen_test.csv"
+    task_col: "task"
     input_col: "input"
-    target_col: "output"
+    output_col: "output"
+    max_seq_length: 256
 
   model:
-    path: "modelDev-text2textGen/results/checkpoint-67320"
-    max_input_length: 1024
-    max_target_length: 1024
+    dir: "modelDev-text2textGen/results/checkpoint-67320"
+    max_input_length: 256
+    max_target_length: 128
     load_dir: "./checkpoints"
 
   eval_args:

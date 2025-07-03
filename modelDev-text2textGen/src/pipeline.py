@@ -1,26 +1,37 @@
-from src.model_wrapper import FlanT5Wrapper
-from src.preprocess import DatasetLoader
-from src.trainer import Trainer
-from src.evaluator import Evaluator
-from src.utils.misc import training_query, evaluation_query
+from src.utils.misc import training_query, evaluation_query, get_config, parser, modelDev_text2text_query
 
 class FinetunePipeline:
-    def __init__(self, config):
-        self.config = config
-        if config['train_or_eval'] == 'train': training_query(config)
-        elif config['train_or_eval'] == 'eval': evaluation_query(config)
-        else: raise ValueError("Invalid value for 'train_or_eval' in config. Must be 'train' or 'eval'.")
+    def __init__(self):
+        self.config = get_config()
         
     def run(self):
+        run = parser()
+        modelDev_text2text_query(run, self.config)
         
-        if self.config['train_or_eval'] == 'train':
-            dataset = DatasetLoader(self.config).load_training_data()
-            model_wrapper = FlanT5Wrapper(self.config)
-            trainer = Trainer(model_wrapper=model_wrapper, dataset=dataset, config=self.config)
-            trainer.train()
+        #************ Train ************#
+        if run == 'train':
+            training_query()
+            
+            from src.preprocess import DatasetLoader
+            dataset = DatasetLoader(self.config, run).load_training_data(self.config['train'])
+            
+            from src.model_wrapper import FlanT5Wrapper
+            model_wrapper = FlanT5Wrapper(run, self.config['train'])
+            
+            from src.trainer import Trainer
+            trainer = Trainer(model_wrapper, dataset, self.config)
+            trainer.train(self.config['train'])
 
-        elif self.config['train_or_eval'] == 'eval':
-            dataset = DatasetLoader(self.config).load_evaluation_data()
-            model_wrapper = FlanT5Wrapper(self.config)
-            evaluator = Evaluator(model_wrapper=model_wrapper, dataset=dataset, config=self.config)
-            evaluator.evaluate()
+        #************ Evaluate ************#
+        elif run == 'evaluate':
+            evaluation_query()
+            
+            from src.preprocess import DatasetLoader
+            dataset = DatasetLoader(self.config, run).load_evaluation_data(self.config['eval']) #config=self.config['eval']
+            
+            from src.model_wrapper import FlanT5Wrapper
+            model_wrapper = FlanT5Wrapper(run, self.config['eval'])
+            
+            from src.evaluator import Evaluator
+            evaluator = Evaluator(model_wrapper, dataset, self.config)
+            evaluator.evaluate(self.config['eval'])

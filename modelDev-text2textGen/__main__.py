@@ -1,6 +1,8 @@
+from src.pipeline import FinetunePipeline
+
 if __name__ == "__main__":
-    from src.utils.misc import get_config
-    config = get_config("modelDev-text2textGen/config.yaml")
-    from src.pipeline import FinetunePipeline
-    pipeline = FinetunePipeline(config)
+    pipeline = FinetunePipeline()
     pipeline.run()
+    
+# NB: config_path = 'modelDev/config.yaml' 
+# To alter, see modelDev/src/misc/utils.py

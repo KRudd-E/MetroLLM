@@ -13,7 +13,7 @@ class Evaluator:
         self.dataset = dataset
         self.metric = evaluate.load(self.config["eval"]["eval_args"]["metric"])
 
-    def evaluate(self):
+    def evaluate(self, config):
         self.model.eval()
 
         # Only keep tensor-friendly fields
@@ -24,7 +24,7 @@ class Evaluator:
 
         loader = torch.utils.data.DataLoader(
             dataset_for_loader,
-            batch_size=self.config["eval"]["eval_args"]["batch_size"],
+            batch_size=config["eval_args"]["batch_size"],
             collate_fn=self.data_collator,
         )
 
@@ -56,6 +56,6 @@ class Evaluator:
 
         eval_to_jsonl(
             self.metric.compute(),
-            self.config["eval"]["eval_args"]["output_dir"],
+            config["eval_args"]["output_dir"],
         )
         print("Evaluation metrics:", self.metric.compute())

@@ -6,8 +6,8 @@ from tqdm import tqdm
 from dotenv import load_dotenv
 from openai import OpenAI
 from ollama import Client
-from src.utils import t2t_app_query, t2t_def_query
-from src.patterns import PATTERNS
+from src.utils.utils import t2t_app_query, t2t_def_query
+from src.utils.patterns import PATTERNS
 import uuid
 import json
 from datetime import datetime
@@ -24,7 +24,7 @@ class Text2TextGen:
     def applicationsDB_Gen(self, config):
         
         # Confirmation message
-        t2t_app_query(config['starting_subfolder'], config['output_dir'], config['method'])
+        t2t_app_query(config['starting_subfolder'], config['output_dir'], config['append_or_overwrite'])
         
         # Get Subfolder directories and names
         subdirs = sorted([x[0] for x in os.walk(os.getcwd() + config['source_dir'])][1:])
@@ -34,10 +34,10 @@ class Text2TextGen:
         if config['starting_subfolder']:
             subdir_names, subdirs = self.starting_subfolder_manager(config['starting_subfolder'], subdir_names, subdirs)
         
-        # Method handling
-        if config['method'] == 'overwrite': self.overwrite_manager(self, config, config['output_dir'], config['log_dir'], config['csv_header'])
-        elif config['method'] == 'append': self.append_manager(self, config, config['output_dir'], config['log_dir'], config['csv_header'])
-        else: self.unknown_method(config['method'])
+        # Append/Overwrite handling
+        if config['append_or_overwrite'] == 'overwrite': self.overwrite_manager(config, config['output_dir'], config['log_dir'], config['csv_header'])
+        elif config['append_or_overwrite'] == 'append': self.append_manager(config, config['output_dir'], config['log_dir'], config['csv_header'])
+        else: self.unknown_method(config['append_or_overwrite'])
 
         # Subfolder Loop
         for subfolder_dir, subfolder_name in tqdm(zip(subdirs, subdir_names),
@@ -99,24 +99,59 @@ class Text2TextGen:
                         try: # As some reponses are poorly formatted. 
                             input_txt, output_txt = pair.split("=>", 1)
                             input, output = self.output_cleanup(input_txt), self.output_cleanup(output_txt)
-                            if  rnd_task and input_txt and output_txt and output_txt not in input_txt and input_txt not in output_txt:
+                            if rnd_task and input_txt and output_txt and output_txt not in input_txt and input_txt not in output_txt:
                                 with open(os.getcwd() + config['output_dir'], 'a', encoding='utf-8') as fo:
                                     fo.write(f"\"A{uuid.uuid4().int:0>39}\",\"{subfolder_name}\",\"{text_file}\",\"{rnd_task}\",\"{input}\",\"{output}\"\n")
                                     fo.close()
-                        except ValueError: pass
+                        except: pass
 
                         #! Watch for cot_stream_general_input_inversion
 
     def definitionsDB_Gen(self, config):
-        t2t_def_query(config['method'], config['output_dir'])
+        t2t_def_query(config['append_or_overwrite'], config['output_dir'], config['starting_definition'])
         
         # Method handling
-        if config['method'] == 'overwrite': self.overwrite_manager(config['output_dir'], config['log_dir'], config['csv_header'])
-        elif config['method'] == 'append': self.append_manager(config['output_dir'], config['log_dir'], config['csv_header'])
-        else: self.unknown_method(config['method'])
-
+        if config['append_or_overwrite'] == 'overwrite': self.overwrite_manager(config, config['output_dir'], config['log_dir'], config['csv_header'])
+        elif config['append_or_overwrite'] == 'append': self.append_manager(config, config['output_dir'], config['log_dir'], config['csv_header'])
+        else: self.unknown_method(config['append_or_overwrite'])
+  
         # Read definitions from CSV
         df = pd.read_csv(os.path.join(os.getcwd() + config['source_dir'])).set_index('id')
+    
+        # Manage starting definition specificiation
+        if config['starting_definition']:
+            if config['starting_definition'] not in df['name'].values:
+                raise ValueError(f"Starting definition '{config['starting_definition']}' not found in definitionsDB.")
+            df = df.loc[config['starting_definition']:]
+
+        # Iterate over definition columns
+        for row in tqdm(df.iterrows(), total=len(df), desc="Processing definitions", position=0, dynamic_ncols=True, colour='blue'):
+            for _ in range(config['pairs_per_definition']):
+                
+                ai_txt = config['prompt'].format(
+                    name=row[1]['name'],
+                    definition=row[1]['definition']
+                )
+                
+                response = self.ai_chat(
+                    model_source=config['model_source'],
+                    model=config['model'],
+                    input=ai_txt
+                )
+                pairs = [line for line in response.split('\n') if "=>" in line]
+                # Process response
+                for pair in pairs:
+                    try:
+                        input_txt, output_txt = response.split("=>", 1)
+                        input, output = self.output_cleanup(input_txt), self.output_cleanup(output_txt)
+                        if input and output and output not in input and input not in output:
+                            with open(os.getcwd() + config['output_dir'], 'a', encoding='utf-8') as fo:
+                                fo.write(f"\"D{uuid.uuid4().int:0>39}\",\"define\",\"{row[1]['name']}\",\"{input}\",\"{output}\"\n")
+                                fo.close()
+                    except: 
+                        tqdm.write(f"Error processing response for '{row[1]['name']}': {response}")
+                        pass
+                
         
         # Reformat
         df = pd.DataFrame({
@@ -151,6 +186,38 @@ class Text2TextGen:
             except Exception as e:
                 print(f"\nError loading API key: {e}")
                 exit()
+                
+    def ai_chat(self, model_source: str, model: str, input: str) -> None:
+        """ Sends a chat request to the specified model and returns the response.
+        Args:
+            model_source (string): Model source. Either 'ollama' or 'OpenAI'.
+            model (string): Model name.
+            txt (string): The text to send to the model.
+
+        Returns:
+            string: The response from the model.
+        """
+        if model_source == 'ollama':
+            client = Client(host='http://localhost:11434')
+            response = client.chat(
+                model=model,
+                messages=[{'role': 'user', 'content': f'{input}/n'}]
+            )
+            return response.message.content.strip()
+
+        elif model_source == 'OpenAI':
+            self.get_API_key()
+            client = OpenAI(api_key=self.config['api_key'])
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user",
+                    "content": input,
+                }])
+            return completion.choices[0].message.content
+
+        else:
+            print(f"\nUnknown model source: {model_source}")
+            exit()
 
 
     @staticmethod
@@ -164,19 +231,22 @@ class Text2TextGen:
         subdir_names = subdir_names[sbf_idx:]    
         return subdir_names, subdirs
 
-
     @staticmethod
     def output_cleanup(output: str) -> str:
         """ Cleans output string by removing various unwanted characters and formatting.
         """
         if not output: return ''
         if output.startswith('['): output = output[1:]
+        if output.endswith(']'): output = output[:-1]
+        if output.startswith('<'): output = output[1:]
+        if output.endswith('>'): output = output[:-1]
         if output.startswith(('1.', '2.', '3.', '4.','5.','6.','7.','8.')): output = output[2:] # Remove numbering
-        try:
-            for _ in range(output.count('{')):
+        for _ in range(output.count('{')):
+            try:
+                
                 p1, p2 = output.split('{', 1), output.split('}', 1)
                 output = p1[0] + '.' + p2[1]
-        except ValueError: pass
+            except: pass
         return output.replace('<input>', '').replace('<output>', '').strip().replace('"', '""')
 
 
@@ -187,7 +257,6 @@ class Text2TextGen:
         return pattern.replace('\n', ' ').replace("'", '').replace('"', '').strip()
 
 
-    @staticmethod
     def overwrite_manager(self, config: dict, output_dir: str, log_dir: str, csv_header: str) -> None:
         """Overwrite the output file if it exists and write the CSV header.
 
@@ -205,7 +274,7 @@ class Text2TextGen:
         self.log_updater(self, log_dir, output_dir, config)
 
 
-    @staticmethod
+
     def append_manager(self, config: dict, output_dir: str, log_dir: str, csv_header: str) -> None:
         """Append to the output file if it exists and write the CSV header if not.
 
@@ -232,40 +301,7 @@ class Text2TextGen:
     @staticmethod
     def unknown_method(method: str) -> None:
         raise ValueError(f"Unknown method: {method}. Please use 'overwrite' or 'append'.")
-
-
-    def ai_chat(self, model_source: str, model: str, input: str) -> None:
-        """
-        Args:
-            model_source (string): Model source. Either 'ollama' or 'OpenAI'.
-            model (string): Model name.
-            txt (string): The text to send to the model.
-
-        Returns:
-            string: The response from the model.
-        """
-        if model_source == 'ollama':
-            client = Client(host='http://localhost:11434')
-            response = client.chat(
-                model=model,
-                messages=[{'role': 'user', 'content': f'{input}/n'}]
-            )
-            return response.message.content.strip()
-
-        elif model_source == 'OpenAI':
-            # Get API key from config or .env file
-            self.get_API_key()
-            client = OpenAI(api_key=self.config['api_key'])
-            completion = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user",
-                    "content": input,
-                }])
-            return completion.choices[0].message.content
-
-        else:
-            print(f"\nUnknown model source: {model_source}")
-            exit()
+    
     
     @staticmethod
     def log_updater(self, log_dir: str, output_dir: str, config: dict) -> None:
@@ -282,7 +318,6 @@ class Text2TextGen:
             z = {}
         
         row_count = self.get_file_row_count(output_dir)
-        print(row_count)
         # Update log with starting line, timestamp, and config
         dt = {f'linestart~{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}': row_count,
               f'config~{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}': config}

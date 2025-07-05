@@ -1,13 +1,9 @@
-
-
-
 # ****** Text2Text Generation ****** #
 text2textGen:
     
-    api_key:  # Leave empty to use environment variable OPENAI_API_KEY
+    api_key:        # Leave empty to use environment variable OPENAI_API_KEY
 
     #****** CompaniesDB ******#
-    run_companiesDB: False
     companiesDB:
       source_dir: /data/2-decomposed/companiesDB/
       output_dir: /data/3-formatted/t2tGen/t2tGen-companiesDB.csv
@@ -15,40 +11,50 @@ text2textGen:
 
 
     #****** DefinitionsDB ******#
-    run_definitionsDB: False
     definitionsDB:
       source_dir: /data/2-decomposed/definitionsDB/definitionsDB.csv
       output_dir: /data/3-formatted/t2tGen/t2tGen-definitionsDB.csv
-      csv_header: id,task,input,output
-      method: overwrite
+      log_dir:    /data/3-formatted/t2tGen/logs/Dlog.json
+      
+      append_or_overwrite:  overwrite
+      starting_definition:  
+      csv_header: id,task,name,input,output
+      pairs_per_definition: 2
+
+      model_source: OpenAI
+      model:        gpt-4o-mini
+
+      prompt: |
+        You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
+
+        Given the following definition of {name}, create ONE input output pair. The input should in some distinct way ask for or question the given definition. The ouput should answer the question respectively, with large influence from the following definition. Ensure the pair is generalisable to the domain of 3D metrology and contains factual information ONLY. 
+
+        Use the following format exactly:
+        <input> => <output>
+
+        Here is the definition:
+        {definition}
+        
+
+        Generate ONE training pair.
+
 
 
     #****** ApplicationsDB ******#
-    run_applicationsDB: True
     applicationsDB:
       source_dir: /data/2-decomposed/applicationsDB/
       output_dir: /data/3-formatted/t2tGen/temp.csv
-      log_dir:    /data/3-formatted/t2tGen/log.json
+      log_dir:    /data/3-formatted/t2tGen/logs/Alog.json
 
-      method: append 
-      starting_subfolder: CMSC 01 
-      csv_header: id,subdir,file,task,input,output
+      append_or_overwrite:  append 
+      starting_subfolder:   GOM 01
+      csv_header:           id,subdir,file,task,input,output
 
       model_source: OpenAI
-      model: gpt-4o-mini
+      model:        gpt-4o-mini
       
-      window_size: 1000
-      stride: 1200 # stride for sliding window
-      tasks: 
-        - summarisation (≤30w, no case details)
-        - question answering (1-3 sentences)
-        - classification (one of a limited set with no explanation)
-        - explanation (Short paragraph)
-        - comparison (Bullet list or single sentence stating differences)
-        - benefit analysis (Bullet list or comma separated)
-        - limitation (Bullet list)
-        - procedure (ordered list 1. 2. 3.)
-        - instruction following (follow the imperative; 1‑3 sentences or list)
+      window_size:  1000
+      stride:       1200 
       prompt: |
         You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
 
@@ -67,20 +73,6 @@ text2textGen:
 
         Generate the training pairs.
       
-      datetime: 
-
-
-# ****** Text Generation ****** #
-textGen:
-    data_path: /data/applicationsDB/new/
-    output_file: /data/textGen.csv
-
-    use_applicationsDB: True
-    use_companiesDB: False
-    use_definitionsDB: False
-
-    debug: False
-
 
 # ****** Text Classification ****** #
 textClass:
@@ -94,41 +86,11 @@ textClass:
     debug: False
 
 
+# ****** Text Generation ****** #
+textGen:
+    data_path: /data/applicationsDB/new/
+    output_file: /data/textGen.csv
 
-
-
-
-
-
-
-
-
-# prompt: |
-        # You are a domain expert creating generalisable **classification** training examples
-        # for a text-to-text model (e.g. FLAN-T5), in the field of **3D metrology**.
-
-        # Your goal is to generate standalone classification examples based on general principles,
-        # tools, materials, challenges, and workflows in laser scanning, photogrammetry,
-        # dimensional analysis, and related measurement techniques.
-
-        # Each training example must consist of:
-        #   - **Input**: A natural-language question with multiple labelled options (e.g. [A], [B], [C])
-        #   - **Output**: The correct option’s text (e.g. "photogrammetry")
-
-        # Do NOT include:x
-        #   - Any context paragraph
-        #   - Project-specific data, named locations, companies, or case results
-        #   - Definitions in the output
-
-        # Output format (strict):
-        #   Classification: <input> => <outputt>
-
-        # Examples:
-
-        # Classification: Which method is most suitable for scanning shiny or reflective surfaces? Contact-based CMM, Photogrammetry, Laser scanning, or Structured light => Laser scanning
-
-        # Classification: What type of data is typically produced by a 3D scanner before meshing? Mesh, CAD model, Point cloud, or Parametric model => Point cloud
-
-        # Classification: Which error source is most associated with temperature fluctuations during scanning? Calibration, Environment, Surface reflectivity, or Operator error => Environment
-
-        # Classification: What material is most likely to require anti-reflective coating during 3D scanning? Composite, Plastic, Glass, or Ceramic => Glass
+    use_applicationsDB: True
+    use_companiesDB: False
+    use_definitionsDB: False

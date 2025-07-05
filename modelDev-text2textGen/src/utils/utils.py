@@ -21,7 +21,7 @@ def modelDev_text2text_query(run: str, config: dict) -> None:
         elif user_input.lower() == 'n': exit()
         else: print("\nInvalid input. Please enter Y or N.")
 
-def training_query():
+def training_query(self):
     while True:
         user_input = input("\nThis will fine-tune the FLAN-T5 model.\nBefore proceeding, ensure config.yaml contains the correct arguments.\nDo you want to proceed? (yes/no): ").strip().lower()
         if user_input.lower() in ['yes', 'y']: break
@@ -41,16 +41,12 @@ def get_config(config_path='modelDev-text2textGen/config.yaml'):
         config = yaml.safe_load(f)
     return config
 
-def eval_to_jsonl(eval_results, output_path):
-    """
-    Save evaluation results to a JSONL file.
-
-    Args:
-        eval_results (dict): The evaluation results to save.
-        output_path (str): The path to the output JSONL file.
+def setup_training_output_dir(self):
+    """ Set up the output directory for training results.
     """
     import os
-    import json
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(eval_results) + "\n")
+    from datetime import datetime
+    output_dir = os.path.join('/' + self.config['train']['training_args']['output_dir'] + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '/')
+    os.makedirs(os.path.join(os.getcwd() + output_dir), exist_ok=False)
+    self.config['train']['training_args']['output_dir'] = output_dir
+    self.config['train']['training_args']['log_dir'] = output_dir + 'log.json'

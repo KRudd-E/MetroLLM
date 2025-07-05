@@ -1,9 +1,8 @@
 import numpy as np
 import nltk
-from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 import evaluate
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 from src.utils.logging import LoggingCallback, DebugCallback
-import torch
 
 class Trainer:
     def __init__(self, model_wrapper, dataset, config):
@@ -51,7 +50,7 @@ class Trainer:
             tokenizer=self.tokenizer,
             data_collator=self.data_collator,
             compute_metrics=self.compute_metrics2,
-            callbacks=[LoggingCallback(log_path=config['training_args'].get("log_path", "modelDev-text2textGen/results/logs.json"))]
+            callbacks=[LoggingCallback(config), DebugCallback()]
         )
 
         trainer.train()

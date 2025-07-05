@@ -1,4 +1,6 @@
-from src.utils.misc import training_query, evaluation_query, get_config, parser, modelDev_text2text_query
+from src.utils.utils import training_query, \
+    evaluation_query, get_config, parser, modelDev_text2text_query, \
+        setup_training_output_dir
 
 class FinetunePipeline:
     def __init__(self):
@@ -10,10 +12,12 @@ class FinetunePipeline:
         
         #************ Train ************#
         if run == 'train':
-            training_query()
+            training_query(self)
+            setup_training_output_dir(self)
             
             from src.preprocess import DatasetLoader
-            dataset = DatasetLoader(self.config, run).load_training_data(self.config['train'])
+            dataset = DatasetLoader(self.config, run)
+            dataset.load_training_data(self.config['train'])
             
             from src.model_wrapper import FlanT5Wrapper
             model_wrapper = FlanT5Wrapper(run, self.config['train'])
@@ -27,7 +31,7 @@ class FinetunePipeline:
             evaluation_query()
             
             from src.preprocess import DatasetLoader
-            dataset = DatasetLoader(self.config, run).load_evaluation_data(self.config['eval']) #config=self.config['eval']
+            dataset = DatasetLoader(self.config, run).load_evaluation_data(self.config['eval'])
             
             from src.model_wrapper import FlanT5Wrapper
             model_wrapper = FlanT5Wrapper(run, self.config['eval'])

@@ -1,7 +1,9 @@
+import os
+import json
 import torch
 import evaluate
 from tqdm import tqdm
-from src.utils.misc import eval_to_jsonl
+from datetime import datetime
 
 class Evaluator:
     def __init__(self, model_wrapper, dataset, config):
@@ -11,7 +13,7 @@ class Evaluator:
         self.device = model_wrapper.get_device()
         self.data_collator = model_wrapper.get_data_collator()
         self.dataset = dataset
-        self.metric = evaluate.load(self.config["eval"]["eval_args"]["metric"])
+        self.metric = evaluate.load(self.config["eval_args"]["metric"])
 
     def evaluate(self, config):
         self.model.eval()
@@ -54,8 +56,31 @@ class Evaluator:
                 references=[r.strip().lower() for r in refs],
             )
 
-        eval_to_jsonl(
-            self.metric.compute(),
-            config["eval_args"]["output_dir"],
+        self.eval_to_jsonl(
+            model_dir = self.config['model']['dir'],
+            output_dir = config["eval_args"]["output_dir"],
+            results = self.metric.compute(),
         )
         print("Evaluation metrics:", self.metric.compute())
+        
+    @staticmethod
+    def eval_to_jsonl(model_dir, output_dir, results):
+        """ Save evaluation results to a JSONL file.
+        """
+          
+        os.makedirs(os.path.join(os.getcwd() + output_dir), exist_ok=True)
+        with open(os.path.join(os.getcwd() + output_dir), 'r', encoding='utf-8') as f:
+            try:
+                z = json.load(f)
+            except json.JSONDecodeError:
+                z = {}
+
+        y = {
+            "model_dir": model_dir,
+            "timestamp": datetime.datetime.now().isoformat(),
+            "results": results,
+        }
+        z.update(y)
+
+        with open(os.path.join(os.getcwd() + output_dir), 'w', encoding='utf-8') as f:
+            json.dump(z, f, indent=4)

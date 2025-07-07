@@ -4,6 +4,7 @@ applications_db:
   output_path: /data/2-decomposed/temp_applicationsDB/
   pdf-txt: True
   pdf-img: True
+  starting_subfolder: GANCELL - UNPROCESSED
   
 #****** Companies DB ******#
 companies_db: 

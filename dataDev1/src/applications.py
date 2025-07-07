@@ -1,4 +1,3 @@
-import pypdf
 import os
 from tqdm import tqdm
 import fitz
@@ -7,33 +6,28 @@ import logging
 class Applications_Reformat:
     def __init__(self, config):
         self.config = config
-        if self.config.get('debug', True):
-            print(f'Applications_Reformat initialized with config:\n {self.config}')
-        else:
-            logging.getLogger("pypdf").setLevel(logging.ERROR)
-            fitz.TOOLS.mupdf_display_errors(False)
+        fitz.TOOLS.mupdf_display_errors(False)
 
     def run(self):
 
         # Get the list of subfolders in the data path
-        subfolder_directories = sorted([x[0] for x in os.walk(os.getcwd() + self.config['data_path'])][1:])
-        subfolder_names = sorted([x[1] for x in os.walk(os.getcwd() + self.config['data_path']) if x[1] != []][0])
-        if self.config.get('debug', True):
-            print(f"Found {len(subfolder_directories)} subfolders in {self.config['data_path']}")
+        subdirs = sorted([x[0] for x in os.walk(os.getcwd() + self.config['data_path'])][1:])
+        subdir_names = sorted([x[1] for x in os.walk(os.getcwd() + self.config['data_path']) if x[1] != []][0])
+
+        if self.config['starting_subfolder']:
+            subdir_names, subdirs = self.starting_subfolder_manager(self.config['starting_subfolder'], subdir_names, subdirs)
 
         # Iterate through each subfolder and respective PDF files
         text_errors, img_errors = 0, 0 # Error counters
-        for subfolder_dir, subfolder_name in tqdm(zip(subfolder_directories, subfolder_names), 
-                                                  total=len(subfolder_directories),
+        for subfolder_dir, subfolder_name in tqdm(zip(subdirs, subdir_names), 
+                                                  total=len(subdirs),
                                                     desc="Processing subfolders",
                                                     dynamic_ncols=True,
                                                     colour='blue'):
             
             # Get all PDF files in the current subfolder
             pdf_files = [f for f in os.listdir(subfolder_dir) if f.endswith('.pdf')]
-            if self.config.get('debug', True):
-                 tqdm.write(f"Processing {len(pdf_files):03} PDF files in {subfolder_name}.")
-            
+
             # Create output directories if they do not exist
             if not os.path.exists(f"{os.getcwd()}{self.config['output_path']}/{subfolder_name}"):
                 os.makedirs(f"{os.getcwd()}{self.config['output_path']}/{subfolder_name}")
@@ -82,6 +76,19 @@ class Applications_Reformat:
                 doc.close()
                 
             
-        print(f"Finished processing {len(subfolder_directories)} subfolders.")
+        print(f"Finished processing {len(subdirs)} subfolders.")
         print(f"Text extraction errors: {text_errors}")
         print(f"Image extraction errors: {img_errors}")
+
+
+
+    @staticmethod
+    def starting_subfolder_manager(starting_subfolder: str, subdir_names: list, subdirs: list) -> tuple:
+        """ Adjusts subdirs and subdir_names to start from the specified starting_subfolder.
+        """
+        if starting_subfolder not in subdir_names:
+            raise ValueError(f"Starting subfolder '{starting_subfolder}' not found in subdir_names\n Check config.yaml and data.")
+        sbf_idx = subdir_names.index(starting_subfolder)
+        subdirs = subdirs[sbf_idx:]
+        subdir_names = subdir_names[sbf_idx:]    
+        return subdir_names, subdirs

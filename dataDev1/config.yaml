@@ -4,10 +4,9 @@
 # and specify respective configurations for each database.
 
 #****** Applications DB ******#
-run_applications_db: False
 applications_db: 
-  data_path: /data/1-original/applicationsDB
-  output_path: /data/applicationsDB/new
+  data_path: /data/1-original/applicationsDB/
+  output_path: /data/2-decomposed/temp_applicationsDB/
   
   pdf-txt: True # To convert PDFs text to .txt files.
   pdf-img: True # To pull images from PDFs as .png.
@@ -15,7 +14,6 @@ applications_db:
   debug: False # Useful for extended outputs. 
 
 #****** Definitions DB ******#
-run_definitions_db: True
 definitions_db: 
   data_path: data/1-original/definitionsDB/definitionsDB.docx
   output_path: data/2-decomposed/definitionsDB/definitionsDB.csv
@@ -23,7 +21,6 @@ definitions_db:
   debug: False 
 
 #****** Companies DB ******#
-run_companies_db: False
 companies_db: 
   data_path: data/1-original/companies
   output_path: data/2-decomposed/companies

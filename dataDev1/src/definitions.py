@@ -1,6 +1,3 @@
-"""
-This module defines the Definitions class, which reformats the data into a useful format for modelDev.
-"""
 from docx import Document
 import pandas as pd
 import re

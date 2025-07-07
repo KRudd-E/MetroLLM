@@ -23,7 +23,11 @@ class Applications_Reformat:
 
         # Iterate through each subfolder and respective PDF files
         text_errors, img_errors = 0, 0 # Error counters
-        for subfolder_dir, subfolder_name in tqdm(zip(subfolder_directories, subfolder_names)):
+        for subfolder_dir, subfolder_name in tqdm(zip(subfolder_directories, subfolder_names), 
+                                                  total=len(subfolder_directories),
+                                                    desc="Processing subfolders",
+                                                    dynamic_ncols=True,
+                                                    colour='blue'):
             
             # Get all PDF files in the current subfolder
             pdf_files = [f for f in os.listdir(subfolder_dir) if f.endswith('.pdf')]
@@ -37,37 +41,47 @@ class Applications_Reformat:
             # Process each PDF file in the subfolder
             for pdf_file in pdf_files:
                 
-                # pdf-txt
-                if self.config.get('pdf-txt', True):
-                    try:    
-                        reader = pypdf.PdfReader(subfolder_dir + '/' + pdf_file)
-                        nf = open(f'{os.getcwd()}{self.config["output_path"]}/{subfolder_name}/{pdf_file[:-4]}.txt', 'w')
-                        nf.write('\n'.join([page.extract_text() for page in reader.pages]))
-                        nf.close()
-                    except Exception as e:
-                        text_errors += 1
-                
-                # pdf-img
-                if self.config.get('pdf-img', True):
-                    try:    
-                        doc = fitz.open(subfolder_dir + '/' + pdf_file)
-                        for i, page in enumerate(doc):
+                doc = fitz.open(subfolder_dir + '/' + pdf_file)
+                text = '' 
+
+                for page in doc: 
+                    # Extract images
+                    if self.config.get('pdf-img', True):
+                        try:
                             images = page.get_images(full=True)
                             for img_index, img in enumerate(images):
                                 pix = fitz.Pixmap(doc, img[0])
-                                if pix.alpha:  # has transparency
-                                    pix = fitz.Pixmap(fitz.csRGB, pix)  # remove alpha
-                                pix.save(f"{os.getcwd()}{self.config['output_path']}/{subfolder_name}/{pdf_file[:-4]}_{i+1}-{img_index+1}.png")
-                        doc.close()
-                    except Exception as e:
-                        img_errors += 1
+                                try:
+                                    pix = fitz.Pixmap(fitz.csRGB, pix)  # Convert to RGB if not already
+                                except:
+                                    pass
+                                pix.save(f"{os.getcwd()}{self.config['output_path']}/{subfolder_name}/{pdf_file[:-4]}_{page.number+1}-{img_index+1}.png")
+                        except Exception as e:
+                            tqdm.write(f"Error extracting images from {pdf_file} on page {page.number+1}: {e}")
+                            img_errors += 1
+                    
+                    # Extract text
+                    if self.config.get('pdf-txt', True):
+                        try:
+                            blocks = page.get_text('blocks')
+                            blocks.sort(key=lambda b: (b[1], b[0]))  # top-down, left-right
+
+                            for block in blocks:
+                                if block[6] == 0:
+                                    text += block[4].strip() + '\n\n'  # Add spacing between paragraphs
+
+                        except Exception as e:
+                            tqdm.write(f"Error extracting text from {pdf_file} on page {page.number+1}: {e}")
+                            text_errors += 1
+
+                # Save text after processing all pages
+                if text:
+                    with open(f'{os.getcwd()}{self.config["output_path"]}/{subfolder_name}/{pdf_file[:-4]}.txt', 'w') as nf:
+                        nf.write(text)
+
+                doc.close()
+                
             
-        # Print summary of errors
-        if self.config.get('debug', True):
-            print(f"Finished processing {len(subfolder_directories)} subfolders.")
-            if text_errors > 0:
-                print(f"Text extraction errors: {text_errors}")
-            if img_errors > 0:
-                print(f"Image extraction errors: {img_errors}")
-            if text_errors == 0 and img_errors == 0:
-                print("No errors encountered during processing.")
+        print(f"Finished processing {len(subfolder_directories)} subfolders.")
+        print(f"Text extraction errors: {text_errors}")
+        print(f"Image extraction errors: {img_errors}")

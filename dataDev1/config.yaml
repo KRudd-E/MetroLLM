@@ -1,28 +1,16 @@
-# This file is used to configure the data processing pipeline.
-# It contains settings for the applications, definitions, and companies DBs.
-# To run the pipeline, set the `run_*_db` variables to True, 
-# and specify respective configurations for each database.
-
 #****** Applications DB ******#
 applications_db: 
   data_path: /data/1-original/applicationsDB/
   output_path: /data/2-decomposed/temp_applicationsDB/
+  pdf-txt: True
+  pdf-img: True
   
-  pdf-txt: True # To convert PDFs text to .txt files.
-  pdf-img: True # To pull images from PDFs as .png.
-  
-  debug: False # Useful for extended outputs. 
+#****** Companies DB ******#
+companies_db: 
+  data_path: /data/1-original/companiesDB/
+  output_path: /data/2-decomposed/companiesDB/
 
 #****** Definitions DB ******#
 definitions_db: 
-  data_path: data/1-original/definitionsDB/definitionsDB.docx
-  output_path: data/2-decomposed/definitionsDB/definitionsDB.csv
-  
-  debug: False 
-
-#****** Companies DB ******#
-companies_db: 
-  data_path: data/1-original/companies
-  output_path: data/2-decomposed/companies
-
-  debug: False
+  data_path: /data/1-original/definitionsDB/definitionsDB.docx
+  output_path: /data/2-decomposed/definitionsDB/definitionsDB.csv

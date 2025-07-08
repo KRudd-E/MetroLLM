@@ -6,6 +6,7 @@ applications_db:
   pdf-img: True
   starting_subfolder:
   skip_existing: True
+  allow_empty_text_files: True
   
 #****** Companies DB ******#
 companies_db: 

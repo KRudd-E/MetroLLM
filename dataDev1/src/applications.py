@@ -3,9 +3,6 @@ from tqdm import tqdm
 import fitz
 import logging
 
-
-
-
 class Applications_Reformat:
     def __init__(self, config):
         self.config = config
@@ -98,9 +95,9 @@ class Applications_Reformat:
                     self.TEXT_ERRORS += 1
 
         # Save text after processing all pages
-        if text:
-            with open(os.path.join(os.getcwd() + self.config['output_path'] + subfolder_name + '/' + f"{pdf_file[:-4]}.txt"), 'w') as nf:
-                nf.write(text)
+
+        with open(os.path.join(os.getcwd() + self.config['output_path'] + subfolder_name + '/' + f"{pdf_file[:-4]}.txt"), 'w') as nf:
+            nf.write(text)
 
 
     @staticmethod

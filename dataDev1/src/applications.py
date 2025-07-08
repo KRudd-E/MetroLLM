@@ -95,9 +95,9 @@ class Applications_Reformat:
                     self.TEXT_ERRORS += 1
 
         # Save text after processing all pages
-
-        with open(os.path.join(os.getcwd() + self.config['output_path'] + subfolder_name + '/' + f"{pdf_file[:-4]}.txt"), 'w') as nf:
-            nf.write(text)
+        if self.config.get('allow_empty_text_files', True) or text.strip():
+            with open(os.path.join(os.getcwd() + self.config['output_path'] + subfolder_name + '/' + f"{pdf_file[:-4]}.txt"), 'w') as nf:
+                nf.write(text)
 
 
     @staticmethod

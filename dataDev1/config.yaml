@@ -1,10 +1,11 @@
 #****** Applications DB ******#
 applications_db: 
   data_path: /data/1-original/applicationsDB/
-  output_path: /data/2-decomposed/temp_applicationsDB/
+  output_path: /data/2-decomposed/applicationsDB/
   pdf-txt: True
   pdf-img: True
-  starting_subfolder: GANCELL - UNPROCESSED
+  starting_subfolder:
+  skip_existing: True
   
 #****** Companies DB ******#
 companies_db: 

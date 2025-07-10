@@ -1,7 +1,11 @@
 import os
 from tqdm import tqdm
 import fitz
-import logging
+from pytesseract import image_to_string
+from PIL import Image
+import re
+import io
+import os
 
 class Applications_Reformat:
     def __init__(self, config):
@@ -10,6 +14,7 @@ class Applications_Reformat:
         self.TEXT_ERRORS = 0
         self.IMAGE_ERRORS = 0
         self.FILE_SKIPS = 0
+        self.BAD_TEXT_FILES = 0
 
     def run(self):
 
@@ -36,7 +41,7 @@ class Applications_Reformat:
             
             # Process each PDF file in the subfolder
             for pdf_file in pdf_files:
-                
+                tqdm.write(f"Processing {pdf_file} in {subfolder_name}...")
                 # Skip exisiting
                 if os.path.exists(f"{os.getcwd()}{self.config['output_path']}/{subfolder_name}/{pdf_file[:-4]}.txt") and self.config.get('skip_existing', True):
                     self.FILE_SKIPS += 1
@@ -53,9 +58,13 @@ class Applications_Reformat:
                 doc.close()
                  
         print(f"\nFinished processing {len(subdirs)} subfolders.")
-        print(f"\nText extraction errors: {self.TEXT_ERRORS}")
-        print(f"\nImage extraction errors: {self.IMAGE_ERRORS}")
-        print(f"\nFiles skipped (already processed): {self.FILE_SKIPS}")
+        print(f"\nBad text files: {self.BAD_TEXT_FILES}")
+        if self.config.get('pdf-txt', True):
+            print(f"\nText extraction errors: {self.TEXT_ERRORS}")
+        if self.config.get('pdf-img', True):
+            print(f"\nImage extraction errors: {self.IMAGE_ERRORS}")
+        if self.config.get('skip_existing', True):
+            print(f"\nFiles skipped (already processed): {self.FILE_SKIPS}")
 
 
 
@@ -76,28 +85,72 @@ class Applications_Reformat:
                 tqdm.write(f"Error extracting images from {pdf_file} on page {page.number+1}: {e}")
                 self.IMAGE_ERRORS += 1
 
-
     def get_text_from_pdf(self, pdf_file, subfolder_name, doc, text=''):
-        """ Extracts text from a PDF file and saves it in the specified output directory.
-        """
+        vertical_tolerance = 12  # for grouping into lines
+        column_tolerance = 50    # min horizontal gap to define a new column
+
+        all_text = ''
         for index, page in enumerate(doc):
-            # Extract text
+            page_text = ''
             if self.config.get('pdf-txt', True):
                 try:
                     blocks = page.get_text('blocks')
-                    blocks.sort(key=lambda b: (b[1], b[0]))  # top-down, left-right
-                    for block in blocks:
-                        if block[6] == 0:
-                            text += block[4].strip() + '\n\n'  # Add spacing between paragraphs
+                    text_blocks = [b for b in blocks if b[6] == 0]
+
+                    if not text_blocks:
+                        continue
+
+                    text_blocks.sort(key=lambda b: -b[3])  # use y1 (top) descending
+                    columns = []
+                    for block in text_blocks:
+                        x0 = block[0]
+                        assigned = False
+                        for col in columns:
+                            if abs(col['x'] - x0) < column_tolerance:
+                                col['blocks'].append(block)
+                                assigned = True
+                                break
+                        if not assigned:
+                            columns.append({'x': x0, 'blocks': [block]})
+
+                    columns.sort(key=lambda c: c['x'])
+
+                    for col in columns:
+                        col['blocks'].sort(key=lambda b: b[3])  # y1 descending (top to bottom)
+                        for block in col['blocks']:
+                            page_text += block[4].strip() + '.\n\n'
 
                 except Exception as e:
                     tqdm.write(f"Error extracting text from {pdf_file} on page {index+1}: {e}")
                     self.TEXT_ERRORS += 1
 
-        # Save text after processing all pages
-        if self.config.get('allow_empty_text_files', True) or text.strip():
-            with open(os.path.join(os.getcwd() + self.config['output_path'] + subfolder_name + '/' + f"{pdf_file[:-4]}.txt"), 'w') as nf:
-                nf.write(text)
+            # Check for badly encoded text
+            if self.is_bad_text(page_text):
+                try:
+                    tqdm.write(f"Bad text detected, trying OCR...")
+                    # try using OCR - pdf image capture
+                    pix = page.get_pixmap(dpi=300)
+                    img = Image.open(io.BytesIO(pix.tobytes("png")))
+                    page_text = image_to_string(img)
+                    self.BAD_TEXT_FILES += 1
+                except Exception as e:
+                    tqdm.write(f"OCR failed for {pdf_file} on page {index+1}: {e}")
+                    self.TEXT_ERRORS += 1
+
+            all_text += page_text
+
+        # Save text if not empty or allowed
+        if self.config.get('allow_empty_text_files', True) or all_text.strip():
+            output_path = os.path.join(os.getcwd() + self.config['output_path'], subfolder_name)
+            os.makedirs(output_path, exist_ok=True)
+            with open(os.path.join(output_path, f"{pdf_file[:-4]}.txt"), 'w', encoding='utf-8') as nf:
+                nf.write(all_text)
+
+
+    def is_bad_text(self, text: str) -> bool:
+        clean = re.sub(r'[\s\w,.!?;:\'"\(\)\[\]\{\}-]', '', text)  # non-standard
+        garbage_ratio = len(clean) / max(len(text), 1)
+        return garbage_ratio > 0.2  # tweak threshold
 
 
     @staticmethod

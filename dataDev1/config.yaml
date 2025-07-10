@@ -3,9 +3,9 @@ applications_db:
   data_path: /data/1-original/applicationsDB/
   output_path: /data/2-decomposed/applicationsDB/
   pdf-txt: True
-  pdf-img: True
+  pdf-img: False
   starting_subfolder:
-  skip_existing: True
+  skip_existing: False
   allow_empty_text_files: True
   
 #****** Companies DB ******#

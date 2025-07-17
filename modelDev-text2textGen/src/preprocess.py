@@ -29,6 +29,7 @@ class DatasetLoader:
 
     def preprocess_mapping(self, examples, config):
         """Preprocess input examples for training or evaluation."""
+        
         model_inputs = self.tokenizer(
             examples[config['data']['input_col']],
             max_length=config.get('data', {}).get('max_seq_length', self.tokenizer.model_max_length),

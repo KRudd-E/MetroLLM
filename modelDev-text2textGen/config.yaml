@@ -2,7 +2,7 @@
 
 train:
   data:
-    dir: "/data/3-formatted/t2tGen/archive/t2t_short_test.csv"
+    dir: "data/3-formatted/t2tGen/t2tGen_test.csv"
     task_col: "task"
     input_col: "input"
     output_col: "output"
@@ -12,7 +12,6 @@ train:
     name: "google/flan-t5-large"
     max_input_length: 256
     max_target_length: 128
-    save_dir: "./checkpoints"
 
   training_args:
     output_dir: "/modelDev-text2textGen/results/"
@@ -20,8 +19,8 @@ train:
     lr: 3e-4
     epochs: 5
     batch_size: 4
-    weight_decay: 0.01
     eval_batch_size: 4
+    weight_decay: 0.01
     save_total_limit: 3
     metric_for_best_model: "eval_rouge1"
 

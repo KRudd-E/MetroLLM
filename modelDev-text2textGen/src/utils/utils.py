@@ -3,23 +3,26 @@ def parser():
     parser = argparse.ArgumentParser(description="Model Development for Text2Text Generation")
     parser.add_argument('--run', '-r', type=str, choices=['train', 't', 'finetune', 'ft', 't', 'evaluate', 'eval', 'e'], required=True,
                         help="Specify whether to train, evaluate, or fine-tune the model.")
-    if parser.parse_args().run.lower() in ['train', 't', 'finetune', 'ft']:
-        run = 'train'
-    elif parser.parse_args().run.lower() in ['evaluate', 'eval', 'e']:
-        run = 'evaluate'
-    else:
-        raise ValueError("Invalid run type specified. Use 'train' or 'evaluate'.")
+    if parser.parse_args().run.lower() in ['train', 't', 'finetune', 'ft']: run = 'train'
+    elif parser.parse_args().run.lower() in ['evaluate', 'eval', 'e']: run = 'evaluate'
+    else: raise ValueError("Invalid run type specified. Use 'train' or 'evaluate'.")
     return run
 
 def modelDev_text2text_query(run: str, config: dict) -> None:
-    while True:
-        if run.lower() in ['train', 't', 'finetune', 'ft']:
-            user_input = input(f"\n         ********************* >>>>> -- ModelDev Text2Text -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text2Text model.\nYou have opted to **Fine-tune** **{config['train']['model']['name']}**, using data at dir. **{config['train']['data']['dir']}**.\nDo you wish to continue? (y/n): ")
-        if run.lower() in ['evaluate', 'eval', 'e']:
-            user_input = input(f"\n         ********************* >>>>> -- ModelDev Text2Text -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text2Text model.\nYou have opted to **Evaluate** **{config['eval']['model']['dir']}**.\nDo you wish to continue? (y/n): ")
-        if user_input.lower() == 'y': break
-        elif user_input.lower() == 'n': exit()
-        else: print("\nInvalid input. Please enter Y or N.")
+
+    if run.lower() in ['train', 't', 'finetune', 'ft']:
+        user_input = input(f"\n         ********************* >>>>> -- ModelDev Text2Text -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text2Text model.\nYou have opted to **Fine-tune** **{config['train']['model']['name']}**, using data at dir. **{config['train']['data']['dir']}**.\nDo you wish to continue? (y/n): ")
+    if run.lower() in ['evaluate', 'eval', 'e']:
+        user_input = input(f"\n         ********************* >>>>> -- ModelDev Text2Text -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text2Text model.\nYou have opted to **Evaluate** **{config['eval']['model']['dir']}**.\nDo you wish to continue? (y/n): ")
+    if user_input.lower() in ['yes', 'y']: pass
+    elif user_input.lower() in ['no', 'n']: exit()
+    else: 
+        while True:
+            user_input = input("Invalid input. Please enter Y or N: ")
+            if user_input.lower() in ['yes', 'y']:
+                break
+            elif user_input.lower() in ['no', 'n']:
+                exit()
 
 def training_query(self):
     while True:
@@ -46,7 +49,12 @@ def setup_training_output_dir(self):
     """
     import os
     from datetime import datetime
+    import shutil
+    
     output_dir = os.path.join('/' + self.config['train']['training_args']['output_dir'] + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '/')
     os.makedirs(os.path.join(os.getcwd() + output_dir), exist_ok=False)
     self.config['train']['training_args']['output_dir'] = output_dir
     self.config['train']['training_args']['log_dir'] = output_dir + 'log.json'
+    
+    shutil.copy('modelDev-text2textGen/config.yaml', os.path.join(os.getcwd() + output_dir, 'config.yaml'))
+    #shutil.copy(self['train']['data']['dir'], os.path.join(os.getcwd() + output_dir, 'train.csv'))

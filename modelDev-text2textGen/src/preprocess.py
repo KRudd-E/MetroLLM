@@ -14,15 +14,15 @@ class DatasetLoader:
 
     def load_training_data(self, config):
         """Load and preprocess training data."""
-        dataset = load_dataset("csv", data_files=config['data']['dir'])["train"]
-        train_dataset, val_dataset = dataset.train_test_split(test_size=0.1875).values()
+        dataset = load_dataset("csv", data_files=config['data']['dir'], split="train")
+        train_dataset, val_dataset = dataset.train_test_split(test_size=0.1875).values()  # type: ignore
         tokenized_train = train_dataset.map(lambda x: self.preprocess_mapping(x, config), batched=True)
         tokenized_val = val_dataset.map(lambda x: self.preprocess_mapping(x, config), batched=True)
         return DatasetDict({"train": tokenized_train, "val": tokenized_val})
 
     def load_evaluation_data(self, config):
         """Load and preprocess evaluation data."""
-        raw_test = load_dataset("csv", data_files=config['data']['dir'])["train"]
+        raw_test = load_dataset("csv", data_files=config['data']['dir'], split="train")
         tokenised_test = raw_test.map(lambda x: self.preprocess_mapping(x, config), batched=True)
         return tokenised_test
 

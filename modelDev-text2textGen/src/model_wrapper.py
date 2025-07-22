@@ -1,5 +1,6 @@
 # File: src/models/model_wrapper.py
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers.data.data_collator import DataCollatorForSeq2Seq
 import torch
 
 class FlanT5Wrapper:

@@ -2,7 +2,7 @@
 
 train:
   data:
-    dir: "data/3-formatted/t2tGen/t2tGen_test.csv"
+    dir: "data/3-formatted/t2tGen/t2tGen_train.csv"
     task_col: "task"
     input_col: "input"
     output_col: "output"
@@ -11,7 +11,7 @@ train:
   model:
     name: "google/flan-t5-large"
     max_input_length: 256
-    max_target_length: 128
+    max_target_length: 256
 
   training_args:
     output_dir: "/modelDev-text2textGen/results/"
@@ -37,7 +37,7 @@ eval:
   model:
     dir: "/modelDev-text2textGen/results/checkpoint-67320"
     max_input_length: 256
-    max_target_length: 128
+    max_target_length: 256
 
   eval_args:
     metric: "rouge"

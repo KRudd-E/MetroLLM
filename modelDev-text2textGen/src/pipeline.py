@@ -20,8 +20,8 @@ class FinetunePipeline:
             #training_query(self)
             setup_training_output_dir(self)
             
-            dataset = DatasetLoader(self.config, run)
-            dataset.load_training_data(self.config['train'])
+            ds_loader = DatasetLoader(self.config, run)
+            dataset = ds_loader.load_training_data(self.config['train'])
             
             model_wrapper = FlanT5Wrapper(run, self.config['train'])
             

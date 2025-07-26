@@ -9,8 +9,10 @@ class DatasetLoader:
     @staticmethod
     def load_tokenizer(config, run):
         """Load the tokenizer based on the run type."""
-        if run == 'train':return T5Tokenizer.from_pretrained(config['train']['model']['name'])
-        else: return T5Tokenizer.from_pretrained(config['eval']['model']['dir'])
+        if run == 'train':
+            return T5Tokenizer.from_pretrained(config['train']['model']['name'])
+        else: 
+            return T5Tokenizer.from_pretrained(config['eval']['model']['dir'])
 
     def load_training_data(self, config):
         """Load and preprocess training data."""

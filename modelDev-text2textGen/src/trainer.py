@@ -48,7 +48,7 @@ class Trainer:
         trainer = Seq2SeqTrainer(
             model=self.model,
             args=training_args,
-            train_dataset=self.dataset["train"],
+            train_dataset=self.dataset["train"], #! 
             eval_dataset=self.dataset["val"],
             #tokenizer=self.tokenizer,
             data_collator=self.data_collator,

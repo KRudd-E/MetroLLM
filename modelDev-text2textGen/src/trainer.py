@@ -8,52 +8,58 @@ from collections import defaultdict
 
 class Trainer:
     def __init__(self, model_wrapper, dataset, config):
-        self.dataset = dataset
-        self.model = model_wrapper.get_model()
-        self.tokenizer = model_wrapper.get_tokenizer()
-        self.device = model_wrapper.get_device()
-        self.data_collator = model_wrapper.get_data_collator()
+       
+        self.dataset          = dataset
+        self.model            = model_wrapper.get_model()
+        self.tokenizer        = model_wrapper.get_tokenizer()
+        self.device           = model_wrapper.get_device()
+        self.data_collator    = model_wrapper.get_data_collator()
         
-        self.rouge = evaluate.load("rouge")
-        self.bleu = evaluate.load("bleu")
-        self.exact_match = evaluate.load("exact_match")
+        self.rouge        = evaluate.load("rouge")
+        self.bleu         = evaluate.load("bleu")
+        self.exact_match  = evaluate.load("exact_match")
+        
         nltk.download("punkt", quiet=True)
         
-        self.check_model_config()  # Verify model configuration
+        self.check_model_config()
 
     def train(self, config):
         training_args = Seq2SeqTrainingArguments(
-            output_dir=config['training_args'].get("output_dir", "modelDev-text2textGen/results"),
-            eval_strategy="epoch",
-            save_strategy="epoch",  # Save checkpoint at the end of every epoch
-            learning_rate=float(config['training_args'].get("lr", 3e-4)),
-            per_device_train_batch_size=config['training_args'].get("batch_size", 4),  # Reduced from 8 to 2
-            per_device_eval_batch_size=config['training_args'].get("eval_batch_size", 4),  # Reduced from 4 to 1
-            weight_decay=float(config['training_args'].get("weight_decay", 0.01)),
-            save_total_limit=config['training_args'].get("save_total_limit", 3),
-            num_train_epochs=config['training_args'].get("epochs", 6),
-            #predict_with_generate=True,
-            push_to_hub=False,
-            load_best_model_at_end=True,
-            metric_for_best_model=config['training_args'].get("metric_for_best_model", "rouge1"),
-            greater_is_better=True,
-            # Memory optimization settings
-            gradient_accumulation_steps=config['training_args'].get("gradient_accumulation_steps", 4),  # Accumulate gradients to simulate larger batch
-            #fp16=True,  # Use mixed precision training to reduce memory usage
-            bf16=True,  # Use bfloat16 for better performance on TPUs
-            dataloader_pin_memory=False,  # Disable pin memory to save GPU memory
-            gradient_checkpointing=True,  # Trade compute for memory
+            output_dir                    =   str(config['training_args']['output_dir']),
+            eval_strategy                 =   str(config['training_args']['eval_strategy']),
+            save_strategy                 =   str(config['training_args']['save_strategy']),
+            eval_steps                    =   int(config['training_args']['eval_steps']),
+            save_steps                    =   int(config['training_args']['save_steps']),
+            logging_steps                 =   int(config['training_args']['logging_steps']),
+            learning_rate                 = float(config['training_args']['learning_rate']),
+            per_device_train_batch_size   =   int(config['training_args']['batch_size']),
+            per_device_eval_batch_size    =   int(config['training_args']['eval_batch_size']),
+            gradient_accumulation_steps   =   int(config['training_args']['gradient_accumulation_steps']),
+            weight_decay                  = float(config['training_args']['weight_decay']),
+            warmup_ratio                  = float(config['training_args']['warmup_ratio']),
+            num_train_epochs              =   int(config['training_args']['epochs']),
+            predict_with_generate         =  bool(config['training_args']['predict_with_generate']),
+            generation_max_length         =   int(config['training_args']['max_target_length']),
+            load_best_model_at_end        =  bool(config['training_args']['load_best_model_at_end']),
+            metric_for_best_model         =   str(config['training_args']['metric_for_best_model']),
+            greater_is_better             =  bool(config['training_args']['greater_is_better']),
+            bf16                          =  bool(config['training_args']['bf16']),
+            gradient_checkpointing        =  bool(config['training_args']['gradient_checkpointing']),
+            dataloader_pin_memory         =  bool(config['training_args']['dataloader_pin_memory']),
+            label_smoothing_factor        = float(config['training_args']['label_smoothing_factor']),
+            save_total_limit              =   int(config['training_args']['save_total_limit']),
+            push_to_hub                   =  bool(config['training_args']['push_to_hub']),
         )
 
         trainer = Seq2SeqTrainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=self.dataset["train"], #! 
-            eval_dataset=self.dataset["val"],
-            #tokenizer=self.tokenizer,
-            data_collator=self.data_collator,
-            compute_metrics=self.compute_metrics3, 
-            callbacks=[LoggingCallback(config), DebugCallback()]
+            model             = self.model,
+            args              = training_args,
+            train_dataset     = self.dataset["train"],
+            eval_dataset      = self.dataset["val"],
+            #tokenizer        = self.tokenizer,         #?? old version
+            data_collator     = self.data_collator,
+            compute_metrics   = self.compute_metrics3, 
+            callbacks         = [LoggingCallback(config), DebugCallback()]
         )
 
         trainer.train()

@@ -14,16 +14,32 @@ train:
     max_target_length: 256
 
   training_args:
-    output_dir: "./modelDev-text2textGen/results"
-    log_dir: "./modelDev-text2textGen/results/logs.csv"
-    lr: 3e-4
-    epochs: 5
-    batch_size: 4
-    eval_batch_size: 4
-    weight_decay: 0.01
-    save_total_limit: 3
-    metric_for_best_model: "eval_rouge1"
-
+    output_dir:         "./modelDev-text2textGen/results"
+    eval_strategy:      "steps"
+    save_strategy:      "steps"
+    eval_steps:         2000
+    save_steps:         2000
+    logging_steps:      100
+    learning_rate:      3e-4
+    per_device_train_batch_size:    8
+    per_device_eval_batch_size:     8
+    gradient_accumulation_steps:    16
+    weight_decay:               0.01
+    warmup_ratio:               0.1
+    num_train_epochs:           6
+    predict_with_generate:      True
+    generation_max_length:      128
+    load_best_model_at_end:     True
+    metric_for_best_model:      "rogue1"
+    greater_is_better:          True
+    bf16:                       True
+    gradient_checkpointing:     True
+    dataloader_pin_memory:      False
+    label_smoothing_factor:     0.1
+    save_total_limit:           3
+    push_to_hub:                False
+    
+    log_dir:                    "./modelDev-text2textGen/results/logs.csv"
 
 
 eval:

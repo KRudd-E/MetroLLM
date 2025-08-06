@@ -9,7 +9,7 @@ train:
     max_seq_length: 256
 
   model:
-    name: "google/flan-t5-small"
+    name: "google/flan-t5-xl"
     max_input_length: 256
     max_target_length: 256
 

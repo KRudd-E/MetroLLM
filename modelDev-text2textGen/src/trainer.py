@@ -2,7 +2,7 @@ import numpy as np
 import nltk
 import evaluate
 from transformers.trainer_seq2seq import Seq2SeqTrainer
-from transformers.training_args_seq2seq import Seq2SeqTrainingArguments
+from transformers import Seq2SeqTrainingArguments
 from src.utils.logging import LoggingCallback, DebugCallback
 from collections import defaultdict
 
@@ -24,22 +24,23 @@ class Trainer:
         self.check_model_config()
 
     def train(self, config):
+        
         training_args = Seq2SeqTrainingArguments(
             output_dir                    =   str(config['training_args']['output_dir']),
             eval_strategy                 =   str(config['training_args']['eval_strategy']),
             save_strategy                 =   str(config['training_args']['save_strategy']),
-            eval_steps                    =   int(config['training_args']['eval_steps']),
-            save_steps                    =   int(config['training_args']['save_steps']),
+            #eval_steps                    =   int(config['training_args']['eval_steps']),
+            #save_steps                    =   int(config['training_args']['save_steps']),
             logging_steps                 =   int(config['training_args']['logging_steps']),
             learning_rate                 = float(config['training_args']['learning_rate']),
-            per_device_train_batch_size   =   int(config['training_args']['batch_size']),
-            per_device_eval_batch_size    =   int(config['training_args']['eval_batch_size']),
+            per_device_train_batch_size   =   int(config['training_args']['per_device_train_batch_size']),
+            per_device_eval_batch_size    =   int(config['training_args']['per_device_eval_batch_size']),
             gradient_accumulation_steps   =   int(config['training_args']['gradient_accumulation_steps']),
             weight_decay                  = float(config['training_args']['weight_decay']),
             warmup_ratio                  = float(config['training_args']['warmup_ratio']),
-            num_train_epochs              =   int(config['training_args']['epochs']),
+            num_train_epochs              =   int(config['training_args']['num_train_epochs']),
             predict_with_generate         =  bool(config['training_args']['predict_with_generate']),
-            generation_max_length         =   int(config['training_args']['max_target_length']),
+            generation_max_length         =   int(config['training_args']['generation_max_length']),
             load_best_model_at_end        =  bool(config['training_args']['load_best_model_at_end']),
             metric_for_best_model         =   str(config['training_args']['metric_for_best_model']),
             greater_is_better             =  bool(config['training_args']['greater_is_better']),
@@ -59,7 +60,7 @@ class Trainer:
             #tokenizer        = self.tokenizer,         #?? old version
             data_collator     = self.data_collator,
             compute_metrics   = self.compute_metrics3, 
-            callbacks         = [LoggingCallback(config), DebugCallback()]
+            callbacks         = [LoggingCallback(config), DebugCallback()],
         )
 
         trainer.train()
@@ -69,6 +70,7 @@ class Trainer:
         predictions, labels = eval_pred
 
         # Remove -100s and decode
+        predictions = np.where(predictions != -100, predictions, self.tokenizer.pad_token_id) #-100 values are typically used as ignore indices in loss computation during training, but they need to be converted to valid token IDs before decoding.
         labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
         decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
         decoded_labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
@@ -94,8 +96,8 @@ class Trainer:
 
             # BLEU if moderately long
             if pred_len >= 10:
-                bleu_preds.append(pred.split())
-                bleu_refs.append([label.split()])
+                bleu_preds.append(pred)
+                bleu_refs.append([label])
 
             # ROUGE if longer or paragraph-like
             if pred_len > 30 or '\n' in pred or '\n' in label:

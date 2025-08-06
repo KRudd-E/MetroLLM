@@ -6,9 +6,13 @@ import datetime
 class LoggingCallback(TrainerCallback):
     def __init__(self, config):
         self.log_dir = config['training_args']['log_dir']
-        os.makedirs(os.path.join(os.getcwd() + '/' + self.log_dir), exist_ok=False)
 
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        
+        if not os.path.exists(os.path.join(os.getcwd() + self.log_dir)):
+            with open(os.path.join(os.getcwd() + self.log_dir), 'w', encoding='utf-8') as f:
+                json.dump({}, f, indent=4)
+        
         with open(os.path.join(os.getcwd() + self.log_dir), 'r', encoding='utf-8') as f:
             try:
                 z = json.load(f)

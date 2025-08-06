@@ -54,11 +54,11 @@ class Pipeline:
         
 
         #**** Iterate over folders and text files ****#
-        for subdir, subdir_name in tqdm(zip(subdirs, subdir_names), total=len(subdirs), desc="Processing", position=0, colour='blue'):
+        for subdir, subdir_name in tqdm(zip(subdirs, subdir_names), total=len(subdirs), desc="Processing Subdirectories", position=0, colour='blue'):
             
             text_files: list = sorted([f for f in os.listdir(subdir) if f.endswith('.txt')])
             
-            for file_name in tqdm(text_files, total=len(text_files), desc=f"Processing {subdir_name}", position=1, colour='green', leave=False):
+            for file_name in tqdm(text_files, total=len(text_files), desc=f"Processing '{subdir_name}'", position=1, colour='green', leave=False):
                 
                 #**** Read the case study text file ***#
                 with open(os.path.join(subdir + '/' + file_name), 'r') as file:
@@ -172,12 +172,12 @@ class Pipeline:
                         names=['surface interaction', 'measured object properties'],
                         
                         options={
-                            'surface interaction': self.config['surface_interaction_list'],
+                            'surface interaction': self.config['surface_interaction_list_v2'],
                             'measured object properties': self.config['measured_object_properties_list_v2']
                         },
                         
                         prompt=self.config['surface_interaction_and_measured_object_properties_prompt'].format(
-                            surface_interaction_list=self.config['surface_interaction_list'],
+                            surface_interaction_list=self.config['surface_interaction_list_v2'],
                             measured_object_properties_list=self.config['measured_object_properties_list_v2'],
                             txt=case_study_text)
                     )
@@ -188,10 +188,10 @@ class Pipeline:
                 if self.config['use_tools_and_methods']:
                     tools_and_methods_dict: dict = self.retriever.retrieve_multiple(
                         names=['tools and methods'],
-                        options={'tools and methods': self.config['tools_methods_list']},
+                        options={'tools and methods': self.config['tools_methods_list_v2']},
                         
                         prompt=self.config['tools_methods_prompt'].format(
-                            tools_methods_list=self.config['tools_methods_list'],
+                            tools_methods_list=self.config['tools_methods_list_v2'],
                             txt=case_study_text)
                     )
                 else:
@@ -203,15 +203,16 @@ class Pipeline:
                         names=['environment properties', 'task operation'],
                         options={
                             'environment properties': self.config['environment_list'],
-                            'task operation': self.config['task_operation_list']
+                            'task operation': self.config['task_operation_list_v2']
                         },
                         prompt=self.config['environment_operation_prompt'].format(
                             environment_list=self.config['environment_list'],
-                            task_operation_list=self.config['task_operation_list'],
+                            task_operation_list=self.config['task_operation_list_v2'],
                             txt=case_study_text),
                         tries=3,
                         expect_result=True
                     )
+                    environment_and_task_operations_dict = self.remove_brackets_from_dict_vals(environment_and_task_operations_dict)
                 else:
                     environment_and_task_operations_dict: dict = {'environment properties': '', 'task operation': ''}
                 
@@ -261,7 +262,7 @@ class Pipeline:
         """
         row = pd.Series({
             'id': id,
-            'File Name': file_name,
+            'File Name': file_name.replace('.txt', '.pdf'),
             'Folder Name': subdir_name,
             'Name': self.clean_value(info_vals.get('name', '')),
             'Level': self.clean_value(info_vals.get('level', '')),
@@ -311,8 +312,9 @@ class Pipeline:
             ws.append(row.tolist())
             
             # add hyperlink to name
-            ws.cell(row=ws.max_row, column=4).hyperlink = f"{os.getcwd()}/data/1-original/applicationsDB/{row['Folder Name']}/{file_name[:-4]}.pdf" #type: ignore
-            ws.cell(row=ws.max_row, column=4).style = 'Hyperlink'
+            if self.config['use_level_name']:
+                ws.cell(row=ws.max_row, column=4).hyperlink = f"{os.getcwd()}/data/1-original/applicationsDB/{row['Folder Name']}/{file_name[:-4]}.pdf" #type: ignore
+                ws.cell(row=ws.max_row, column=4).style = 'Hyperlink'
             
             wb.save(f'{os.getcwd()}/{self.config["output_xlsx_dir"]}')
         except Exception as e:
@@ -337,7 +339,7 @@ class Pipeline:
         """ Adjusts subdirs and subdir_names to start from the specified starting_subfolder.
         """
         if starting_subfolder not in subdir_names:
-            raise ValueError(f"Starting subfolder '{starting_subfolder}' not found in subdir_names\n Check config.yaml and data.")
+            raise ValueError(f"Starting subfolder '{starting_subfolder}' not found in subdirectories list. Check config.yaml and data.")
         sbf_idx = subdir_names.index(starting_subfolder)
         subdirs = subdirs[sbf_idx:]
         subdir_names = subdir_names[sbf_idx:]    
@@ -376,5 +378,16 @@ class Pipeline:
         tqdm.write(f"\nDiversity check failed for case study: {file_name}")  # Log the failure
         return False 
 
-            
-    
+    def remove_brackets_from_dict_vals(self, input_dict: dict) -> dict:
+        for key, val in input_dict.items():
+            if isinstance(val, str):
+                # Remove content in brackets from the value
+                input_dict[key] = val.split('(')[0].strip()
+            elif isinstance(val, list):
+                # Process lists to remove brackets from each item
+                input_dict[key] = [item.split('(')[0].strip() for item in val]
+            elif isinstance(val, dict):
+                # Recursively process nested dictionaries
+                input_dict[key] = self.remove_brackets_from_dict_vals(val)
+
+        return input_dict

@@ -1,10 +1,10 @@
 # Directories
 txt_grandparent_dir: /data/2-decomposed/applicationsDB/
-beginning_dir: Hexagon 01 - Romer Arm - UNPROCESSED
-ending_dir: Hexagon 01 - Romer Arm - UNPROCESSED
+beginning_dir:
+ending_dir:
 output_xlsx_dir: /data/1-original/applicationsDB/pureAPI-out.xlsx     #modelDev-pureAPI/results/out.xlsx
 output_csv_dir: modelDev-pureAPI/results/out.csv
-subdir_ending_selection: UNPROCESSED
+subdir_ending_selection: VAR
 min_case_study_length: 30
 
 # File Setup
@@ -21,7 +21,7 @@ terminal_outputs: False
 
 
 # OPTIONS
-use_level_name: True
+use_level_name: False
 use_country_year: False
 use_sector: False
 use_task: False
@@ -30,13 +30,12 @@ use_measurement_metrics: False
 use_surface_interaction_and_object_properties: False
 use_tools_and_methods: False
 use_environment_and_task_operations: False
-use_user_model: False
+use_user_model: True
 
 
 #**** Diversity check ****#
 diverse_check_prompt: |
-  You are an information retrieval expert. You are analyzing a metrological case study. Identify whether the case study contains a broad set of technologies and/or applications. If this set of technologies and/or applications is closely intertwined, 
-  Identify whether the case study contains a set of technologies or applications, rather than a single technology or application. If they are closely, intertwined then the case study is not diverse, but if they are individual, separate tasks then the case study is diverse.
+  You are an information retrieval expert. You are analyzing a metrological case study. Identify whether the case study contains a broad set of technologies or applications, rather than a single technology or application. If there are multiple tasks which are related and/or contextually suited then the case study is not diverse. If there are multiple individual, separate tasks then the case study is diverse.
 
   In your response, return only 'Yes' or 'No' for easy parsing. 
 
@@ -46,11 +45,11 @@ diverse_check_prompt: |
 #**** Level & Name ****#
 level_name_prompt: |
   You are an information retrieval expert. You are analyzing a metrological case study. Extract the following information:
-  1. The name of the study/project. If unsure, use a suggested short name for the case study file (max 6 words). Do not end the name with 'study' or 'case study' and avoid using company names. 
+  1. The title of the study/project, if present. If unsure, use a suggested short name for the case study file (max 6 words) - do not end the name with 'study' or 'case study' and avoid using company names. Prioritize titles found explicitly in the text over your own suggested title. 
   2. The level of detail in the case study (1 = low, 2 = medium, 3 = high). Consider:
-    - Level 1: moderate detail, including less than 10 paragraphs of broad descriptions & results. 
-    - Level 2: high detail, including over 10 paragraphs of methods, challenges, and results.
-    - Level 3: considerable detail, including a large number of paragraphs containing comprehensive descriptions, data, and outcomes. 
+    - Level 1: moderate detail, including around 15 paragraphs of broad descriptions & results. 
+    - Level 2: high detail, including over 20 paragraphs of methods, challenges, and results.
+    - Level 3: considerable detail, including a large number of paragraphs containing comprehensive descriptions, data, and outcomes. This level of detail would be enough for someone to repeat the same development/testing process. 
 
   Return your answer as JSON with keys: 'name', 'level'.
 
@@ -60,33 +59,20 @@ level_name_prompt: |
 #**** Country & Year ****#
 country_year_prompt: |
   You are an information retrieval expert. You are analyzing a metrological case study. Extract the following information:
-  1. The country of the case study. Return the two letter acronym of the country only (e.g., China: CH, Spain: ES). If not present in the text, return nothing.
-  2. The year of the case study. If not present in the text, return nothing. 
+  1. The country of the case study. Return the two letter acronym of the country only (e.g., China: CH, Spain: ES, United Kingdom: UK). If not present in the text, return nothing.
+  2. The year of the case study. If there are multiple suitable years, return the most recent year. If a suitable year is not present in the text, return an empty array. 
 
   Return your answer as JSON with keys: 'country', 'year'. Remember to return an empty list as value in the key-value pair when the desired information is missing. 
 
   Case study text:
   {txt}
 
-#**** Case Study Users ****#
-user_model_prompt: |
-  You are an information retrieval expert. You are analyzing a metrological case study. Extract the following information:
-  1. User - the named entity from the case study which uses the technology/solution. Typically, this is the entity which funds the study/directly benefits from it, NOT the entity which develops the technology/solution.
-  2. User branch location or group: {company}'s branch location in this case study, if it is explicitly stated in the case study. This is not synonymous with the location of the project. Return an empty list if it is not explicitly stated. 
-  3. User partners - partners to {company} in this project, if explicitly stated. The partner is not the end users. Return an empty list if not explicitly stated. 
-  4. Model - the model version of the technology or solution, if present. Ensure this is clearly defined in the text as an iteration of a technology or solution - not just its name.
-
-  Return your answer as JSON with keys: 'user', 'user branch location or group', 'user partners', 'model'. Return an empty list as value in the key-value pair when the desired information is missing. 
-
-  Case study text:
-  {txt}
-
-
 
 #**** Sector ****#
 sector_prompt: |
-  You are an information retrieval expert. You are analyzing a case study. From the following case study text, identify the most applicable sector(s). This sector should describe the broader area of industry/research that the study is within. Do not focus solely on the technology, but instead on the field in which the technology is intended to be used. Choose either one or two from the following list, only selecting two in the case where one does not fully encapsulate the sector:
-
+  You are an information retrieval expert. You are analyzing a case study. From the following case study text, identify the most applicable sector(s). These sector(s) should describe the broader area of industry/research that the study is within. Do not focus solely on the technology, but instead on the field in which the technology is intended to be used. Choose either one or two from the following list, only selecting two in the case where one does not fully encapsulate the sector. Only select general sectors like 'Engineering' and 'Engineering and General Manufacturing' if no other sectors are suitable - it is already assumed that this case study is within the realm of engineering, meaning that these sectors are final resorts.
+  
+  Sector list:
   {sector_list}
 
   Return the sector in a JSON format, with the key named 'sector'. 
@@ -152,7 +138,7 @@ sector_list_v1:
 
 #**** Task ****#
 task_prompt: | 
-  You are an information retrieval expert. You are analyzing a metrological case study. From the case study, identify either one or two tasks from the proceeding task list which best represent the task that has been performed, the task that the technology enables, etc. Only select two tasks when one is not fully encompassing. 
+  You are an information retrieval expert. You are analyzing a metrological case study. From the case study, identify **up to two** tasks from the proceeding task list which best represent the task that has been performed, the task that the technology enables, etc. Prefer selecting one task over two, only selecting two when no single task is descriptive enough.
 
   Task list (format: 'section:[task1,task2,...]'):
   {task_list}
@@ -246,12 +232,13 @@ task_list:
 
 #**** Object Keywords ****#
 object_keywords_prompt: |
-  You are an information retrieval expert. You are analyzing a metrological case study. From the case study identify suitable object keywords from the list below only - keywords not in the list are invalid and will not be used. These keywords should describe the object being under investigation / being measured. Do not identify more than 4 object keywords and do not select object keywords which are only partially relevant. 
+  You are an information retrieval expert. You are analyzing a metrological case study. 
+  From the case study attempt to identify **up to three** suitable object keywords from the list below only - keywords not in the list are invalid and will not be used. Ensure the selected key words are fully relevant. If none are relevant, return an empty list. These keywords should describe the object being under investigation / being measured. 
 
   Object keywords list (format: 'section: [object_keyword1, object_keyword2, ...]'):
   {object_keywords_list}
 
-  Return the selected object keyword(s) in a JSON format, with the single key named 'object keyword'. Ensure the selected object keywords are found exclusively within the list above - other keywords are not valid and will not be used. Do not include the section from the task list in the JSON dictionary.
+  Return any selected object keyword(s) in a JSON format, with the single key named 'object keyword'. Ensure the selected object keywords are found **exclusively within the list above** as other keywords are not valid and will be rejected. Do not include the section from the task list in the JSON dictionary.
 
   Case study text:
   {txt}
@@ -268,6 +255,7 @@ object_keywords_list:
     - Car - whole
     - Car - chassis
     - Car - door
+    - Car - part
     - Train carriage
     - Engineering
     - Ship - whole
@@ -320,7 +308,7 @@ object_keywords_list:
 
 #**** Measurement metrics ****#
 measurement_metrics_prompt: |
-  You are an information retrieval expert. You are analyzing a metrological case study. From this case study, extract the measurement metrics 'extent' and 'tolerance'. These should be used in quantifying the measurement / engineering task being done. For these values, only return an answer if one is present in the text, and only return the closest measurement to the identified extent or tolerance, based on the respective list. 
+  You are an information retrieval expert. You are analyzing a metrological case study. From this case study, extract the measurement extent (size of measured object(s)) and measurement tolerance. These should be used in quantifying the measurement / engineering task being done. For these values, only return an answer if one is present in the text, and only return the closest measurement to the identified extent or tolerance, based on the respective list. 
 
   Measurement extent list:
   {measurement_extent_list}
@@ -334,7 +322,7 @@ measurement_metrics_prompt: |
   {txt}
 
 measurement_extent_list_v2:
-  - less than 0.5 centimeters
+  - Less than 0.5 centimeters
   - 0.5 to 2 centimeters
   - 2 to 5 centimeters
   - 5 to 50 centimeters
@@ -346,8 +334,8 @@ measurement_extent_list_v2:
   - 20 to 30 meters
   - 30 to 50 meters
   - 50 to 100 meters
-  - over 100 meters
-
+  - Over 100 meters
+  - Various
 
 measurement_extent_list_v1:
   - a few millimeters
@@ -374,6 +362,7 @@ measurement_tolerance_list_v2:
   - 2 to 10 millimeters 
   - 10 to 50 millimeters (1 to 5 centimeters)
   - 5 centimeters to 10 centimeters
+  - Various
 
 measurement_tolerance_list_v1: 
   - 10 micrometers
@@ -391,10 +380,8 @@ measurement_tolerance_list_v1:
 surface_interaction_and_measured_object_properties_prompt: |
   You are an information retrieval expert. You are analyzing a metrological case study. Extract the following information from the case study:
 
-  1. The primary type of surface interaction described in the case. Select **one** from the list provided.
-  2. The most relevant measured object property or properties. The object in question is that which is being scanned, mapped, measured, etc. Select **up to three** from the list provided, only selecting two where particularly relevant. 
-
-  Only return values if they are clearly relevant and explicitly present in the case study. If no appropriate information is present for a given field, return an empty list.
+  1. The primary type of surface interaction described in the case. Select **up to two** from the proceeding list provided. Only make selections which are relevant and explicitly stated in the text - do not assume anything. If no relevant surface interaction type is present, return an empty list. 
+  2. The most relevant measured object property or properties, if described. The object in question is that which is being scanned, mapped, measured, etc. Select **up to two** from the list provided. These properties should be explicitly stated in the case study, not just implied. If no object properties are appropriate, return an empty list. 
 
   Surface Interaction list:
   {surface_interaction_list}
@@ -407,8 +394,13 @@ surface_interaction_and_measured_object_properties_prompt: |
   Case study text:
   {txt}
 
+surface_interaction_list_v2:
+  - Contact
+  - Non-contact
+  - Added targets
+  - No added targets
 
-surface_interaction_list:
+surface_interaction_list_v1:
   - Contact
   - Added Targets
   - Markerless / Targetless
@@ -418,11 +410,9 @@ surface_interaction_list:
   - Contact & Added tagets & Markerless / Targetless
 
 measured_object_properties_list_v2:
-  - Simple
-  - Complex shape
-  - Multi-element
-  - Static
-  - Dynamic
+  - Multi-element body
+  - Static (Non-moving)
+  - Dynamic (Moving)
   - High-speed
   - Deforming
   - Matt
@@ -430,8 +420,10 @@ measured_object_properties_list_v2:
   - Translucent
   - Transparent
   - Cold or Very Cold object (<0°C)
-  - Approximately Room Temperature
+  - Room Temperature object
   - Hot or Very Hot object
+
+#^ not true to excel doc. removed complex/simple shape. 
 
 measured_object_properties_list_v1:
   - Complexity:
@@ -457,23 +449,54 @@ measured_object_properties_list_v1:
 
 #**** Tools & Methods ****#
 tools_methods_prompt: |
-  You are an information retrieval expert. You are analyzing a metrological case study. Identify the most relevant tools and methods used or described in the case study. Choose **one or two** items from the list below. Only select two if no one tool/method is an adequate descriptor. If no tool or method is clearly mentioned or applicable, return an empty list.
+  You are an information retrieval expert. You are analyzing a metrological case study. Identify the most relevant tools and/or methods used or described in the case study. Select one item for each tool/method in the case study, with a **maximum of two items** selected. Ensure that the selected tools/methods are explicitly stated in the text. If no tool or method is clearly mentioned or applicable, return an empty list. 
 
   Tools and Methods list:
   {tools_methods_list}
 
-  Return your answer using a JSON format, with key 'tools and methods'. Ensure the selected items are found exclusively within the list above - other values are not valid and will not be used. 
+  Return your answer using a JSON format, with key 'tools and methods'. Ensure the selected items are found exclusively within the list above - other values are invalid and will not be used. 
 
   Case study text:
   {txt}
 
+tools_methods_list_v2:
+  - Laser Tracker (3D)
+  - Laser Tracker (6D / with scanning)
+  - Laser Tracker (Long-Range / Polar)
+  - Structured-Light Scanner (Area Scanner)
+  - Time-of-Flight Scanner (Long-Range Scanner)
+  - CMM Arm (Touch Probe)
+  - CMM Arm (Laser Scanner)
+  - Fixed CMM
+  - Photogrammetry (Single Camera)
+  - Photogrammetry (Multi-Camera)
+  - Photogrammetry (Drone)
+  - Photogrammetry (Smartphone-Based)
+  - Moiré / Fringe Projection Scanner
+  - Camera and/or Projector System
+  - Motion Capture (MoCap)
+  - Reflectometry
+  - Deflectometry
+  - Generative Scene Reconstruction (GSR)
+  - Digital Image Correlation (DIC)
+  - Gap & Flush Measurement Tool
+  - iGPS
+  - X-Ray CT Scanner
+  - Ultrasound (Metrology Use)
+  - Optical Microscope (Metrology Use)
+  - AR / VR / MR
+  - Projected Augmented Reality (AR)
+  - Indoor Navigation & Positioning
+  - Mobile Mapping System
+  - Machine Control (Construction/Agriculture)
+
 tools_methods_list:
-  - 3D Laser Tracker
-  - 6D Laser Tracker
+  - 3D Laser Tracker/Scanner
+  - 6D Laser Tracker/Scanner
   - Total Station
-  - CMM Arm - Touch & Scan
-  - Laser Scanner (Polar, Long-Range)
-  - Area Scanner
+  - CMM Arm - Touch & Scan  
+  - Laser Tracker/Scanner (Polar, Long-Range)
+  - Area Tracker/Scanner
   - Photogrammetry - Multi Camera
   - Photogrammetry - Single Camera
   - Smartphone Photogrammetry
@@ -483,7 +506,7 @@ tools_methods_list:
   - Reflectometry
   - Deflectometry
   - GSR - Generative Scene Reconstruction
-  - DIC
+  - Digital Image Correlation (DIC)
   - Gap and Flush
   - iGPS
   - CMM
@@ -496,15 +519,13 @@ tools_methods_list:
   - Mobile mapping
   - Machine control (construction/agriculture)
   - System
-   
 
 
 #**** Environment & Operation ****#
 environment_operation_prompt: |
   You are an information retrieval expert. You are analyzing a metrological case study. Extract the following:
-  1. Environmental properties: properties of the environment in which the technology or solution has been used or is aimed at. Select up to **two** clearly relevant items from the Environment list. These should be explicitly stated in the text. Do not select multiple items from the same category. 
-  2. Task operations: Select up to **two** clearly relevant items from the Task Operation list.
-  Only return values if they are clearly relevant and explicitly present in the case study. If either type of information is not present or applicable, return an empty list for that field.
+  1. Environmental properties: properties of the environment in which the technology or solution has been used or is aimed at, if described in the text. You may select **up to two** clearly relevant items from the Environment properties list. These should be explicitly stated in the text as a feature of the technology/solution - do not assume ANY environmental properties. Do not select multiple items from the same category unless particularly suitable. If no items are suitable, return an empty array. 
+  2. Task operations: Choose up to two items from the Task Operation list that describe **how the technology is used** in context, as described in the case study. Do not guess based on typical use cases. Only return values if there is **direct evidence or clear description of the operational mode, deployment method, or platform**. Avoid selecting conflicting items like "Manual" and "Automated" unless both are clearly described **as distinct modes**.
 
   Environment properties list (format: 'category: [environment property 1, environment property 2]'):
   {environment_list}
@@ -518,20 +539,22 @@ environment_operation_prompt: |
   {txt}
 
 environment_list:
+  - Miscellaneous:
+    - Purely software-based
   - Where:
     - Indoors
     - Outdoors
     - Underground
     - Underwater
-    - Space / Vacuum
+    - Outer Space
   - Optical Media:
-    - Air
-    - Water
-    - Vacuum
+    - Air Medium
+    - Water Medium
+    - Vacuum Medium
     - Multi-media interface
-  - Air:
+  - Air type:
     - Clean Air
-    - Dusty
+    - Dusty Air
   - Space:
     - Cluttered
     - Open
@@ -540,16 +563,32 @@ environment_list:
   - Temperature: 
     - Fluctuating Temperature
     - Stable Temperature
-    - Very hot (>40°C)
-    - Hot (>25°C)
-    - Normal (18°c to 25°C)
-    - Cool (10°C to 18°c)
-    - Cold (-5°C to 10°C)
-    - Very Cold (<-5°C)
+    - Very hot >40°C
+    - Hot 25°C to 40°C
+    - Normal 18°C to 24°C
+    - Cool 10°C to 17°c
+    - Cold -5°C to 9°C
+    - Very Cold <-5°C
   - Vibration:
     - No Vibration
     - Intermittent Vibration
     - Continuous Vibration
+
+task_operation_list_v2:
+  - Manual (Human-controlled, no automation)
+  - Semi-Automated (Mixed manual and automated elements)
+  - Automated (Fully autonomous operation or decision-making)
+  - Guided (Operator-directed via interface or aid; not autonomous)
+  - Real-Time Updating (Data processed/displayed continuously during acquisition)
+  - Sequential Updating (Stepwise, processed between stages or afterwards)
+  - Fixed Instrument / Network (Stationary system or infrastructure-based network)
+  - On-site Use (Technology deployed at the measurement site)
+  - Mobile / Portable Deployment (Carried or moved between locations, used in field)
+  - Off-Line Analysis (Data is processed later, not during acquisition)
+  - In-Line Integration (Embedded in manufacturing or assembly process)
+  - On-Machine Operation (Mounted directly on or inside a machine tool)
+  - UAV-Based Platform (Mounted on unmanned aerial vehicle)
+  - Suspended Platform (E.g. rig or boom-mounted camera/scanner)
 
 task_operation_list:
   - Manual
@@ -565,6 +604,20 @@ task_operation_list:
   - On-Machine
   - Real-Time Updating
   - Sequential Updating
+
+
+#**** Case Study Users ****#
+user_model_prompt: |
+  You are an information retrieval expert. You are analyzing a metrological case study. Extract the following information:
+  1. User - the named entity from the case study which uses the technology/solution. Typically, this is the entity which directly uses & benefits from from the study, NOT the entity which develops the technology/solution. Keep this short - an overarching company name would be best. Return an empty list if it is not explicitly stated.
+  2. User branch location or group: {company}'s branch location for this case study, if it is explicitly stated. Return only a country/city if present. This is not synonymous with the location of the project. Return an empty list if it is not explicitly stated. 
+  3. User partners - partners to {company} in this project, if explicitly stated. The partners are NOT the end users. Return an empty list if not explicitly stated. 
+  4. Model - the model version of the technology or solution, if present. Return an empty list if not explicitly stated. 
+
+  Return your answer as JSON with keys: 'user', 'user branch location or group', 'user partners', 'model'. Return an empty list as value in the key-value pair when the desired information is missing. 
+
+  Case study text:
+  {txt}
 
 
 

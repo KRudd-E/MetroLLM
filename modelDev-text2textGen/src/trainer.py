@@ -31,7 +31,7 @@ class Trainer:
             save_strategy                 =   str(config['training_args']['save_strategy']),
             #eval_steps                    =   int(config['training_args']['eval_steps']),
             #save_steps                    =   int(config['training_args']['save_steps']),
-            logging_steps                 =   int(config['training_args']['logging_steps']),
+            #logging_steps                 =   int(config['training_args']['logging_steps']),
             learning_rate                 = float(config['training_args']['learning_rate']),
             per_device_train_batch_size   =   int(config['training_args']['per_device_train_batch_size']),
             per_device_eval_batch_size    =   int(config['training_args']['per_device_eval_batch_size']),

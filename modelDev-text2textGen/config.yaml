@@ -2,7 +2,7 @@
 
 train:
   data:
-    dir: "./data/3-formatted/t2tGen/t2tGen_train_SHORT.csv"
+    dir: "data/3-formatted/t2tGen/t2tGen_train.csv"
     task_col: "task"
     input_col: "input"
     output_col: "output"

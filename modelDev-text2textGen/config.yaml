@@ -44,14 +44,14 @@ train:
 
 eval:
   data:
-    dir: "./data/3-formatted/t2tGen/archive/t2tGen_test.csv"
+    dir: "./data/3-formatted/t2tGen/t2tGen_test.csv"
     task_col: "task"
     input_col: "input"
     output_col: "output"
     max_seq_length: 256
 
   model:
-    dir: "./modelDev-text2textGen/results/checkpoint-67320"
+    dir: "./modelDev-text2textGen/results/V2/checkpoint-1680"
     max_input_length: 256
     max_target_length: 256
 

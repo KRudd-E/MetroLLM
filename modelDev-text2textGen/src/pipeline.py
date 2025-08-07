@@ -17,7 +17,6 @@ class FinetunePipeline:
             from src.model_wrapper import FlanT5Wrapper
             from src.trainer import Trainer
             
-            #training_query(self)
             setup_training_output_dir(self)
             
             ds_loader = DatasetLoader(self.config, run)
@@ -35,9 +34,8 @@ class FinetunePipeline:
             from src.model_wrapper import FlanT5Wrapper
             from src.evaluator import Evaluator
             
-            #evaluation_query()
-            
-            dataset = DatasetLoader(self.config, run).load_evaluation_data(self.config['eval'])
+            ds_loader = DatasetLoader(self.config, run)
+            dataset = ds_loader.load_evaluation_data(self.config['eval'])
             
             model_wrapper = FlanT5Wrapper(run, self.config['eval'])
             

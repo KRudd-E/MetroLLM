@@ -25,8 +25,8 @@ class DatasetLoader:
     def load_evaluation_data(self, config):
         """Load and preprocess evaluation data."""
         raw_test = load_dataset("csv", data_files=config['data']['dir'], split="train")
-        tokenised_test = raw_test.map(lambda x: self.preprocess_mapping(x, config), batched=True)
-        return tokenised_test
+        tokenized_test = raw_test.map(lambda x: self.preprocess_mapping(x, config), batched=True)
+        return tokenized_test
 
 
     def preprocess_mapping(self, examples, config):

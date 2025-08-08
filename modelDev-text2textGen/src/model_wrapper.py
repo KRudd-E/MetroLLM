@@ -1,15 +1,18 @@
 # File: src/models/model_wrapper.py
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from transformers.data.data_collator import DataCollatorForSeq2Seq
+from transformers import DataCollatorForSeq2Seq
 import torch
 
 class FlanT5Wrapper:
     def __init__(self, run, config):
         if run == 'train':
+            print('...')
             self.model = AutoModelForSeq2SeqLM.from_pretrained(config['model']['name'],)
             self.tokenizer = AutoTokenizer.from_pretrained(config['model']['name'], use_fast=True)
         else: 
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(config['model']['dir'],)
+            print('_!!!_')
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(config['model']['dir'], low_cpu_mem_usage=True, device_map="auto")
+            print('__!!!!__')
             self.tokenizer = AutoTokenizer.from_pretrained(config['model']['dir'], use_fast=True)
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

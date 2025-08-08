@@ -1,9 +1,7 @@
-import os
 import json
 import torch
 import evaluate
 from tqdm import tqdm
-from datetime import datetime
 from torch.utils.data import DataLoader
 import nltk
 import numpy as np
@@ -38,8 +36,8 @@ class Evaluator:
         
         self.model.eval()
         self.model.to(self.device)
-        
-        for batch in dataloader:
+
+        for batch in tqdm(dataloader, desc="Evaluating", unit="batch"):
             with torch.no_grad():
                 inputs = {
                     "input_ids": batch["input_ids"].to(self.device),
@@ -56,6 +54,10 @@ class Evaluator:
                     repetition_penalty=1.2,
                     no_repeat_ngram_size=3
                 )
+
+
+                # predictions = outputs.cpu().numpy()
+                # labels = labels.numpy()
                 
                 all_predictions.extend(outputs.cpu().numpy())
                 all_labels.extend(batch["labels"].cpu().numpy())
@@ -63,11 +65,14 @@ class Evaluator:
         
         results = self.compute_metrics3((np.array(all_predictions), np.array(all_labels)))
         
-        return results
+        print(results)
+
+        # write to json
+        with open(config["eval_args"]["output_dir"], "w") as f:
+            json.dump(results, f, indent=4)
 
 
-
-
+        
 
     def compute_metrics3(self, eval_pred):
         predictions, labels = eval_pred

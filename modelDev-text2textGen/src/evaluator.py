@@ -75,9 +75,10 @@ class Evaluator:
                 
                 all_predictions.extend(outputs.cpu().numpy())
                 all_labels.extend(batch["labels"].cpu().numpy())
-                        
         
-        results = self.compute_metrics3((np.array(all_predictions), np.array(all_labels)))
+        
+        eval_pred = (np.array(all_predictions), np.array(all_labels))
+        results = self.compute_metrics3(eval_pred)
         
         print(results)
 

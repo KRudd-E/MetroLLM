@@ -37,9 +37,9 @@ class FinetunePipeline:
             
             ds_loader = DatasetLoader(self.config, run)
             dataset = ds_loader.load_evaluation_data(self.config['eval'])
-            print('!!!!!')
+
             model_wrapper = FlanT5Wrapper(run, self.config['eval'])
-            print('!!!!!')
+
             evaluator = Evaluator(model_wrapper, dataset, self.config)
-            print('!!!!!')
+
             evaluator.evaluate(self.config['eval'])

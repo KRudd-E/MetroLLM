@@ -6,14 +6,11 @@ import torch
 class FlanT5Wrapper:
     def __init__(self, run, config):
         if run == 'train':
-            print('...')
             self.model = AutoModelForSeq2SeqLM.from_pretrained(config['model']['name'],)
             self.tokenizer = AutoTokenizer.from_pretrained(config['model']['name'], use_fast=True)
             self.data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
         else: 
-            print('_!!!_')
             self.model = AutoModelForSeq2SeqLM.from_pretrained(config['model']['dir'], low_cpu_mem_usage=True, device_map="auto")
-            print('__!!!!__')
             self.tokenizer = AutoTokenizer.from_pretrained(config['model']['dir'], use_fast=True)
             self.data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model, padding=True)
         

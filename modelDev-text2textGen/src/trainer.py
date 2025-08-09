@@ -2,7 +2,7 @@ import numpy as np
 import nltk
 import evaluate
 from transformers.trainer_seq2seq import Seq2SeqTrainer
-from transformers import Seq2SeqTrainingArguments
+from transformers.training_args_seq2seq import Seq2SeqTrainingArguments
 from src.utils.logging import LoggingCallback, DebugCallback
 from collections import defaultdict
 

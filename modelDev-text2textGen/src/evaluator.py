@@ -23,6 +23,8 @@ class Evaluator:
 
     def evaluate(self, config):
         
+        print(f"\nConfig:\n{config}\n\n")
+        
         #* Dataset column names: ['id', 'task', 'input', 'output', 'input_ids', 'attention_mask', 'labels']
         
         # self.dataset = self.dataset.map(

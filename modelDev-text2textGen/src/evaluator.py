@@ -25,10 +25,24 @@ class Evaluator:
         
         #* Dataset column names: ['id', 'task', 'input', 'output', 'input_ids', 'attention_mask', 'labels']
         
+        # self.dataset = self.dataset.map(
+        #     lambda examples: self.tokenizer(
+        #         examples["input"],
+        #         padding="max_length",
+        #         truncation=True,
+        #         max_length=config["model"]["max_length"],
+        #     ),
+        #     batched=True,
+        #     remove_columns=self.dataset.column_names,
+        # )
+        
+        # remove cols ['id', 'task', 'input', 'output'] from dataset
+        self.dataset = self.dataset.remove_columns(['id', 'task', 'input', 'output'])
+
         dataloader = DataLoader(
-            self.dataset,
-            batch_size=config["eval_args"]["batch_size"],
-            collate_fn=self.data_collator,
+            dataset     = self.dataset,
+            batch_size  = config["eval_args"]["batch_size"],
+            collate_fn  = self.data_collator,
         )
         
         all_predictions = []

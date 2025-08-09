@@ -1,6 +1,6 @@
 # File: src/models/model_wrapper.py
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from transformers import DataCollatorForSeq2Seq
+from transformers.data.data_collator import DataCollatorForSeq2Seq
 import torch
 
 class FlanT5Wrapper:
@@ -9,14 +9,16 @@ class FlanT5Wrapper:
             print('...')
             self.model = AutoModelForSeq2SeqLM.from_pretrained(config['model']['name'],)
             self.tokenizer = AutoTokenizer.from_pretrained(config['model']['name'], use_fast=True)
+            self.data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
         else: 
             print('_!!!_')
             self.model = AutoModelForSeq2SeqLM.from_pretrained(config['model']['dir'], low_cpu_mem_usage=True, device_map="auto")
             print('__!!!!__')
             self.tokenizer = AutoTokenizer.from_pretrained(config['model']['dir'], use_fast=True)
+            self.data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model, padding=True)
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.data_collator = DataCollatorForSeq2Seq(tokenizer=self.tokenizer, model=self.model)
+        
 
         self.model.to(self.device)
 

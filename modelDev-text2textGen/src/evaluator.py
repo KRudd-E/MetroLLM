@@ -79,8 +79,9 @@ class Evaluator:
                 all_labels.extend(batch["labels"].cpu().numpy())
         
         
-        eval_pred = (np.array(all_predictions), np.array(all_labels))
-        results = self.compute_metrics3(eval_pred)
+        # Don't convert to numpy arrays here since they have different lengths
+        # Pass the lists directly to compute_metrics3
+        results = self.compute_metrics3((all_predictions, all_labels))
         
         print(results)
 
@@ -94,11 +95,19 @@ class Evaluator:
     def compute_metrics3(self, eval_pred):
         predictions, labels = eval_pred
 
-        # Remove -100s and decode
-        predictions = np.where(predictions != -100, predictions, self.tokenizer.pad_token_id) #-100 values are typically used as ignore indices in loss computation during training, but they need to be converted to valid token IDs before decoding.
-        labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
-        decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
-        decoded_labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
+        # predictions and labels are lists of arrays with different lengths
+        decoded_preds = []
+        decoded_labels = []
+        
+        for pred_array in predictions:
+            pred_clean = np.where(pred_array != -100, pred_array, self.tokenizer.pad_token_id)
+            decoded_pred = self.tokenizer.decode(pred_clean, skip_special_tokens=True)
+            decoded_preds.append(decoded_pred)
+        
+        for label_array in labels:
+            label_clean = np.where(label_array != -100, label_array, self.tokenizer.pad_token_id)
+            decoded_label = self.tokenizer.decode(label_clean, skip_special_tokens=True)
+            decoded_labels.append(decoded_label)
 
         # Normalize text (tokenize into sentences for ROUGE)
         decoded_preds = [pred.strip() for pred in decoded_preds]

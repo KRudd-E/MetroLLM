@@ -3,7 +3,7 @@ import nltk
 import evaluate
 from transformers.trainer_seq2seq import Seq2SeqTrainer
 from transformers.training_args_seq2seq import Seq2SeqTrainingArguments
-from src.utils.logging import LoggingCallback, DebugCallback
+from src.utils.callbacks import LoggingCallback, DebugCallback
 from collections import defaultdict
 
 class Trainer:
@@ -60,7 +60,7 @@ class Trainer:
             #tokenizer        = self.tokenizer,         #?? old version
             data_collator     = self.data_collator,
             compute_metrics   = self.compute_metrics3, 
-            callbacks         = [LoggingCallback(config['train']['log_dir']), DebugCallback()],
+            callbacks         = [LoggingCallback(config['log_dir']), DebugCallback()],
         )
 
         trainer.train()

@@ -1,6 +1,6 @@
 # NB: add '/' at the start of directories for ensured directory formatting
 
-config_dir: /modelDev-text2textGen/config.yaml
+config_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-text2textGen/config.yaml
 
 train:
   data:

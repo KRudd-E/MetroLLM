@@ -60,7 +60,7 @@ class Trainer:
             #tokenizer        = self.tokenizer,         #?? old version
             data_collator     = self.data_collator,
             compute_metrics   = self.compute_metrics3, 
-            callbacks         = [LoggingCallback(config), DebugCallback()],
+            callbacks         = [LoggingCallback(config['train']['log_dir']), DebugCallback()],
         )
 
         trainer.train()

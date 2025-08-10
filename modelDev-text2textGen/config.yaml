@@ -1,20 +1,22 @@
 # NB: add '/' at the start of directories for ensured directory formatting
 
+config_dir: /modelDev-text2textGen/config.yaml
+
 train:
   data:
-    dir: "data/3-formatted/t2tGen/t2tGen_train.csv"
+    dir: "/data/3-formatted/t2tGen/t2tGen_train.csv"
     task_col: "task"
     input_col: "input"
     output_col: "output"
     max_seq_length: 256
 
   model:
-    name: "google/flan-t5-xl"
+    name: "google/flan-t5-small"
     max_input_length: 256
     max_target_length: 256
 
   training_args:
-    output_dir:         "./modelDev-text2textGen/results/"
+    output_dir:         "/modelDev-text2textGen/results/"
     eval_strategy:      "epoch"
     save_strategy:      "epoch"
     #eval_steps:         10
@@ -39,23 +41,21 @@ train:
     save_total_limit:           3
     push_to_hub:                False
     
-    log_dir:                    "./modelDev-text2textGen/results/logs.json"
-
 
 eval:
   data:
-    dir: "./data/3-formatted/t2tGen/t2tGen_test.csv"
+    dir: "/data/3-formatted/t2tGen/t2tGen_test.csv"
     task_col: "task"
     input_col: "input"
     output_col: "output"
     max_seq_length: 256
 
   model:
-    dir: "./modelDev-text2textGen/results/V2/checkpoint-1680/"
+    dir: "/modelDev-text2textGen/results/V2/checkpoint-1680/"
     max_input_length: 256
     max_target_length: 256
 
   eval_args:
     metric: "rouge"
     batch_size: 8
-    output_dir: "./modelDev-text2textGen/results/V2/checkpoint-1680/eval_results.json"
+    output_dir: "/modelDev-text2textGen/results/V2/checkpoint-1680/eval_results.json"

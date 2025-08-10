@@ -50,11 +50,17 @@ def setup_training_output_dir(self):
     import os
     from datetime import datetime
     import shutil
+    import json
     
-    output_dir = os.path.join('/' + self.config['train']['training_args']['output_dir'] + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '/')
-    os.makedirs(os.path.join(os.getcwd() + output_dir), exist_ok=False)
-    self.config['train']['training_args']['output_dir'] = output_dir
-    self.config['train']['training_args']['log_dir'] = output_dir + 'log.json'
+    self.config['train']['output_dir'] = os.path.join(self.config['train']['training_args']['output_dir'] + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '/')
+    self.config['train']['log_dir'] = os.path.join(self.output_dir + 'logs.json')
     
-    shutil.copy('modelDev-text2textGen/config.yaml', os.path.join(os.getcwd() + output_dir, 'config.yaml'))
-    #shutil.copy(self['train']['data']['dir'], os.path.join(os.getcwd() + output_dir, 'train.csv'))
+    # Make output folder
+    os.makedirs(self.config['train']['output_dir'], exist_ok=False)
+    
+    # Make log file
+    with open(self.config['train']['log_dir'], 'w', encoding='utf-8') as f:
+        json.dump({}, f, indent=4)
+
+    # Copy config file
+    shutil.copy(self['train']['config_dir'], os.path.join(self.config['output_dir'] + 'config.yaml'))

@@ -4,16 +4,14 @@ import json
 import datetime
 
 class LoggingCallback(TrainerCallback):
-    def __init__(self, config):
-        self.log_dir = config['training_args']['log_dir']
+    def __init__(self, log_dir):
+        self.log_dir = log_dir
 
     def on_epoch_end(self, args, state, control, metrics=None, **kwargs):
         
-        if not os.path.exists(os.path.join(os.getcwd() + self.log_dir)):
-            with open(os.path.join(os.getcwd() + self.log_dir), 'w', encoding='utf-8') as f:
-                json.dump({}, f, indent=4)
+        print(f"Epoch {state.epoch} completed. Global step: {state.global_step}. Saving logs.")
         
-        with open(os.path.join(os.getcwd() + self.log_dir), 'r', encoding='utf-8') as f:
+        with open(self.log_dir, 'r', encoding='utf-8') as f:
             try:
                 z = json.load(f)
             except json.JSONDecodeError:
@@ -21,10 +19,10 @@ class LoggingCallback(TrainerCallback):
 
         y = {state.epoch: {"timestamp": datetime.datetime.now().isoformat(),
                 "step": state.global_step,
-                "metrics": metrics,}}
+                "metrics": metrics}}
         z.update(y) 
         
-        with open(os.path.join(os.getcwd() + self.log_dir), 'w', encoding='utf-8') as f:
+        with open(self.log_dir, 'w', encoding='utf-8') as f:
             json.dump(z, f, indent=4)
 
 

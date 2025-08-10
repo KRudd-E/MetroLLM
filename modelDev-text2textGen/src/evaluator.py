@@ -78,9 +78,7 @@ class Evaluator:
                 all_predictions.extend(outputs.cpu().numpy())
                 all_labels.extend(batch["labels"].cpu().numpy())
         
-        
-        # Don't convert to numpy arrays here since they have different lengths
-        # Pass the lists directly to compute_metrics3
+
         results = self.compute_metrics3((all_predictions, all_labels))
         
         print(results)
@@ -95,6 +93,8 @@ class Evaluator:
     def compute_metrics3(self, eval_pred):
         predictions, labels = eval_pred
 
+
+        #* bespoke to evaluate.py
         # predictions and labels are lists of arrays with different lengths
         decoded_preds = []
         decoded_labels = []
@@ -108,6 +108,8 @@ class Evaluator:
             label_clean = np.where(label_array != -100, label_array, self.tokenizer.pad_token_id)
             decoded_label = self.tokenizer.decode(label_clean, skip_special_tokens=True)
             decoded_labels.append(decoded_label)
+
+
 
         # Normalize text (tokenize into sentences for ROUGE)
         decoded_preds = [pred.strip() for pred in decoded_preds]

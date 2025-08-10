@@ -4,7 +4,7 @@ config_dir: /modelDev-text2textGen/config.yaml
 
 train:
   data:
-    dir: "/data/3-formatted/t2tGen/t2tGen_train.csv"
+    dir: "/gpfs01/home/efykr2/MetroLLM/data/3-formatted/t2tGen/t2tGen_train.csv"
     task_col: "task"
     input_col: "input"
     output_col: "output"
@@ -16,7 +16,7 @@ train:
     max_target_length: 256
 
   training_args:
-    output_dir:         "/modelDev-text2textGen/results/"
+    output_dir:         "/gpfs01/home/efykr2/MetroLLM/modelDev-text2textGen/results/"
     eval_strategy:      "epoch"
     save_strategy:      "epoch"
     #eval_steps:         10

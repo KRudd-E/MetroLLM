@@ -56,7 +56,7 @@ def setup_training_output_dir(self):
     self.config['train']['log_dir'] = os.path.join(self.config['train']['output_dir']+ 'logs.json')
     
     # Make output folder
-    os.makedirs("/gpfs01/home/efykr/MetroLLLM/" + self.config['train']['output_dir'], exist_ok=False)
+    os.makedirs("/gpfs01/home/efykr2/MetroLLLM/" + self.config['train']['output_dir'], exist_ok=False)
     
     # Make log file
     with open(self.config['train']['log_dir'], 'w', encoding='utf-8') as f:

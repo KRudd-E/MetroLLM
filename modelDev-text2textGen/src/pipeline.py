@@ -5,6 +5,7 @@ from src.utils.utils import training_query, \
 class FinetunePipeline:
     def __init__(self):
         self.config = get_config()
+        print(f'\nConfig:\n{self.config}\n')
         
     def run(self):
         run = parser()

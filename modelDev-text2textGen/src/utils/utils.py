@@ -53,7 +53,7 @@ def setup_training_output_dir(self):
     import json
     
     self.config['train']['output_dir'] = os.path.join(self.config['train']['training_args']['output_dir'] + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '/')
-    self.config['train']['log_dir'] = os.path.join(self.output_dir + 'logs.json')
+    self.config['train']['log_dir'] = os.path.join(self.config['train']['output_dir']+ 'logs.json')
     
     # Make output folder
     os.makedirs(self.config['train']['output_dir'], exist_ok=False)

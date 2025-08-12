@@ -4,28 +4,62 @@ import json
 import datetime
 
 class LoggingCallback(TrainerCallback):
-    def __init__(self, log_dir):
+    def __init__(self, log_dir, log_training_steps=True):
         self.log_dir = log_dir
+        self.log_training_steps = log_training_steps
+        
+        if not os.path.exists(log_dir):
+            with open(log_dir, 'w', encoding='utf-8') as f:
+                json.dump([], f, indent=4)
 
-    def on_epoch_end(self, args, state, control, metrics=None, **kwargs):
-        
-        print(f"Epoch {state.epoch} completed. Global step: {state.global_step}. Saving logs.")
-        
-        with open(self.log_dir, 'r', encoding='utf-8') as f:
-            try:
-                z = json.load(f)
-            except json.JSONDecodeError:
-                z = {}
 
-        y = {state.epoch: {"timestamp": datetime.datetime.now().isoformat(),
-                "step": state.global_step,
-                "metrics": metrics}}
-        z.update(y) 
-        
+    #*** Load and Save Logs ***#
+    def load_logs(self):
+        try:
+            with open(self.log_dir, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except json.JSONDecodeError:
+            return []
+    
+    def save_logs(self, logs):
         with open(self.log_dir, 'w', encoding='utf-8') as f:
-            json.dump(z, f, indent=4)
+            json.dump(logs, f, indent=4)
+    
 
+    #*** Callbacks ***#
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        logs = self.load_logs()
+        
+        y = {
+            "type": "evaluation",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "epoch": state.epoch,
+            "step": state.global_step,
+            "metrics": metrics
+            }
+        
+        logs.append(y)
+        self.save_logs(logs)
+        
 
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if self.log_training_steps and logs is not None:
+            
+            logs = self.load_logs()
+            
+            y = {
+                "type": "train_log",
+                "timestamp": datetime.datetime.now().isoformat(),
+                "epoch": state.epoch,
+                "step": state.global_step,
+                "logs": logs
+            }
+            
+            logs.append(y)
+            self.save_logs(logs)
+        else:
+            return 
+    
 
 class DebugCallback(TrainerCallback):
     def on_step_end(self, args, state, control, logs=None, metrics=None, **kwargs):

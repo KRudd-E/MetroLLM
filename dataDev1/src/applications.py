@@ -15,6 +15,7 @@ class Applications_Reformat:
         self.IMAGE_ERRORS = 0
         self.FILE_SKIPS = 0
         self.BAD_TEXT_FILES = 0
+        self.SHORT_TEXT_FILES = []
 
     def run(self):
 
@@ -61,6 +62,8 @@ class Applications_Reformat:
         print(f"\nBad text files: {self.BAD_TEXT_FILES}")
         if self.config.get('pdf-txt', True):
             print(f"\nText extraction errors: {self.TEXT_ERRORS}")
+        if self.config.get('pdf-txt', True):
+            print(f"\nShort text files (less than 2 characters): {self.SHORT_TEXT_FILES}")
         if self.config.get('pdf-img', True):
             print(f"\nImage extraction errors: {self.IMAGE_ERRORS}")
         if self.config.get('skip_existing', True):
@@ -68,7 +71,7 @@ class Applications_Reformat:
 
 
 
-    def get_images_from_pdf(self, page, pdf_file, subfolder_name, doc, img_errors=0):
+    def get_images_from_pdf(self, page, pdf_file, subfolder_name, doc):
         """ Extracts images from a PDF file and saves them in the specified output directory.
         """
         for page in doc:
@@ -125,7 +128,7 @@ class Applications_Reformat:
                     self.TEXT_ERRORS += 1
 
             # Check for badly encoded text
-            if self.is_bad_text(page_text):
+            if self.is_bad_text(page_text) | len(page_text.strip()) < 10:
                 try:
                     tqdm.write(f"Bad text detected, trying OCR...")
                     # try using OCR - pdf image capture
@@ -133,12 +136,18 @@ class Applications_Reformat:
                     img = Image.open(io.BytesIO(pix.tobytes("png")))
                     page_text = image_to_string(img)
                     self.BAD_TEXT_FILES += 1
+                    tqdm.write(f"OCR successful for {pdf_file} on page {index+1}. Length: {len(page_text)} characters.")
                 except Exception as e:
                     tqdm.write(f"OCR failed for {pdf_file} on page {index+1}: {e}")
                     self.TEXT_ERRORS += 1
 
             all_text += page_text
-
+            
+        if len(all_text.strip()) < 2:
+            self.SHORT_TEXT_FILES.append(pdf_file)
+            
+    
+        
         # Save text if not empty or allowed
         if self.config.get('allow_empty_text_files', True) or all_text.strip():
             output_path = os.path.join(os.getcwd() + self.config['output_path'], subfolder_name)

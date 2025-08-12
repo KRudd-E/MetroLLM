@@ -51,6 +51,9 @@ class Trainer:
             save_total_limit              =   int(config['training_args']['save_total_limit']),
             push_to_hub                   =  bool(config['training_args']['push_to_hub']),
         )
+        
+        logger = LoggingCallback(config['log_dir'])
+        debugger = DebugCallback()
 
         trainer = Seq2SeqTrainer(
             model             = self.model,
@@ -60,7 +63,7 @@ class Trainer:
             #tokenizer        = self.tokenizer,         #?? old version
             data_collator     = self.data_collator,
             compute_metrics   = self.compute_metrics3, 
-            callbacks         = [LoggingCallback(config['log_dir']), DebugCallback()],
+            callbacks         = [logger, debugger],
         )
 
         trainer.train()

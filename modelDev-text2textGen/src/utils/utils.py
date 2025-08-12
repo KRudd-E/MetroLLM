@@ -65,3 +65,5 @@ def setup_training_output_dir(self):
 
     # Copy config file
     shutil.copy(self.config['config_dir'], os.path.join(self.config['train']['output_dir'] + 'config.yaml'))
+
+    return self

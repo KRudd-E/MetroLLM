@@ -1,96 +1,104 @@
 # ****** Text2Text Generation ****** #
 text2textGen:
+  
+  api_key:  # Leave empty for .env variable OPENAI_API_KEY
+
+  #****** ApplicationsDB ******#
+  applicationsDB:
+    source_dir: /data/2-decomposed/applicationsDB/
+    output_dir: /data/3-formatted/t2tGen/temp.csv
+    log_dir:    /data/3-formatted/t2tGen/logs/Alog.json
+
+    append_or_overwrite:  append 
+    starting_subfolder:   GOM 01
+    csv_header:           id,subdir,file,task,input,output
+
+    model_source: OpenAI
+    model:        gpt-4o-mini
     
-    api_key:        # Leave empty to use environment variable OPENAI_API_KEY
+    window_size:  1000
+    stride:       1200 
+    prompt: |
+      You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
 
-    #****** CompaniesDB ******#
-    companiesDB:
-      source_dir: /data/2-decomposed/companiesDB/
-      output_dir: /data/3-formatted/t2tGen/t2tGen-companiesDB.csv
-      method: append
+      Given the following case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, NOT specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, and related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.
+
+      Use the following patterns exactly. Substitute content for the curly brackets accordingly. DO NOT add any additional punctuation. Always answer with a full sentence, rather than A, B, 1, or 2.
+      {p1_in} => {p1_out}
+      {p2_in} => {p2_out}
+      {p3_in} => {p3_out}
 
 
-    #****** DefinitionsDB ******#
-    definitionsDB:
-      source_dir: /data/2-decomposed/definitionsDB/definitionsDB.csv
-      output_dir: /data/3-formatted/t2tGen/t2tGen-definitionsDB.csv
-      log_dir:    /data/3-formatted/t2tGen/logs/Dlog.json
+      Here is the text:
       
-      append_or_overwrite:  overwrite
-      starting_definition:  
-      csv_header: id,task,name,input,output
-      pairs_per_definition: 2
-
-      model_source: OpenAI
-      model:        gpt-4o-mini
-
-      prompt: |
-        You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
-
-        Given the following definition of {name}, create ONE input output pair. The input should in some distinct way ask for or question the given definition. The ouput should answer the question respectively, with large influence from the following definition. Ensure the pair is generalisable to the domain of 3D metrology and contains factual information ONLY. 
-
-        Use the following format exactly:
-        <input> => <output>
-
-        Here is the definition:
-        {definition}
-        
-
-        Generate ONE training pair.
-
-
-
-    #****** ApplicationsDB ******#
-    applicationsDB:
-      source_dir: /data/2-decomposed/applicationsDB/
-      output_dir: /data/3-formatted/t2tGen/temp.csv
-      log_dir:    /data/3-formatted/t2tGen/logs/Alog.json
-
-      append_or_overwrite:  append 
-      starting_subfolder:   GOM 01
-      csv_header:           id,subdir,file,task,input,output
-
-      model_source: OpenAI
-      model:        gpt-4o-mini
+      {window}
       
-      window_size:  1000
-      stride:       1200 
-      prompt: |
-        You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
 
-        Given the following case study or technical description, extract ONLY factual input/output pairs that are generalisable to the domain of 3D metrology, NOT specific to the particular project. Prefer questions or prompts that reflect general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, and related measurement practices. Exclude specific names, locations, company names, or project outcomes unless they illustrate a widely applicable technique or standard.
+      Generate the training pairs.
+    
+  #****** CompaniesDB ******#
+  companiesDB:
+    # Placeholder
 
-        Use the following patterns exactly. Substitute content for the curly brackets accordingly. DO NOT add any additional punctuation. Always answer with a full sentence, rather than A, B, 1, or 2.
-        {p1_in} => {p1_out}
-        {p2_in} => {p2_out}
-        {p3_in} => {p3_out}
+  #****** DefinitionsDB ******#
+  definitionsDB:
+    source_dir: /data/2-decomposed/definitionsDB/definitionsDB.csv
+    output_dir: /data/3-formatted/t2tGen/t2tGen-definitionsDB.csv
+    log_dir:    /data/3-formatted/t2tGen/logs/Dlog.json
+    
+    append_or_overwrite:  overwrite
+    starting_definition:  
+    csv_header:           id,task,name,input,output
+    pairs_per_definition: 2
 
+    model_source: OpenAI
+    model:        gpt-4o-mini
 
-        Here is the text:
-        
-        {window}
-        
+    prompt: |
+      You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
 
-        Generate the training pairs.
+      Given the following definition of {name}, create ONE input output pair. The input should in some distinct way ask for or question the given definition. The ouput should answer the question respectively, with large influence from the following definition. Ensure the pair is generalisable to the domain of 3D metrology and contains factual information ONLY. 
+
+      Use the following format exactly:
+      <input> => <output>
+
+      Here is the definition:
+      {definition}
       
+
+      Generate ONE training pair.
+
 
 # ****** Text Classification ****** #
 textClass:
-    data_path: /data/applicationsDB/new/
-    output_file: /data/textClass.csv
+  applicationsDB:
+    db_dir:     /data/2-decomposed/applicationsDB/
+    xlsx_dir:   /data/1-original/applicationsDB/LVM Applications Database - v7 copy.xlsx
+    sheet_name: Database
+    output_dir: /data/3-formatted/textClass/textClass-applicationsDB.csv
 
-    use_applicationsDB: True
-    use_companiesDB: False
-    use_definitionsDB: False
+    id_col:     0     # int for positional 
+    name_col:   File
+    sector_col: Sector
+    task_col1:  Task1
+    task_col2:  Task2
 
-    debug: False
+    csv_header: id,name,subdir,file,sector,task1,task2
+    rows_to_remove: [43, 293, 470, 474, 475, 477, 481, 485, 489, 500, 508, 517, 562, 660] #[483,487,488,490,494,498,513,523,532]
 
+  companiesDB:
+    # Placeholder
+  
+  definitionsDB:
+    # Placeholder
 
 # ****** Text Generation ****** #
 textGen:
-    data_path: /data/applicationsDB/new/
-    output_file: /data/textGen.csv
-
-    use_applicationsDB: True
-    use_companiesDB: False
-    use_definitionsDB: False
+  applicationsDB:
+    # Placeholder
+  
+  companiesDB:
+    # Placeholder
+  
+  definitionsDB:
+    # Placeholder

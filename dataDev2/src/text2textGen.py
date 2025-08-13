@@ -3,28 +3,28 @@ import random
 import pandas as pd
 import random
 from tqdm import tqdm
-from dotenv import load_dotenv
-from openai import OpenAI
-from ollama import Client
-from src.utils.utils import t2t_app_query, t2t_def_query
-from src.utils.patterns import PATTERNS
 import uuid
 import json
 from datetime import datetime
 
+from src.utils.utils import t2t_app_query, t2t_def_query
+from src.utils.ai_chat import get_API_key, ai_chat
+from src.utils.patterns import PATTERNS
+
 class Text2TextGen:
-    def __init__(self, config, src=None):
+    def __init__(self, config, src):
         self.config = config
-        if src.lower() == 'applications' or src.lower() == 'a': self.applicationsDB_Gen(config['applicationsDB'])
-        if src.lower() == 'definitions' or src.lower() == 'd': self.definitionsDB_Gen(config['definitionsDB'])
-        if src.lower() == 'companies' or src.lower() == 'c': self.companiesDB_Gen(config['companiesDB'])
+        if src.lower() == 'applications'  : self.applicationsDB_Gen(config['applicationsDB'])
+        if src.lower() == 'definitions'   : self.definitionsDB_Gen(config['definitionsDB'])
+        if src.lower() == 'companies'     : self.companiesDB_Gen(config['companiesDB'])
         # NB: avoided using self.config for readability. 
 
 
+    #*** ApplicationsDB **#
     def applicationsDB_Gen(self, config):
         
-        # Confirmation message
         t2t_app_query(config['starting_subfolder'], config['output_dir'], config['append_or_overwrite'])
+        self = get_API_key(self)
         
         # Get Subfolder directories and names
         subdirs = sorted([x[0] for x in os.walk(os.getcwd() + config['source_dir'])][1:])
@@ -40,7 +40,7 @@ class Text2TextGen:
         else: self.unknown_method(config['append_or_overwrite'])
 
         # Subfolder Loop
-        for subfolder_dir, subfolder_name in tqdm(zip(subdirs, subdir_names),
+        for subfolder_dir, subfolder_name in tqdm(zip(subdirs, subdir_names), 
                                                     total=len(subdirs),
                                                     desc="Processing subfolders",
                                                     position=0,
@@ -87,7 +87,8 @@ class Text2TextGen:
                     )
                     
                     # Generate output
-                    response = self.ai_chat(
+                    response = ai_chat(
+                        self=self,
                         model_source=config['model_source'],
                         model=config['model'],
                         input=ai_txt
@@ -96,17 +97,21 @@ class Text2TextGen:
                     # Process response
                     pairs = [line for line in response.split('\n') if "=>" in line]
                     for pair in pairs:
-                        try: # As some reponses are poorly formatted. 
+                        try: # As some responses are poorly formatted. 
                             input_txt, output_txt = pair.split("=>", 1)
                             input, output = self.output_cleanup(input_txt), self.output_cleanup(output_txt)
+                            
                             if rnd_task and input_txt and output_txt and output_txt not in input_txt and input_txt not in output_txt:
                                 with open(os.getcwd() + config['output_dir'], 'a', encoding='utf-8') as fo:
                                     fo.write(f"\"A{uuid.uuid4().int:0>39}\",\"{subfolder_name}\",\"{text_file}\",\"{rnd_task}\",\"{input}\",\"{output}\"\n")
                                     fo.close()
-                        except: pass
+                        except: 
+                            pass
 
-                        #! Watch for cot_stream_general_input_inversion
+                        #? Watch for cot_stream_general_input_inversion
 
+
+    #*** DefinitionsDB **#
     def definitionsDB_Gen(self, config):
         t2t_def_query(config['append_or_overwrite'], config['output_dir'], config['starting_definition'])
         
@@ -118,7 +123,7 @@ class Text2TextGen:
         # Read definitions from CSV
         df = pd.read_csv(os.path.join(os.getcwd() + config['source_dir'])).set_index('id')
     
-        # Manage starting definition specificiation
+        # Manage starting definition specification
         if config['starting_definition']:
             if config['starting_definition'] not in df['name'].values:
                 raise ValueError(f"Starting definition '{config['starting_definition']}' not found in definitionsDB.")
@@ -133,7 +138,8 @@ class Text2TextGen:
                     definition=row[1]['definition']
                 )
                 
-                response = self.ai_chat(
+                response = ai_chat(
+                    self=self,
                     model_source=config['model_source'],
                     model=config['model'],
                     input=ai_txt
@@ -165,61 +171,13 @@ class Text2TextGen:
         df.to_csv(os.path.join(os.getcwd() + config['output_dir']), 
                   index=True, encoding='utf-8', quotechar='"', quoting=1)
 
-
+    #*** CompaniesDB **#
     def companiesDB_Gen(self, config):
         print("CompaniesDB processing is not implemented yet.")
         pass
 
 
-
-
-    def get_API_key(self) -> None:
-        """Get API key from config or .env file. Writes to self.config['api_key'].
-        """
-        if not self.config['api_key']:
-            try:
-                load_dotenv()
-                self.config['api_key'] = os.getenv('API_KEY')
-                if not self.config['api_key']:
-                    raise ValueError("API key not found in .env file.")
-                    
-            except Exception as e:
-                print(f"\nError loading API key: {e}")
-                exit()
-                
-    def ai_chat(self, model_source: str, model: str, input: str) -> None:
-        """ Sends a chat request to the specified model and returns the response.
-        Args:
-            model_source (string): Model source. Either 'ollama' or 'OpenAI'.
-            model (string): Model name.
-            txt (string): The text to send to the model.
-
-        Returns:
-            string: The response from the model.
-        """
-        if model_source == 'ollama':
-            client = Client(host='http://localhost:11434')
-            response = client.chat(
-                model=model,
-                messages=[{'role': 'user', 'content': f'{input}/n'}]
-            )
-            return response.message.content.strip()
-
-        elif model_source == 'OpenAI':
-            self.get_API_key()
-            client = OpenAI(api_key=self.config['api_key'])
-            completion = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user",
-                    "content": input,
-                }])
-            return completion.choices[0].message.content
-
-        else:
-            print(f"\nUnknown model source: {model_source}")
-            exit()
-
-
+    #*** Helper Functions **#
     @staticmethod
     def starting_subfolder_manager(starting_subfolder: str, subdir_names: list, subdirs: list) -> tuple:
         """ Adjusts subdirs and subdir_names to start from the specified starting_subfolder.
@@ -271,7 +229,7 @@ class Text2TextGen:
         with open(os.path.join(os.getcwd() + output_dir), 'w', encoding='utf-8') as f:
             f.write(f"{csv_header}\n")
         # Log the configuration
-        self.log_updater(self, log_dir, output_dir, config)
+        self.log_updater(log_dir, output_dir, config)
 
 
 
@@ -295,7 +253,7 @@ class Text2TextGen:
                 if f.readline().strip().replace('"','').replace("'","") != f"{csv_header}":
                     raise ValueError("Output file format is incorrect. Please check the file.")
         # Log the configuration
-        self.log_updater(self, log_dir, output_dir, config)
+        self.log_updater(log_dir, output_dir, config)
                     
 
     @staticmethod
@@ -303,7 +261,6 @@ class Text2TextGen:
         raise ValueError(f"Unknown method: {method}. Please use 'overwrite' or 'append'.")
     
     
-    @staticmethod
     def log_updater(self, log_dir: str, output_dir: str, config: dict) -> None:
         """Updates the log file with the current configuration and timestamp.
         """

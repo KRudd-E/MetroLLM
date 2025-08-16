@@ -14,11 +14,15 @@ class LoggingCallback(TrainerCallback):
 
 
     #*** Load and Save Logs ***#
-    def load_logs(self):
+    def load_logs(self) -> list:
         try:
             with open(self.log_dir, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-        except json.JSONDecodeError:
+                logs = json.load(f)
+                if isinstance(logs, list):
+                    return logs
+                else:
+                    return []
+        except (json.JSONDecodeError, FileNotFoundError):
             return []
     
     def save_logs(self, logs):
@@ -55,7 +59,7 @@ class LoggingCallback(TrainerCallback):
                 "logs": logs
             }
             
-            logs.append(y)
+            logs.append(y) #!
             self.save_logs(logs)
         else:
             return 

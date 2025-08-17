@@ -1,0 +1,49 @@
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MultiLabelBinarizer
+from datasets import Dataset
+from transformers.models.auto.tokenization_auto import AutoTokenizer
+
+
+class Preprocessor:
+    def __init__(self, config, model_wrapper):
+        self.config = config
+        self.mlb = model_wrapper.get_mlb()
+        self.tokenizer = model_wrapper.get_tokenizer()
+        self.max_length = self.config["model"].get("max_length", 4096)
+
+    def run(self):
+        df = pd.read_csv(self.config["data"]["source_dir"])
+
+        # Combine task columns
+        task_cols = self.config["data"]["task_cols"]
+        df["tasks"] = df[task_cols].values.tolist()
+        df["tasks"] = df["tasks"].apply(
+            lambda xs: [x.strip().lower() for x in xs if isinstance(x, str) and x.strip()]
+        )
+
+        # Multi-label binarization
+        y = self.mlb.fit_transform(df["tasks"])
+        task_names = self.mlb.classes_
+        df["label_vec"] = y.tolist() #type: ignore
+
+        # Text column normalization
+        text_col = self.config["data"]["text_col"]
+        df = df.rename(columns={text_col: "text"})
+
+        ds = Dataset.from_pandas(df[["text", "label_vec"]])
+        ds = ds.train_test_split(test_size=0.15, seed=42)
+
+        ds_tok = ds.map(self.tok_fn, batched=True, remove_columns=["text", "label_vec"])
+
+        return ds_tok, task_names
+
+    def tok_fn(self, ex):
+        out = self.tokenizer(
+            ex["text"],
+            truncation=True,
+            padding="max_length",
+            max_length=self.max_length,
+        )
+        out["labels"] = ex["label_vec"]
+        return out

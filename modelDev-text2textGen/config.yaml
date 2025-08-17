@@ -19,8 +19,6 @@ train:
     output_dir:         "/gpfs01/home/efykr2/MetroLLM/modelDev-text2textGen/results/"
     eval_strategy:      "epoch"
     save_strategy:      "epoch"
-    #eval_steps:         10
-    #save_steps:         10
     logging_strategy:   epoch
     logging_steps:      5
     learning_rate:      3e-4

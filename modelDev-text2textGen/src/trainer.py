@@ -26,7 +26,7 @@ class Trainer:
     def train(self, config):
         
         training_args = Seq2SeqTrainingArguments(
-            output_dir                    =   str(config['training_args']['output_dir']),
+            output_dir                    =   str(config['output_dir']),
             eval_strategy                 =   str(config['training_args']['eval_strategy']),
             save_strategy                 =   str(config['training_args']['save_strategy']),
             #eval_steps                    =   int(config['training_args']['eval_steps']),

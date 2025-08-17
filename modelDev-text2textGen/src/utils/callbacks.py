@@ -59,7 +59,7 @@ class LoggingCallback(TrainerCallback):
                 "logs": logs
             }
             
-            existing_logs.append(y) #!
+            existing_logs.append(y)
             self.save_logs(existing_logs)
         else:
             return 

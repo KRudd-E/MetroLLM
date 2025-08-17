@@ -1,19 +1,10 @@
 from datasets import load_dataset, DatasetDict
-from transformers import T5Tokenizer
-
+ 
 class DatasetLoader:
-    def __init__(self, config, run):
+    def __init__(self, config, run, model_wrapper):
         self.config = config
-        self.tokenizer = self.load_tokenizer(config, run)
+        self.tokenizer = model_wrapper.get_tokenizer()
     
-    @staticmethod
-    def load_tokenizer(config, run):
-        """Load the tokenizer based on the run type."""
-        if run == 'train':
-            return T5Tokenizer.from_pretrained(config['train']['model']['name'])
-        else: 
-            return T5Tokenizer.from_pretrained(config['eval']['model']['dir'])
-
     def load_training_data(self, config):
         """Load and preprocess training data."""
         dataset = load_dataset("csv", data_files=config['data']['dir'], split="train")

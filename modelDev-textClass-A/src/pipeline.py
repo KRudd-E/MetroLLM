@@ -8,12 +8,12 @@ class FineTunePipeline:
         
     def run(self):
         run = parser()
-        modelDev_textclass_query(run, self.config)
+        #modelDev_textclass_query(run, self.config)
         
         from src.preprocess import Preprocessor
         from src.model_wrapper import ClassificationWrapper
         
-        #! CONSIDER LIMIT ON LENGTH OF TEXT
+        #! INVESTIGATE LIMIT ON LENGTH OF TEXT
         #************ Train ************#
         if run == 'train':
             from src.train import Trainer_Object

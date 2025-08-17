@@ -1,4 +1,3 @@
-# File: src/models/model_wrapper.py
 import torch
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForSequenceClassification   

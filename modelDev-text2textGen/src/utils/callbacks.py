@@ -49,7 +49,7 @@ class LoggingCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         if self.log_training_steps and logs is not None:
             
-            logs = self.load_logs()
+            existing_logs = self.load_logs()
             
             y = {
                 "type": "train_log",
@@ -59,8 +59,8 @@ class LoggingCallback(TrainerCallback):
                 "logs": logs
             }
             
-            logs.append(y) #!
-            self.save_logs(logs)
+            existing_logs.append(y) #!
+            self.save_logs(existing_logs)
         else:
             return 
     

@@ -50,6 +50,7 @@ class Trainer_Object:
 
     def compute_metrics(self, eval_pred):
         logits, labels = eval_pred
+        assert type(logits) == np.ndarray, "Logits should be a numpy array" # debugging
         probs = 1 / (1 + np.exp(-logits))           # sigmoid
         preds = (probs >= 0.5).astype(int)          # threshold; tune if needed
         result = self.metric.compute(

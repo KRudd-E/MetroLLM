@@ -35,7 +35,6 @@ class Preprocessor:
         out = self.tokenizer(
             ex["text"],
             truncation=True,
-            padding="max_length",
             max_length=self.max_length,
         )
         out["labels"] = ex["label_vec"]

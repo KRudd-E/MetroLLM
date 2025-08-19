@@ -2,6 +2,7 @@ import torch
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForSequenceClassification   
 from transformers.data.data_collator import DataCollatorWithPadding
+from transformers.models.auto.configuration_auto import AutoConfig
 from sklearn.preprocessing import MultiLabelBinarizer
 
 class ClassificationWrapper:
@@ -13,8 +14,15 @@ class ClassificationWrapper:
             num_labels: number of classes from preprocessing
         """
         if run == "train":
+            
+            model_config = AutoConfig.from_pretrained(
+                config["model"]["name"],
+                reference_compile=False,
+            )
+            
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 config["model"]["name"],
+                config=model_config,
                 num_labels=config['data']['class_no'],
                 problem_type="multi_label_classification"
             )
@@ -22,6 +30,9 @@ class ClassificationWrapper:
                 config["model"]["name"], use_fast=True
             )
         else:
+            
+            #! MAY NEED MODEL_CONFIG 
+            
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 config["model"]["source_dir"],
                 num_labels=config['data']['class_no'],

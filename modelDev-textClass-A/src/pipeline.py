@@ -1,6 +1,4 @@
-from src.preprocess import Preprocessor
-from src.train import Trainer_Object
-from src.utils.misc import get_config, parser, modelDev_textclass_query
+from src.utils.misc import get_config, parser, modelDev_textclass_query, setup_training_output_dir
 
 class FineTunePipeline:
     def __init__(self):
@@ -18,6 +16,7 @@ class FineTunePipeline:
         if run == 'train':
             from src.train import Trainer_Object
             
+            self = setup_training_output_dir(self)
             model_wrapper = ClassificationWrapper(run, self.config['train'])
             
             preprocessor = Preprocessor(self.config['train'], model_wrapper)

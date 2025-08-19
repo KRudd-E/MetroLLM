@@ -26,3 +26,27 @@ def get_config(config_path='modelDev-textClass-A/config.yaml'):
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     return config
+
+def setup_training_output_dir(self):
+    """ Set up the output directory for training results.
+    """
+    import os
+    from datetime import datetime
+    import shutil
+    import json
+    
+    self.config['train']['output_dir'] = os.path.join(self.config['train']['training_args']['output_dir'] + datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '/')
+    self.config['train']['log_dir'] = os.path.join(self.config['train']['output_dir']+ 'logs.json')
+    
+    # Make output folder
+    os.makedirs(self.config['train']['output_dir'], exist_ok=False)
+    
+    # Make log file
+    os.makedirs(os.path.dirname(self.config['train']['log_dir']), exist_ok=True)
+    with open(self.config['train']['log_dir'], 'w', encoding='utf-8') as f:
+        json.dump({}, f, indent=4)
+
+    # Copy config file
+    shutil.copy(self.config['config_dir'], os.path.join(self.config['train']['output_dir'] + 'config.yaml'))
+
+    return self

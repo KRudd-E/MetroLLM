@@ -16,7 +16,7 @@ class Preprocessor:
         df = pd.read_csv(self.config["data"]["source_dir"])
 
         # Multi-label binarization
-        y = self.mlb.fit_transform(df["tasks"])
+        y = self.mlb.fit_transform(df["Task"])
         #task_names = self.mlb.classes_
         df["label_vec"] = y.tolist() #type: ignore
 

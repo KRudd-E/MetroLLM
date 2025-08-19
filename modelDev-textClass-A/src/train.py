@@ -15,21 +15,21 @@ class Trainer_Object:
     def run(self, ds_tok):
         
         args = TrainingArguments(
-            output_dir                    = self.config['training_args']['output_dir'],
-            learning_rate                 = self.config['training_args']['learning_rate'],
-            per_device_train_batch_size   = self.config['training_args']['per_device_train_batch_size'],
-            per_device_eval_batch_size    = self.config['training_args']['per_device_eval_batch_size'],
-            num_train_epochs              = self.config['training_args']['num_train_epochs'],
-            warmup_ratio                  = self.config['training_args']['warmup_ratio'],
-            weight_decay                  = self.config['training_args']['weight_decay'],
-            eval_strategy                 = self.config['training_args']['eval_strategy'],
-            save_strategy                 = self.config['training_args']['save_strategy'],
-            save_total_limit              = self.config['training_args']['save_total_limit'],
-            metric_for_best_model         = self.config['training_args']['metric_for_best_model'],
-            load_best_model_at_end        = self.config['training_args']['load_best_model_at_end'],
-            logging_dir                   = self.config['training_args']['logging_dir'],
-            logging_steps                 = self.config['training_args']['logging_steps'],
-            push_to_hub                   = self.config['training_args']['push_to_hub'], # type: ignore
+            output_dir                    =   str(self.config['training_args']['output_dir']),
+            learning_rate                 = float(self.config['training_args']['learning_rate']),
+            per_device_train_batch_size   =   int(self.config['training_args']['per_device_train_batch_size']),
+            per_device_eval_batch_size    =   int(self.config['training_args']['per_device_eval_batch_size']),
+            num_train_epochs              =   int(self.config['training_args']['num_train_epochs']),
+            warmup_ratio                  = float(self.config['training_args']['warmup_ratio']),
+            weight_decay                  = float(self.config['training_args']['weight_decay']),
+            eval_strategy                 =   str(self.config['training_args']['eval_strategy']),
+            save_strategy                 =   str(self.config['training_args']['save_strategy']),
+            save_total_limit              =   int(self.config['training_args']['save_total_limit']),
+            metric_for_best_model         =   str(self.config['training_args']['metric_for_best_model']),
+            load_best_model_at_end        =  bool(self.config['training_args']['load_best_model_at_end']),
+            #logging_dir                  =   str(self.config['training_args']['logging_dir']),
+            logging_steps                 =   int(self.config['training_args']['logging_steps']),
+            push_to_hub                   =  bool(self.config['training_args']['push_to_hub']), # type: ignore
         )
         
         logger = LoggingCallback(self.config['training_args']['logging_dir'], log_training_steps=self.config['training_args']['log_training_steps'])

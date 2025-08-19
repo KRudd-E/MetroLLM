@@ -16,7 +16,7 @@ class Trainer_Object:
         
         args = TrainingArguments(
             output_dir                    = self.config['training_args']['output_dir'],
-            learning_rate                 = self.config['training_args']['learning rate'],
+            learning_rate                 = self.config['training_args']['learning_rate'],
             per_device_train_batch_size   = self.config['training_args']['per_device_train_batch_size'],
             per_device_eval_batch_size    = self.config['training_args']['per_device_eval_batch_size'],
             num_train_epochs              = self.config['training_args']['epochs'],

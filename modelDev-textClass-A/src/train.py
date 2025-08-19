@@ -32,6 +32,9 @@ class Trainer_Object:
             push_to_hub                   = self.config['training_args']['push_to_hub'], # type: ignore
         )
         
+        logger = LoggingCallback(self.config['log_dir'], log_training_steps=self.config['training_args']['log_training_steps'])
+        debugger = DebugCallback()
+        
         trainer = Trainer(
             model             = self.model,
             args              = args,
@@ -40,7 +43,7 @@ class Trainer_Object:
             tokenizer         = self.tokenizer,
             data_collator     = self.data_collator,
             compute_metrics   = self.compute_metrics,
-            callbacks         = [LoggingCallback(self.config), DebugCallback()],
+            callbacks         = [logger, debugger],
         )
         trainer.train()
 

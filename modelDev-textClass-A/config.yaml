@@ -1,17 +1,17 @@
 
 train:
   data:
-    source_dir: /data/3-formatted/textClass/textClass-applicationsDB-train.csv
+    source_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-train.csv
     task_col: Task
     text_col: Text
     class_no: 21
   
   model:
-    name: allenai/led-base-16384
+    name: answerdotai/ModernBERT-large
     max_length: 4096
     
   training_args:
-    output_dir                  : modelDev-textClass-A/results/
+    output_dir                  : /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/
     learning_rate               : 2e-5
     per_device_train_batch_size : 16
     per_device_eval_batch_size  : 32
@@ -30,7 +30,7 @@ train:
 
 eval:
   data: 
-    source_dir: /data/3-formatted/textClass/textClass-applicationsDB-test.csv
+    source_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
     class_no: 21
 
   model:

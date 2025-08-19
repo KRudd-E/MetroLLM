@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MultiLabelBinarizer
+
 from datasets import Dataset
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 

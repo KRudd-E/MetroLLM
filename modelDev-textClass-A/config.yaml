@@ -17,6 +17,7 @@ train:
     per_device_eval_batch_size  : 32
     num_train_epochs            : 3
     warmup_ratio                : 0.1
+    weight_decay                : 0.01
     eval_strategy               : "epoch"
     save_strategy               : "epoch"
     save_total_limit            : 3
@@ -25,7 +26,6 @@ train:
     logging_dir                 : modelDev-textClass-A/results/
     logging_steps               : 50
     push_to_hub                 : False
-    log_dir                     : modelDev-textClass-A/results/logs.csv
 
 
 eval:

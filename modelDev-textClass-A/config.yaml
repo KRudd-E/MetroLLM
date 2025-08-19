@@ -1,12 +1,14 @@
 
 train:
   data:
-    source_dir: /data/3-formatted/textClass/textClass-applicationsDB.csv
-    input_col: Task
+    source_dir: /data/3-formatted/textClass/textClass-applicationsDB-train.csv
+    task_col: Task
+    text_col: Text
     class_no: 21
   
   model:
-    name: bert-base-uncased
+    name: allenai/led-base-16384
+    max_length: 4096
     
   training_args:
     output_dir                  : modelDev-textClass-A/results/
@@ -28,4 +30,8 @@ train:
 
 eval:
   data: 
+    source_dir: /data/3-formatted/textClass/textClass-applicationsDB-test.csv
     class_no: 21
+
+  model:
+    source_dir: 

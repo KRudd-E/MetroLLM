@@ -14,9 +14,9 @@ def parser():
 def modelDev_textclass_query(run: str, config: dict) -> None:
     while True:
         if run.lower() == 'train':
-            user_input = input(f"\n         ********************* >>>>> -- ModelDev Text Classification A -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text Classification model for the Applications database.\nYou have opted to **Fine-tune** **{config['train']['model']['name']}**, using data at dir. **{config['train']['data']['dir']}**.\nDo you wish to continue? (y/n): ")
+            user_input = input(f"\n         ********************* >>>>> -- ModelDev Text Classification A -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text Classification model for the Applications database.\nYou have opted to **Fine-tune** **{config['train']['model']['name']}**, using data at dir. **{config['train']['data']['source_dir']}**.\nDo you wish to continue? (y/n): ")
         if run.lower() == 'evaluate':
-            user_input = input(f"\n         ********************* >>>>> -- ModelDev Text Classification -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text Classification model for the Applications database.\nYou have opted to **Evaluate** **{config['eval']['model']['dir']}**.\nDo you wish to continue? (y/n): ")
+            user_input = input(f"\n         ********************* >>>>> -- ModelDev Text Classification -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text Classification model for the Applications database.\nYou have opted to **Evaluate** **{config['eval']['model']['source_dir']}**.\nDo you wish to continue? (y/n): ")
         if user_input.lower() in ['yes','y']: break
         elif user_input.lower() in ['no','n']: exit()
         else: print("\nInvalid input. Please enter Y or N.")

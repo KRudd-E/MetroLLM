@@ -14,7 +14,7 @@ class ClassificationWrapper:
         if run == "train":
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 config["model"]["name"],
-                num_labels=config['data']['task_no'],
+                num_labels=config['data']['class_no'],
                 problem_type="multi_label_classification"
             )
             self.tokenizer = AutoTokenizer.from_pretrained(
@@ -22,14 +22,14 @@ class ClassificationWrapper:
             )
         else:
             self.model = AutoModelForSequenceClassification.from_pretrained(
-                config["model"]["dir"],
-                num_labels=config['data']['task_no'],
+                config["model"]["source_dir"],
+                num_labels=config['data']['class_no'],
                 problem_type="multi_label_classification",
                 low_cpu_mem_usage=True,
                 device_map="auto",
             )
             self.tokenizer = AutoTokenizer.from_pretrained(
-                config["model"]["dir"], use_fast=True
+                config["model"]["source_dir"], use_fast=True
             )
 
         # Collator – works with variable sequence lengths

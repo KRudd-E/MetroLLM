@@ -29,7 +29,7 @@ class Trainer_Object:
             load_best_model_at_end        = self.config['training_args']['load_best_model_at_end'],
             logging_dir                   = self.config['training_args']['log_dir'],
             logging_steps                 = self.config['training_args']['logging_steps'],
-            push_to_hub                   = self.config['training_args']['push_to_hub'],
+            push_to_hub                   = self.config['training_args']['push_to_hub'], # type: ignore
         )
         
         trainer = Trainer(

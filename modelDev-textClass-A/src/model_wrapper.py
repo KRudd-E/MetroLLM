@@ -2,6 +2,7 @@ import torch
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForSequenceClassification   
 from transformers.data.data_collator import DataCollatorWithPadding
+from sklearn.preprocessing import MultiLabelBinarizer
 
 class ClassificationWrapper:
     def __init__(self, run: str, config):
@@ -37,6 +38,8 @@ class ClassificationWrapper:
             tokenizer=self.tokenizer,
             padding="longest"
         )
+        # Multi-label binarizer
+        self.mlb = MultiLabelBinarizer()
 
         # Device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -53,3 +56,6 @@ class ClassificationWrapper:
 
     def get_data_collator(self):
         return self.data_collator
+    
+    def get_mlb(self):
+        return self.mlb

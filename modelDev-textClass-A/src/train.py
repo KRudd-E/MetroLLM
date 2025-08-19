@@ -32,7 +32,7 @@ class Trainer_Object:
             push_to_hub                   = self.config['training_args']['push_to_hub'], # type: ignore
         )
         
-        logger = LoggingCallback(self.config['log_dir'], log_training_steps=self.config['training_args']['log_training_steps'])
+        logger = LoggingCallback(self.config['training_args']['logging_dir'], log_training_steps=self.config['training_args']['log_training_steps'])
         debugger = DebugCallback()
         
         trainer = Trainer(

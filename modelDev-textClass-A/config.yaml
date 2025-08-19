@@ -26,7 +26,8 @@ train:
     logging_dir                 : modelDev-textClass-A/results/
     logging_steps               : 50
     push_to_hub                 : False
-
+    
+    log_training_steps:   True
 
 eval:
   data: 

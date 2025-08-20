@@ -36,6 +36,12 @@ class ClassificationWrapper:
             num_labels=config["data"]["class_no"],
             problem_type="multi_label_classification",
         )
+        
+        # Disable compilation features that cause issues in HPC environments
+        if hasattr(model_config, 'compile_embeddings'):
+            model_config.compile_embeddings = False
+        if hasattr(model_config, 'attention_implementation'):
+            model_config.attention_implementation = "eager"
 
         if run == "train" and pos_weights is not None:
             self.model = WeightedBCEModel.from_pretrained(
@@ -51,11 +57,27 @@ class ClassificationWrapper:
                 **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
             )
 
+        # Disable any compiled components in the model to avoid HPC compilation issues
+        self._disable_compilation()
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
         self.data_collator = DataCollatorWithPadding(self.tokenizer, padding="longest")
         self.mlb = MultiLabelBinarizer()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
+
+    def _disable_compilation(self):
+        """Disable compilation features that cause issues in HPC environments."""
+        # Disable compiled embeddings in ModernBERT
+        if hasattr(self.model, 'model') and hasattr(self.model.model, 'embeddings'):
+            embeddings = self.model.model.embeddings
+            if hasattr(embeddings, 'compiled_embeddings'):
+                # Replace compiled embeddings with regular embeddings
+                embeddings.compiled_embeddings = embeddings.token_embeddings
+        
+        # Disable torch.compile on the entire model
+        if hasattr(self.model, '_compiled'):
+            self.model._compiled = False
 
     def get_model(self): return self.model
     def get_tokenizer(self): return self.tokenizer

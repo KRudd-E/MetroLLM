@@ -1,11 +1,13 @@
 from src.utils.misc import get_config, parser, \
             modelDev_textclass_query, setup_training_output_dir
+from src.utils.disable_compilation import disable_compilation
 from src.preprocess import Preprocessor
 from src.model_wrapper import ClassificationWrapper
 
 
 class FineTunePipeline:
     def __init__(self):
+        disable_compilation() 
         self.config = get_config()
         
     def run(self):

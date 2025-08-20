@@ -19,7 +19,9 @@ class Trainer_Object:
             learning_rate                 = float(self.config['training_args']['learning_rate']),
             per_device_train_batch_size   =   int(self.config['training_args']['per_device_train_batch_size']),
             per_device_eval_batch_size    =   int(self.config['training_args']['per_device_eval_batch_size']),
+            gradient_accumulation_steps   =   int(self.config['training_args']['gradient_accumulation_steps']),
             num_train_epochs              =   int(self.config['training_args']['num_train_epochs']),
+            gradient_checkpointing        =  bool(self.config['training_args']['gradient_checkpointing']),
             warmup_ratio                  = float(self.config['training_args']['warmup_ratio']),
             weight_decay                  = float(self.config['training_args']['weight_decay']),
             eval_strategy                 =   str(self.config['training_args']['eval_strategy']),
@@ -29,6 +31,7 @@ class Trainer_Object:
             load_best_model_at_end        =  bool(self.config['training_args']['load_best_model_at_end']),
             #logging_dir                  =   str(self.config['training_args']['logging_dir']),
             logging_steps                 =   int(self.config['training_args']['logging_steps']),
+            bf16                          =  bool(self.config['training_args']['bf16']),
             push_to_hub                   =  bool(self.config['training_args']['push_to_hub']), # type: ignore
         )
         

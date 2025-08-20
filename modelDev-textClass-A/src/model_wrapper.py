@@ -27,7 +27,8 @@ class ClassificationWrapper:
                 config=model_config
             )
             self.tokenizer = AutoTokenizer.from_pretrained(
-                config["model"]["name"], use_fast=True
+                config["model"]["name"], 
+                use_fast=True
             )
         else:
             
@@ -44,7 +45,8 @@ class ClassificationWrapper:
                 device_map="auto",
             )
             self.tokenizer = AutoTokenizer.from_pretrained(
-                config["model"]["source_dir"], use_fast=True
+                config["model"]["source_dir"], 
+                use_fast=True
             )
 
         # Collator – works with variable sequence lengths

@@ -39,5 +39,6 @@ class Preprocessor:
             truncation=True,
             max_length=self.max_length,
         )
-        out["labels"] = ex["label_vec"]
+        # Convert labels to float for binary cross entropy loss
+        out["labels"] = [list(map(float, label_vec)) for label_vec in ex["label_vec"]]
         return out

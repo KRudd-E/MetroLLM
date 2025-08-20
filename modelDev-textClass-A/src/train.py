@@ -61,6 +61,10 @@ class Trainer_Object:
         probs = 1 / (1 + np.exp(-logits))           # sigmoid
         preds = (probs >= 0.5).astype(int)          # threshold; tune if needed
 
+        # Ensure labels are in the correct format for F1 computation
+        if isinstance(labels, np.ndarray):
+            labels = labels.astype(int)
+
         result = self.metric.compute(
             predictions=preds, references=labels, average="micro"
         )

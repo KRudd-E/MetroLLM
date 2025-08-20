@@ -65,7 +65,11 @@ class Trainer_Object:
         if isinstance(labels, np.ndarray):
             labels = labels.astype(int)
 
+        # Flatten predictions and references for metric computation
+        flat_preds = preds.flatten()
+        flat_labels = labels.flatten()
+
         result = self.metric.compute(
-            predictions=preds, references=labels, average="micro"
+            predictions=flat_preds, references=flat_labels, average="micro"
         )
         return {"f1_micro": result["f1"] if result and "f1" in result else 0.0}

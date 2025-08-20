@@ -11,9 +11,9 @@ from sklearn.preprocessing import MultiLabelBinarizer
 class WeightedBCEModel(AutoModelForSequenceClassification):
     """Custom model that uses Weighted Binary Cross Entropy to handle class imbalance."""
     
-    def __init__(self, config, pos_weight=None, *args, **kwargs):
+    def __init__(self, config, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
-        self.pos_weight = pos_weight
+        self.pos_weight = None  # Will be set after initialization
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore
@@ -41,8 +41,9 @@ class ClassificationWrapper:
             self.model = WeightedBCEModel.from_pretrained(
                 model_name,
                 config=model_config,
-                pos_weight=pos_weights,
             )
+            # Set the pos_weight after model creation
+            self.model.pos_weight = pos_weights
         else:
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 model_name,

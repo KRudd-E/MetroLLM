@@ -20,7 +20,8 @@ class FineTunePipeline:
             model_wrapper = ClassificationWrapper(run, self.config['train'])
             
             preprocessor = Preprocessor(self.config['train'], model_wrapper)
-            ds_tok = preprocessor.run()
+            ds_tok, task_names = preprocessor.run()
+            print(task_names)  # DEBUG: Print task names for verification
             
             trainer = Trainer_Object(self.config['train'], model_wrapper)
             trainer.run(ds_tok)

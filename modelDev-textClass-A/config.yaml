@@ -9,16 +9,16 @@ train:
     class_no: 21
   
   model:
-    name: answerdotai/ModernBERT-large
+    name: answerdotai/ModernBERT-base
     max_length: 8192
     
   training_args:
     output_dir                  : /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/
-    learning_rate               : 2e-5
+    learning_rate               : 1.5e-5
     per_device_train_batch_size : 1
     per_device_eval_batch_size  : 1
     gradient_accumulation_steps : 16
-    num_train_epochs            : 3
+    num_train_epochs            : 8
     gradient_checkpointing      : True
     warmup_ratio                : 0.1
     weight_decay                : 0.01

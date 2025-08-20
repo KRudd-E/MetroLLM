@@ -3,6 +3,7 @@ import evaluate
 from transformers.trainer import Trainer
 from transformers.training_args import TrainingArguments
 from src.utils.callbacks import LoggingCallback, DebugCallback
+from sklearn.metrics import f1_score, precision_score, recall_score
 
 class Trainer_Object:
     def __init__(self, config, model_wrapper):
@@ -35,10 +36,7 @@ class Trainer_Object:
             bf16                          =  bool(self.config['training_args']['bf16']),
             push_to_hub                   =  bool(self.config['training_args']['push_to_hub']), # type: ignore
         )
-        
-        logger = LoggingCallback(self.config['log_dir'], log_training_steps=self.config['training_args']['log_training_steps'])
-        debugger = DebugCallback()
-        
+
         trainer = Trainer(
             model             = self.model,
             args              = args,
@@ -47,7 +45,10 @@ class Trainer_Object:
             tokenizer         = self.tokenizer,
             data_collator     = self.data_collator,
             compute_metrics   = self.compute_metrics,
-            callbacks         = [logger, debugger],
+            callbacks         = [
+                LoggingCallback(self.config['log_dir'], log_training_steps=self.config['training_args']['log_training_steps']),
+                DebugCallback()
+                ],
         )
         
         trainer.train()
@@ -55,20 +56,18 @@ class Trainer_Object:
 
     def compute_metrics(self, eval_pred):
         logits, labels = eval_pred
-        
-        assert type(logits) == np.ndarray, "Logits should be a numpy array" # debugging
-        probs = 1 / (1 + np.exp(-logits))           # sigmoid
-        preds = (probs >= 0.5).astype(int)          # threshold; tune if needed
+        preds = (1 / (1 + np.exp(-logits)) >= 0.5).astype(int)
+        labels = labels.astype(int)
 
-        # Ensure labels are in the correct format for F1 computation
-        if isinstance(labels, np.ndarray):
-            labels = labels.astype(int)
-
-        # Flatten predictions and references for metric computation
-        flat_preds = preds.flatten()
-        flat_labels = labels.flatten()
-
-        result = self.metric.compute(
-            predictions=flat_preds, references=flat_labels, average="micro"
-        )
-        return {"f1_micro": result["f1"] if result and "f1" in result else 0.0}
+        results = {
+            "f1_micro": f1_score(labels, preds, average="micro", zero_division=0),
+            "f1_macro": f1_score(labels, preds, average="macro", zero_division=0),
+            "f1_weighted": f1_score(labels, preds, average="weighted", zero_division=0),
+            "precision_micro": precision_score(labels, preds, average="micro", zero_division=0),
+            "recall_micro": recall_score(labels, preds, average="micro", zero_division=0),
+            "precision_macro": precision_score(labels, preds, average="macro", zero_division=0),
+            "recall_macro": recall_score(labels, preds, average="macro", zero_division=0),
+        }
+        results.update({f"f1_class_{i}": score for i, score in enumerate(
+            f1_score(labels, preds, average=None, zero_division=0))}) # type: ignore
+        return results

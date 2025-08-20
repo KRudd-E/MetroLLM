@@ -16,7 +16,7 @@ class Trainer_Object:
     def run(self, ds_tok):
         
         args = TrainingArguments(
-            output_dir                    =   str(self.config['training_args']['output_dir']),
+            output_dir                    =   str(self.config['output_dir']),
             learning_rate                 = float(self.config['training_args']['learning_rate']),
             per_device_train_batch_size   =   int(self.config['training_args']['per_device_train_batch_size']),
             per_device_eval_batch_size    =   int(self.config['training_args']['per_device_eval_batch_size']),

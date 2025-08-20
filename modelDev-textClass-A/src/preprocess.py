@@ -30,7 +30,7 @@ class Preprocessor:
         ds = ds.train_test_split(test_size=0.15, seed=42)
         ds_tok = ds.map(self.tok_fn, batched=True, remove_columns=["text", "label_vec"])
 
-        return ds_tok, task_names, class_weights
+        return ds_tok, task_names, y
 
     def tok_fn(self, ex):
         out = self.tokenizer(

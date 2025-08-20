@@ -18,9 +18,9 @@ class FineTunePipeline:
             self = setup_training_output_dir(self)
             
             preprocessor = Preprocessor(self.config['train'])
-            ds_tok, task_names, class_weights = preprocessor.run()
+            ds_tok, task_names, label_matrix = preprocessor.run()
             
-            model_wrapper = ClassificationWrapper(run_mode, self.config['train'], class_weights)
+            model_wrapper = ClassificationWrapper(run_mode, self.config['train'], label_matrix)
             
             trainer = Trainer_Object(self.config['train'], model_wrapper)
             trainer.run(ds_tok)

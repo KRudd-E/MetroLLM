@@ -73,7 +73,7 @@ class ClassificationWrapper:
             embeddings = self.model.model.embeddings
             if hasattr(embeddings, 'compiled_embeddings'):
                 # Replace compiled embeddings with regular embeddings
-                embeddings.compiled_embeddings = embeddings.token_embeddings
+                embeddings.compiled_embeddings = embeddings.tok_embeddings
         
         # Disable torch.compile on the entire model
         if hasattr(self.model, '_compiled'):

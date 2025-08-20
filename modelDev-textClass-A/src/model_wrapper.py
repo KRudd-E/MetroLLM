@@ -35,9 +35,10 @@ class ClassificationWrapper:
         self.model = WeightedBCEModel.from_pretrained(
             model_name,
             config=model_config,
-            pos_weight=class_weights,
             **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
         )
+        
+        self.model.pos_weight = class_weights
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
         self.data_collator = DataCollatorWithPadding(self.tokenizer, padding="longest")

@@ -7,16 +7,18 @@ from sklearn.preprocessing import MultiLabelBinarizer
 import torch.nn as nn
 
 class WeightedBCEModel(AutoModelForSequenceClassification):
-    def __init__(self, config, pos_weight=None):
-        super().__init__(config)
+    def __init__(self, config, pos_weight=None, *args, **kwargs):
+        super().__init__(config, *args, **kwargs)
         self.pos_weight = pos_weight
 
-    def forward(self, **kwargs):
+    def forward(self, labels=None, **kwargs):
         outputs = super().forward(**kwargs) # type: ignore
-        if "labels" in kwargs and self.pos_weight is not None:
-            loss_fct = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(outputs.logits.device))
-            loss = loss_fct(outputs.logits, kwargs["labels"])
-            return {"loss": loss, "logits": outputs.logits}
+        logits = outputs.logits
+
+        if labels is not None and self.pos_weight is not None:
+            loss_fct = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(logits.device))
+            loss = loss_fct(logits, labels.float())
+            return {"loss": loss, "logits": logits}
         return outputs
 
 

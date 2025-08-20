@@ -20,7 +20,6 @@ class Preprocessor:
         
         # Multi-label binarization
         y = self.mlb.fit_transform(df["Task"])
-        class_weights = self.compute_class_weights(y)
         task_names = self.mlb.classes_
 
         df["label_vec"] = y.tolist() #type: ignore
@@ -41,12 +40,3 @@ class Preprocessor:
         # Convert labels to float for binary cross entropy loss
         out["labels"] = [list(map(float, label_vec)) for label_vec in ex["label_vec"]]
         return out
-    
-    @staticmethod
-    def compute_class_weights(labels) -> torch.Tensor:
-        num_samples, num_classes = labels.shape
-        pos_counts = labels.sum(axis=0)         # number of positives per class
-        neg_counts = num_samples - pos_counts   # number of negatives per class
-
-        pos_weight = neg_counts / (pos_counts + 1e-5) # Avoid division by zero
-        return torch.tensor(pos_weight, dtype=torch.float)

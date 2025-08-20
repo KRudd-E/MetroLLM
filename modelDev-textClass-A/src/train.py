@@ -5,6 +5,7 @@ from transformers.training_args import TrainingArguments
 from src.utils.callbacks import LoggingCallback, DebugCallback
 from sklearn.metrics import f1_score, precision_score, recall_score
 
+
 class Trainer_Object:
     def __init__(self, config, model_wrapper):
         self.config = config
@@ -56,9 +57,13 @@ class Trainer_Object:
 
     def compute_metrics(self, eval_pred):
         logits, labels = eval_pred
-        preds = (1 / (1 + np.exp(-logits)) >= 0.5).astype(int)
+        probabilities = 1 / (1 + np.exp(-logits))  # sigmoid
+        
+        # Standard 0.5 threshold predictions
+        preds = (probabilities >= 0.5).astype(int)
         labels = labels.astype(int)
 
+        # Basic metrics
         results = {
             "f1_micro": f1_score(labels, preds, average="micro", zero_division=0),
             "f1_macro": f1_score(labels, preds, average="macro", zero_division=0),
@@ -68,6 +73,10 @@ class Trainer_Object:
             "precision_macro": precision_score(labels, preds, average="macro", zero_division=0),
             "recall_macro": recall_score(labels, preds, average="macro", zero_division=0),
         }
-        results.update({f"f1_class_{i}": score for i, score in enumerate(
-            f1_score(labels, preds, average=None, zero_division=0))}) # type: ignore
+        
+        # Per-class F1 scores for monitoring individual class performance
+        per_class_f1 = f1_score(labels, preds, average=None, zero_division=0)
+        if isinstance(per_class_f1, np.ndarray):
+            results.update({f"f1_class_{i}": score for i, score in enumerate(per_class_f1)})
+        
         return results

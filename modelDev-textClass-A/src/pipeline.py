@@ -15,12 +15,20 @@ class FineTunePipeline:
         #************ Train ************#
         if run_mode == 'train':
             from src.train import Trainer_Object
+            from src.model_wrapper import compute_pos_weights
+            
             self = setup_training_output_dir(self)
             
             preprocessor = Preprocessor(self.config['train'])
-            ds_tok, task_names, label_matrix = preprocessor.run()
+            ds_tok, task_names, y_labels = preprocessor.run()
             
-            model_wrapper = ClassificationWrapper(run_mode, self.config['train'], label_matrix)
+            # Compute positive weights for weighted BCE
+            pos_weights = compute_pos_weights(y_labels)
+            print(f"Computed positive weights for {len(task_names)} classes:")
+            for i, (name, weight) in enumerate(zip(task_names, pos_weights)):
+                print(f"  {name}: {weight:.3f}")
+            
+            model_wrapper = ClassificationWrapper(run_mode, self.config['train'], pos_weights)
             
             trainer = Trainer_Object(self.config['train'], model_wrapper)
             trainer.run(ds_tok)
@@ -29,9 +37,6 @@ class FineTunePipeline:
         elif run_mode == 'evaluate':
             from src.evaluate import Evaluator
             
-            #model_wrapper = ClassificationWrapper(run_mode, self.config['eval'], class_weights)
-            
-
-            # ...
             evaluator = Evaluator(self.config['eval'])
-            evaluator.run()
+            results = evaluator.run()
+            print(f"\nEvaluation completed. Results saved to evaluation output.")

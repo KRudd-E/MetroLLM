@@ -1,22 +1,26 @@
 import torch
+import torch.nn as nn
+import numpy as np
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForSequenceClassification   
 from transformers.data.data_collator import DataCollatorWithPadding
 from transformers.models.auto.configuration_auto import AutoConfig
 from sklearn.preprocessing import MultiLabelBinarizer
-import torch.nn as nn
-import numpy as np
+
 
 class WeightedBCEModel(AutoModelForSequenceClassification):
+    """Custom model that uses Weighted Binary Cross Entropy to handle class imbalance."""
+    
     def __init__(self, config, pos_weight=None, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
         self.pos_weight = pos_weight
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore
-        logits = outputs.logit
+        logits = outputs.logits
 
         if labels is not None and self.pos_weight is not None:
+            # Apply weighted binary cross entropy loss
             loss_fct = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(logits.device))
             loss = loss_fct(logits, labels.float())
             return {"loss": loss, "logits": logits}
@@ -24,7 +28,7 @@ class WeightedBCEModel(AutoModelForSequenceClassification):
 
 
 class ClassificationWrapper:
-    def __init__(self, run: str, config, label_matrix):
+    def __init__(self, run: str, config, pos_weights=None):
         model_name = config["model"]["name"] if run == "train" else config["model"]["source_dir"]
 
         model_config = AutoConfig.from_pretrained(
@@ -32,16 +36,19 @@ class ClassificationWrapper:
             num_labels=config["data"]["class_no"],
             problem_type="multi_label_classification",
         )
-        
-        class_weights = compute_pos_weight(label_matrix)
 
-        self.model = WeightedBCEModel.from_pretrained(
-            model_name,
-            config=model_config,
-            **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
-        )
-        
-        self.model.pos_weight = class_weights
+        if run == "train" and pos_weights is not None:
+            self.model = WeightedBCEModel.from_pretrained(
+                model_name,
+                config=model_config,
+                pos_weight=pos_weights,
+            )
+        else:
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                model_name,
+                config=model_config,
+                **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
+            )
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
         self.data_collator = DataCollatorWithPadding(self.tokenizer, padding="longest")
@@ -54,10 +61,23 @@ class ClassificationWrapper:
     def get_device(self): return self.device
     def get_data_collator(self): return self.data_collator
     def get_mlb(self): return self.mlb
+
+
+def compute_pos_weights(y_labels) -> torch.Tensor:
+    """
+    Compute positive weights for weighted BCE loss.
+    For multi-label classification, pos_weight should be neg_count / pos_count
+    """
+
+    if hasattr(y_labels, 'toarray'):
+        y_labels = y_labels.toarray()
     
+    y_labels = np.array(y_labels)
+    num_samples = y_labels.shape[0]
+    pos_counts = y_labels.sum(axis=0)  # Count of positive samples per class
+    neg_counts = num_samples - pos_counts  # Count of negative samples per class
     
-def compute_pos_weight(label_matrix: np.ndarray) -> torch.Tensor:
-    positives = label_matrix.sum(axis=0)
-    negatives = label_matrix.shape[0] - positives
-    pos_weight = negatives / (positives + 1e-8)   # avoid div by zero
-    return torch.tensor(pos_weight, dtype=torch.float32)
+    # Avoid division by zero
+    pos_weights = neg_counts / (pos_counts + 1e-8)
+    
+    return torch.tensor(pos_weights, dtype=torch.float32)

@@ -17,7 +17,21 @@ class Preprocessor:
 
         # Multi-label binarization
         y = self.mlb.fit_transform(df["Task"])
-        #task_names = self.mlb.classes_
+        task_names = self.mlb.classes_
+        
+        # DEBUG: Inspect the multi-label binarizer results
+        print(f"DEBUG: MultiLabelBinarizer classes: {len(task_names)} classes")
+        print(f"DEBUG: MultiLabelBinarizer classes list: {task_names}")
+        print(f"DEBUG: Binarized labels shape: {y.shape}")
+        print(f"DEBUG: Sample binarized labels (first 3 rows): {y[:3]}")
+        
+        # POTENTIAL FIX: Ensure the number of labels matches config expectation
+        expected_num_labels = self.config['data']['class_no']
+        actual_num_labels = len(task_names)
+        if actual_num_labels != expected_num_labels:
+            print(f"WARNING: Number of labels in data ({actual_num_labels}) doesn't match config ({expected_num_labels})")
+            print("This is likely the cause of the tensor size mismatch error!")
+        
         df["label_vec"] = y.tolist() #type: ignore
 
         # Text column normalization

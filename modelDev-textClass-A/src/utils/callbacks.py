@@ -66,7 +66,7 @@ class LoggingCallback(TrainerCallback):
 
 
 class DebugCallback(TrainerCallback):
-    def on_step_end(self, state, logs=None):
+    def on_step_end(self, args, state, control, logs=None, metrics=None, **kwargs):
         if logs and "loss" in logs:
             if logs["loss"] == 0:
                 print("WARNING: Zero loss detected!")

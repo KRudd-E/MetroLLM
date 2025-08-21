@@ -6,27 +6,6 @@ from src.utils.callbacks import LoggingCallback, DebugCallback
 from sklearn.metrics import f1_score, precision_score, recall_score
 
 
-class SafeTrainer(Trainer):
-    """Custom trainer that handles ModernBERT shared tensor saving issues."""
-    
-    def save_model(self, output_dir=None, _internal_call=False):
-        """Override save_model to handle shared tensor issues."""
-        try:
-            # Try normal saving first
-            super().save_model(output_dir, _internal_call)
-        except RuntimeError as e:
-            if "shared tensors" in str(e):
-                print(f"Shared tensor error detected, using safe serialization: {e}")
-                # Force safe serialization
-                self.args.save_safetensors = True
-                if hasattr(self.model, 'config'):
-                    self.model.config.safe_serialization = True  # type: ignore
-                # Try again with safe serialization
-                super().save_model(output_dir, _internal_call)
-            else:
-                raise e
-
-
 class Trainer_Object:
     def __init__(self, config, model_wrapper):
         self.config = config
@@ -60,7 +39,7 @@ class Trainer_Object:
             save_safetensors              =  True,  # Force safe serialization to handle shared tensors
         )
 
-        trainer = SafeTrainer(
+        trainer = Trainer(
             model             = self.model,
             args              = args,
             train_dataset     = ds_tok["train"],

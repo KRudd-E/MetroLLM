@@ -76,11 +76,17 @@ class ClassificationWrapper:
         # Disable compiled embeddings in ModernBERT
         if hasattr(self.model, 'model') and hasattr(self.model.model, 'embeddings'):
             embeddings = self.model.model.embeddings
-            if hasattr(embeddings, 'compiled_embeddings'):
-                # Remove compiled embeddings to avoid shared tensor saving issues
-                delattr(embeddings, 'compiled_embeddings')
-                # Set a flag to indicate we're using non-compiled embeddings
-                embeddings._use_compiled = False
+            # Safely remove compiled embeddings if they exist
+            if 'compiled_embeddings' in embeddings.__dict__:
+                try:
+                    delattr(embeddings, 'compiled_embeddings')
+                    # Set a flag to indicate we're using non-compiled embeddings
+                    embeddings._use_compiled = False
+                    print("Disabled compiled embeddings to prevent shared tensor issues")
+                except AttributeError:
+                    # In case delattr still fails
+                    pass
+
         
         # Set dynamic tied weights keys to handle shared tensors properly
         if hasattr(self.model, '_dynamic_tied_weights_keys'):

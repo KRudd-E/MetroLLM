@@ -25,6 +25,11 @@ class WeightedBCEModel(AutoModelForSequenceClassification):
             loss = loss_fct(logits, labels.float())
             return {"loss": loss, "logits": logits}
         return outputs
+    
+    def save_pretrained(self, save_directory, **kwargs):
+        # Force safe serialization to handle shared tensors
+        kwargs['safe_serialization'] = True
+        return super().save_pretrained(save_directory, **kwargs) # type: ignore
 
 
 class ClassificationWrapper:
@@ -72,12 +77,26 @@ class ClassificationWrapper:
         if hasattr(self.model, 'model') and hasattr(self.model.model, 'embeddings'):
             embeddings = self.model.model.embeddings
             if hasattr(embeddings, 'compiled_embeddings'):
-                # Replace compiled embeddings with regular embeddings
-                embeddings.compiled_embeddings = embeddings.tok_embeddings
+                # Remove compiled embeddings to avoid shared tensor saving issues
+                delattr(embeddings, 'compiled_embeddings')
+                # Set a flag to indicate we're using non-compiled embeddings
+                embeddings._use_compiled = False
+        
+        # Set dynamic tied weights keys to handle shared tensors properly
+        if hasattr(self.model, '_dynamic_tied_weights_keys'):
+            # Remove problematic shared tensor keys
+            tied_keys = getattr(self.model, '_dynamic_tied_weights_keys', set())
+            tied_keys.discard('model.embeddings.tok_embeddings.weight')
+            tied_keys.discard('model.embeddings.compiled_embeddings.weight')
+            self.model._dynamic_tied_weights_keys = tied_keys
         
         # Disable torch.compile on the entire model
         if hasattr(self.model, '_compiled'):
             self.model._compiled = False
+            
+        # Set safe serialization to handle any remaining tensor sharing issues
+        if hasattr(self.model, 'config'):
+            self.model.config.safe_serialization = True
 
     def get_model(self): return self.model
     def get_tokenizer(self): return self.tokenizer

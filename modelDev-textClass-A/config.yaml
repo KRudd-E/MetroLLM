@@ -31,13 +31,33 @@ train:
     logging_steps               : 50
     bf16                        : True
     push_to_hub                 : False
+    save_safetensors            : True
+    max_grad_norm               : 1.0
+    lr_scheduler_type           : linear
+    label_smoothing_factor      : 0.1
+
+    dropout: 0.25
     
     log_training_steps:   True
 
 eval:
   data: 
     source_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
+    task_col: Task
+    text_col: Text
     class_no: 21
 
   model:
-    source_dir: 
+    source_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/
+    max_length: 8192
+    
+  evaluation_args:
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/evaluation/
+    batch_size: 8
+    threshold_optimization: True
+    threshold_search_range: [0.1, 0.9]
+    threshold_search_steps: 50
+    optimize_metric: "f1_macro"
+    save_predictions: True
+    save_class_analysis: True
+    device_map: "auto" 

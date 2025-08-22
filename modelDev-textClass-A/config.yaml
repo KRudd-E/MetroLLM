@@ -6,7 +6,7 @@ train:
     source_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-train.csv
     task_col: Task
     text_col: Text
-    class_no: 21
+    class_no: 31
   
   model:
     name: answerdotai/ModernBERT-base
@@ -45,7 +45,7 @@ eval:
     source_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
     task_col: Task
     text_col: Text
-    class_no: 21
+    class_no: 31
 
   model:
     source_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/

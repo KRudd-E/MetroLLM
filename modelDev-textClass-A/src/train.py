@@ -36,12 +36,12 @@ class Trainer_Object:
             logging_steps                 =   int(self.config['training_args']['logging_steps']),
             bf16                          =  bool(self.config['training_args']['bf16']),
             push_to_hub                   =  bool(self.config['training_args']['push_to_hub']), # type: ignore
-            save_safetensors              =  True, 
+            save_safetensors              =  bool(self.config['training_args']['save_safetensors']),
 
             # New
-            max_grad_norm                 =  float(self.config['training_args'].get('max_grad_norm', 1.0)),  # gradient clipping
-            lr_scheduler_type             =  str(self.config['training_args'].get('lr_scheduler_type', 'linear')),  # scheduler type
-            label_smoothing_factor        =  float(self.config['training_args'].get('label_smoothing_factor', 0.1)),  # label smoothing
+            max_grad_norm                 =  float(self.config['training_args']['max_grad_norm']),  # gradient clipping
+            lr_scheduler_type             =    str(self.config['training_args']['lr_scheduler_type']),  # scheduler type
+#            label_smoothing_factor        =  float(self.config['training_args']['label_smoothing_factor']),  # label smoothing
             )
 
 

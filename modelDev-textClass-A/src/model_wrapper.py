@@ -40,9 +40,11 @@ class ClassificationWrapper:
             model_name,
             num_labels=config["data"]["class_no"],
             problem_type="multi_label_classification",
+            hidden_dropout_prob=float(config['training_args'].get('dropout', 0.1)),
+            attention_probs_dropout_prob=float(config['training_args'].get('dropout', 0.1)),
         )
         
-        # Disable compilation features that cause issues in HPC environments
+        # Disable features which cause issues on HPC 
         if hasattr(model_config, 'compile_embeddings'):
             model_config.compile_embeddings = False
         if hasattr(model_config, 'attention_implementation'):
@@ -62,7 +64,7 @@ class ClassificationWrapper:
                 **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
             )
 
-        # Disable any compiled components in the model to avoid HPC compilation issues
+        # Disable compilation.
         self._disable_compilation()
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
@@ -70,6 +72,8 @@ class ClassificationWrapper:
         self.mlb = MultiLabelBinarizer()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
+
+
 
     def _disable_compilation(self):
         """Disable compilation features that cause issues in HPC environments."""

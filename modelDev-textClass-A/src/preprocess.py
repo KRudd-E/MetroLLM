@@ -3,6 +3,7 @@ import torch
 from datasets import Dataset
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from sklearn.preprocessing import MultiLabelBinarizer
+from ast import literal_eval
 
 class Preprocessor:
     def __init__(self, config):
@@ -16,7 +17,9 @@ class Preprocessor:
 
     def run(self):
         df = pd.read_csv(self.config["data"]["source_dir"])
-        df['Task'] = df['Task'].apply(lambda x: [x] if isinstance(x, str) else x)
+        df.Task = df.Task.apply(literal_eval)
+        
+        print(f'Example tasks: {df["Task"][0]} : {type(df["Task"][0])}')
         
         # Multi-label binarization
         y = self.mlb.fit_transform(df["Task"])

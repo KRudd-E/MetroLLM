@@ -7,31 +7,31 @@ def get_config(config_path:str='dataDev2/config.yaml') -> dict:
     
 def parser():
     """Parse command line arguments for the script."""
+    
     import argparse
     parser = argparse.ArgumentParser(description="Script that runs dataDev2")
     parser.add_argument('--model_type', '-mt', type=str, required=True, help='Type of data to create: one of Text2Text, TextGen, or TextClass')
     parser.add_argument('--data_source', '-ds', type=str, required=True, help='Source of the data: one of Applications, Companies, or Definitions')
+    
     inputs = parser.parse_args()
-    if inputs.model_type.lower() not in ['text2text', 't2t', 'textgen', 'tg', 'textclass', 'tc']:
-        raise ValueError("Invalid model type (mt). Choose from: Text2Text, TextGen, or TextClass.")
-    if inputs.data_source.lower() not in ['applications', 'a', 'companies', 'c', 'definitions', 'd']:
-        raise ValueError("Invalid data source (ds). Choose from: Applications, Companies, or Definitions.")
+
+    # Normalize inputs and handle bad inputs
+    if      inputs.model_type.lower() in ['t2t','text2text']    : inputs.model_type = 'text2textgen'
+    elif    inputs.model_type.lower() in ['tg','textgen']       : inputs.model_type = 'textgen'
+    elif    inputs.model_type.lower() in ['tc','textclass']     : inputs.model_type = 'textclass'
+    else: raise ValueError("Invalid model type (mt). Choose from: Text2Text, TextGen, or TextClass.")
     
-    # Normalize inputs
-    if      inputs.model_type.lower() == 't2t'    : inputs.model_type = 'text2text'
-    elif    inputs.model_type.lower() == 'tg'     : inputs.model_type = 'textGen'
-    elif    inputs.model_type.lower() == 'tc'     : inputs.model_type = 'textClass'
-    
-    if      inputs.data_source.lower() == 'a'     : inputs.data_source = 'applications'
-    elif    inputs.data_source.lower() == 'c'     : inputs.data_source = 'companies'
-    elif    inputs.data_source.lower() == 'd'     : inputs.data_source = 'definitions'
+    if      inputs.data_source.lower() in ['a','applications']  : inputs.data_source = 'applications'
+    elif    inputs.data_source.lower() in ['c','companies']     : inputs.data_source = 'companies'
+    elif    inputs.data_source.lower() in ['d','definitions']   : inputs.data_source = 'definitions'
+    else:   raise ValueError("Invalid data source (ds). Choose from: Applications, Companies, or Definitions.")
     
     return inputs
 
 def dataDev2_query(args) -> None:
     """Query for confirmation before proceeding with dataDev 2."""
     while True:
-        user_input = input(f"\n         ********************* >>>>> -- DataDev2 -- <<<<< *********************          \n\nThis script will transform decomposed data into .csv files suitable for model development.\nYou have opted to create **{args.model_type.capitalize()}** formatted data, sourced from the **{args.data_source.capitalize()}** database.\nDo you wish to continue? (y/n): ")
+        user_input = input(f"\n         ********************* >>>>> -- DataDev2 -- <<<<< *********************          \n\nThis script will transform decomposed data into .csv files suitable for model development.\nYou have opted to create **{args.model_type}** formatted data, sourced from the **{args.data_source}** database.\nDo you wish to continue? (y/n): ")
         
         if user_input.lower() == 'y': 
             break # Proceed with the script

@@ -488,24 +488,24 @@ PATTERNS = {
         ("What is the version of the following sentence with correct "
          "punctuation?\n\n{no_punct}\n\n", "{answer}"),
     ],
-    "word_segment": [
-        ("{no_space}\nGenerate a sentence using the above characters:",
-         "{answer}"),
-        ("{no_space}\nWhat's a sentence that uses these characters?",
-         "{answer}"),
-        ("{no_space}\n\nPlease segment the words:", "{answer}"),
-        ("Add spaces: {no_space}\n\n", "{answer}"),
-        ("Please add spaces between words: {no_space}\n\n", "{answer}"),
-        ("This text is missing some spaces, please add them: {no_space}\n\n",
-         "{answer}"),
-        ("Add spaces between the words in the following text: {no_space}\n\n",
-         "{answer}"),
-        ("Write the following list of characters into a correctly formed "
-         "sentence: {no_space}\n\n", "{answer}"),
-        ("{answer}\n\nPlease remove spaces between words.", "{no_space}"),
-        ("Remove the spaces from the following sentence: {answer}",
-         "{no_space}"),
-    ],
+    # "word_segment": [
+    #     ("{no_space}\nGenerate a sentence using the above characters:",
+    #      "{answer}"),
+    #     ("{no_space}\nWhat's a sentence that uses these characters?",
+    #      "{answer}"),
+    #     ("{no_space}\n\nPlease segment the words:", "{answer}"),
+    #     ("Add spaces: {no_space}\n\n", "{answer}"),
+    #     ("Please add spaces between words: {no_space}\n\n", "{answer}"),
+    #     ("This text is missing some spaces, please add them: {no_space}\n\n",
+    #      "{answer}"),
+    #     ("Add spaces between the words in the following text: {no_space}\n\n",
+    #      "{answer}"),
+    #     ("Write the following list of characters into a correctly formed "
+    #      "sentence: {no_space}\n\n", "{answer}"),
+    #     ("{answer}\n\nPlease remove spaces between words.", "{no_space}"),
+    #     ("Remove the spaces from the following sentence: {answer}",
+    #      "{no_space}"),
+    # ],
     "cosmos_qa": [
         ("{context}\n\nQuestion with options to choose from: "
          "{question}\n{options_}", "{answer}"),
@@ -625,28 +625,28 @@ PATTERNS = {
          "passage?\n\n{passage}\n\n{options_}\nSay why you think so.",
          "{cot}. The answer is {answer}"),
     ],
-    "definite_pronoun_resolution": [
-        ("{sentence}\n\n{options_}\nWho is {pronoun} referring to?",
-         "{answer}"),
-        ("{sentence}\n\nWho is \"{pronoun}\" in this prior sentence(see "
-         "options)?\n{options_}", "{answer}"),
-        ("{sentence}\n\nWho is {pronoun} referring to in this "
-         "sentence?\n{options_}", "{answer}"),
-        ("Choose your answer: {sentence}\nTell me who {pronoun} is.\n{options_}",
-         "{answer}"),
-        ("{sentence}\nBased on this sentence, who is {pronoun}?\n\n{options_}",
-         "{answer}"),
-        ("Choose your answer: Who is {pronoun} in the following "
-         "sentence?\n\n{sentence}\n\n{options_}", "{answer}"),
-        ("Multi-choice problem: Which entity is {pronoun} this "
-         "sentence?\n\n{sentence}\n\n{options_}", "{answer}"),
-        ("Who is {pronoun} referring to in the following "
-         "sentence?\n{sentence}\n\n{options_}", "{answer}"),
-        ("Note that this question lists possible answers. Which person is "
-         "{pronoun} referring to in the following "
-         "sentence?\n{sentence}\n\n{options_}", "{answer}"),
-        ("{sentence}\nWho is \"{pronoun}\"?\n{options_}", "{answer}"),
-    ],
+    # "definite_pronoun_resolution": [
+    #     ("{sentence}\n\n{options_}\nWho is {pronoun} referring to?",
+    #      "{answer}"),
+    #     ("{sentence}\n\nWho is \"{pronoun}\" in this prior sentence(see "
+    #      "options)?\n{options_}", "{answer}"),
+    #     ("{sentence}\n\nWho is {pronoun} referring to in this "
+    #      "sentence?\n{options_}", "{answer}"),
+    #     ("Choose your answer: {sentence}\nTell me who {pronoun} is.\n{options_}",
+    #      "{answer}"),
+    #     ("{sentence}\nBased on this sentence, who is {pronoun}?\n\n{options_}",
+    #      "{answer}"),
+    #     ("Choose your answer: Who is {pronoun} in the following "
+    #      "sentence?\n\n{sentence}\n\n{options_}", "{answer}"),
+    #     ("Multi-choice problem: Which entity is {pronoun} this "
+    #      "sentence?\n\n{sentence}\n\n{options_}", "{answer}"),
+    #     ("Who is {pronoun} referring to in the following "
+    #      "sentence?\n{sentence}\n\n{options_}", "{answer}"),
+    #     ("Note that this question lists possible answers. Which person is "
+    #      "{pronoun} referring to in the following "
+    #      "sentence?\n{sentence}\n\n{options_}", "{answer}"),
+    #     ("{sentence}\nWho is \"{pronoun}\"?\n{options_}", "{answer}"),
+    # ],
     "glue_mrpc": [
         ("Here are two sentences:\n{sentence1}\n{sentence2}\nDo they have the "
          "same meaning?\n{options_}", "{answer}"),
@@ -775,50 +775,50 @@ PATTERNS = {
          "{sentence1}\n{sentence2}\nYour thought?",
          "{cot}\nThe answer is {answer}"),
     ],
-    "sentiment140": [
-        ("{text}\nSelect your answer from the options. What is the sentiment "
-         "of this tweet?\n{options_}...I think the answer is", "{answer}"),
-        ("{text}\n\nHow would the sentiment of this tweet be "
-         "described?\n{options_}", "{answer}"),
-        ("{text}\n\nDescribe the sentiment embodied by this "
-         "tweet.\n{options_}\nI think the answer is", "{answer}"),
-        ("Tweet: {text}\nPredict the sentiment of this tweet.\n{options_}",
-         "{answer}"),
-        ("Multi-choice question: What is the sentiment of the following "
-         "tweet?\nTweet: {text}\n{options_}", "{answer}"),
-        ("Select your answer from the options. How would one describe the "
-         "sentiment of this tweet?\n{text}\n{options_}", "{answer}"),
-        ("Possible tweet sentiments: {options_}\nWrite a tweet that is "
-         "{answer}.", "{text}"),
-        ("What is an example of a tweet?", "{text}"),
-        ("Write a {answer} tweet. Possible tweet types: {options_}", "{text}"),
-        ("Sentiment possibilities {options_}. Generate a tweet that has the "
-         "following sentiment: {answer} ", "{text}"),
-    ],
+    # "sentiment140": [
+    #     ("{text}\nSelect your answer from the options. What is the sentiment "
+    #      "of this tweet?\n{options_}...I think the answer is", "{answer}"),
+    #     ("{text}\n\nHow would the sentiment of this tweet be "
+    #      "described?\n{options_}", "{answer}"),
+    #     ("{text}\n\nDescribe the sentiment embodied by this "
+    #      "tweet.\n{options_}\nI think the answer is", "{answer}"),
+    #     ("Tweet: {text}\nPredict the sentiment of this tweet.\n{options_}",
+    #      "{answer}"),
+    #     ("Multi-choice question: What is the sentiment of the following "
+    #      "tweet?\nTweet: {text}\n{options_}", "{answer}"),
+    #     ("Select your answer from the options. How would one describe the "
+    #      "sentiment of this tweet?\n{text}\n{options_}", "{answer}"),
+    #     ("Possible tweet sentiments: {options_}\nWrite a tweet that is "
+    #      "{answer}.", "{text}"),
+    #     ("What is an example of a tweet?", "{text}"),
+    #     ("Write a {answer} tweet. Possible tweet types: {options_}", "{text}"),
+    #     ("Sentiment possibilities {options_}. Generate a tweet that has the "
+    #      "following sentiment: {answer} ", "{text}"),
+    # ],
     # Not in FLAN Templates (flan_templates):
-    "synth_cot_sentiment140": [
-        ("{text}\nWhat is the sentiment of this tweet?\n{options_}..."
-         "I think the solution should be:", "{cot} The answer is {answer}"),
-        ("{text}\n\nHow would the sentiment of this tweet be "
-         "described?\n{options_}\nStep-by-step reasoning process:",
-         "{cot} So the answer is {answer}"),
-        ("{text}\n\nDescribe the sentiment embodied by this "
-         "tweet.\n{options_}\nThoughts:", "{cot}\nAnswer: {answer}"),
-        ("Tweet: {text}\nEXPLAIN the sentiment of this tweet.\n{options_}",
-         "Explanation: {cot}\nAnswer: {answer}"),
-        ("Think out loud: What is the sentiment of the following "
-         "tweet?\nTweet:{text}\n{options_}\n", "{cot} The answer is {answer}"),
-        ("Let's think step-by-step to solve this: How would one describe the "
-         "sentiment of this tweet?\n{text}\n{options_}\n",
-         "Step-by-step reasoning: {cot}\nAnswer: {answer}"),
-        ("{text}\nSentiment?\n{options_}\nCoT:", "{cot}\nAnswer: {answer}"),
-        ("{text}\nHow is sentiment of the text above?\n{options_}\n"
-         "Chain-of-thought:", "{cot}\nAnswer: {answer}"),
-        ("{text}\nIs this text positive or negative?\n{options_}\n"
-         "Well, I think:", "{cot}\nSo the answer is: {answer}"),
-        ("Text: {text}\nIs the text above positive or negative in terms of "
-         "sentiment?\n{options_}\nHmm...", "{cot}\nThe answer is: {answer}"),
-    ],
+    # "synth_cot_sentiment140": [
+    #     ("{text}\nWhat is the sentiment of this tweet?\n{options_}..."
+    #      "I think the solution should be:", "{cot} The answer is {answer}"),
+    #     ("{text}\n\nHow would the sentiment of this tweet be "
+    #      "described?\n{options_}\nStep-by-step reasoning process:",
+    #      "{cot} So the answer is {answer}"),
+    #     ("{text}\n\nDescribe the sentiment embodied by this "
+    #      "tweet.\n{options_}\nThoughts:", "{cot}\nAnswer: {answer}"),
+    #     ("Tweet: {text}\nEXPLAIN the sentiment of this tweet.\n{options_}",
+    #      "Explanation: {cot}\nAnswer: {answer}"),
+    #     ("Think out loud: What is the sentiment of the following "
+    #      "tweet?\nTweet:{text}\n{options_}\n", "{cot} The answer is {answer}"),
+    #     ("Let's think step-by-step to solve this: How would one describe the "
+    #      "sentiment of this tweet?\n{text}\n{options_}\n",
+    #      "Step-by-step reasoning: {cot}\nAnswer: {answer}"),
+    #     ("{text}\nSentiment?\n{options_}\nCoT:", "{cot}\nAnswer: {answer}"),
+    #     ("{text}\nHow is sentiment of the text above?\n{options_}\n"
+    #      "Chain-of-thought:", "{cot}\nAnswer: {answer}"),
+    #     ("{text}\nIs this text positive or negative?\n{options_}\n"
+    #      "Well, I think:", "{cot}\nSo the answer is: {answer}"),
+    #     ("Text: {text}\nIs the text above positive or negative in terms of "
+    #      "sentiment?\n{options_}\nHmm...", "{cot}\nThe answer is: {answer}"),
+    # ],
     "story_cloze": [
         ("{context}\n{options_}\nWhich option is the next sentence?",
          "{answer}"),
@@ -1029,27 +1029,27 @@ PATTERNS = {
          "write a list of questions.\n\n{numbered_answers}\n\nNumbered "
          "questions:", "{numbered_questions}"),
     ],
-    "opinion_abstracts_rotten_tomatoes": [
-        ("{numbered_reviews}\n\nWrite a one sentence summary of the reviews "
-         "above.", "{critic_consensus}"),
-        ("{numbered_reviews}\n\nWhat is a brief summary of "
-         "the following reviews?", "{critic_consensus}"),
-        ("{numbered_reviews}\nBased on these individual reviews, what is the "
-         "critic consensus?", "{critic_consensus}"),
-        ("{numbered_reviews}\nWhat is the consensus?", "{critic_consensus}"),
-        ("Here are some reviews for a movie: {numbered_reviews}\n\nWhat was "
-         "the overall consensus about the movie?", "{critic_consensus}"),
-        ("Summarize the following movie "
-         "reviews:\n\n{numbered_reviews}\n\nSummary:", "{critic_consensus}"),
-        ("Write a one sentence review of the movie \"{movie}\".",
-         "{critic_consensus}"),
-        ("Write an ordered list of reviews about \"{movie}\".",
-         "{numbered_reviews}"),
-        ("The critic consesnsus is: {critic_consensus}. What reviews supported"
-         " this critic consensus?", "{numbered_reviews}"),
-        ("Which movie is the following review "
-         "about?\n\n{first_review}\n\nMovie:", "{movie}"),
-    ],
+    # "opinion_abstracts_rotten_tomatoes": [
+    #     ("{numbered_reviews}\n\nWrite a one sentence summary of the reviews "
+    #      "above.", "{critic_consensus}"),
+    #     ("{numbered_reviews}\n\nWhat is a brief summary of "
+    #      "the following reviews?", "{critic_consensus}"),
+    #     ("{numbered_reviews}\nBased on these individual reviews, what is the "
+    #      "critic consensus?", "{critic_consensus}"),
+    #     ("{numbered_reviews}\nWhat is the consensus?", "{critic_consensus}"),
+    #     ("Here are some reviews for a movie: {numbered_reviews}\n\nWhat was "
+    #      "the overall consensus about the movie?", "{critic_consensus}"),
+    #     ("Summarize the following movie "
+    #      "reviews:\n\n{numbered_reviews}\n\nSummary:", "{critic_consensus}"),
+    #     ("Write a one sentence review of the movie \"{movie}\".",
+    #      "{critic_consensus}"),
+    #     ("Write an ordered list of reviews about \"{movie}\".",
+    #      "{numbered_reviews}"),
+    #     ("The critic consesnsus is: {critic_consensus}. What reviews supported"
+    #      " this critic consensus?", "{numbered_reviews}"),
+    #     ("Which movie is the following review "
+    #      "about?\n\n{first_review}\n\nMovie:", "{movie}"),
+    # ],
     "opinion_abstracts_idebate": [
         ("{argument_sentences}\n\nWhat is the general argument implied by "
          "these sentences?", "{claim}"),
@@ -1141,30 +1141,30 @@ PATTERNS = {
         ("Create a set of triples that describes the content in the following "
          "sentence.\n\n{target}\n\n", "{tripleset_newline}"),
     ],
-    "e2e_nlg": [
-        ("Attributes: {meaning_representation}. Produce a detailed sentence "
-         "about this restaurant.", "{target}"),
-        ("Data: {meaning_representation}. Can you generate a sentence about "
-         "this data?", "{target}"),
-        ("Data: {meaning_representation}. What is a sentence that describe "
-         "this data?", "{target}"),
-        ("Here are some keywords about a "
-         "restaurant:\n\n{meaning_representation}. Write a sentence that "
-         "describes the following attributes of a restaurant.", "{target}"),
-        ("Here is some data about a restaurant: {meaning_representation}. "
-         "Write a sentence that includes the above data about a restaurant",
-         "{target}"),
-        ("Sentence: {meaning_representation}\n\nCan you represent the content "
-         "in this sentence in data form?", "{target}"),
-        ("Write a sentence about a restaurant with all the following "
-         "attributes: {meaning_representation}\nSentence:", "{target}"),
-        ("Write a sentence that is about a restaurant with all the following "
-         "properties: {meaning_representation}\nSentence:", "{target}"),
-        ("Produce a detailed sentence about a restaurant using the following "
-         "words: {meaning_representation}\nSentence:", "{target}"),
-        ("Generate a descriptive sentence about a restaurant using the "
-         "following words:\n\n{meaning_representation}\nSentence:", "{target}"),
-    ],
+    # "e2e_nlg": [
+    #     ("Attributes: {meaning_representation}. Produce a detailed sentence "
+    #      "about this restaurant.", "{target}"),
+    #     ("Data: {meaning_representation}. Can you generate a sentence about "
+    #      "this data?", "{target}"),
+    #     ("Data: {meaning_representation}. What is a sentence that describe "
+    #      "this data?", "{target}"),
+    #     ("Here are some keywords about a "
+    #      "restaurant:\n\n{meaning_representation}. Write a sentence that "
+    #      "describes the following attributes of a restaurant.", "{target}"),
+    #     ("Here is some data about a restaurant: {meaning_representation}. "
+    #      "Write a sentence that includes the above data about a restaurant",
+    #      "{target}"),
+    #     ("Sentence: {meaning_representation}\n\nCan you represent the content "
+    #      "in this sentence in data form?", "{target}"),
+    #     ("Write a sentence about a restaurant with all the following "
+    #      "attributes: {meaning_representation}\nSentence:", "{target}"),
+    #     ("Write a sentence that is about a restaurant with all the following "
+    #      "properties: {meaning_representation}\nSentence:", "{target}"),
+    #     ("Produce a detailed sentence about a restaurant using the following "
+    #      "words: {meaning_representation}\nSentence:", "{target}"),
+    #     ("Generate a descriptive sentence about a restaurant using the "
+    #      "following words:\n\n{meaning_representation}\nSentence:", "{target}"),
+    # ],
     "web_nlg_en": [
         ("{input_string}\n\nWhat is sentence that verbalizes this data?",
          "{target}"),
@@ -1283,29 +1283,29 @@ PATTERNS = {
          "grammatically as category: {answer}\nAll categories: {options_}",
          "{sentence}"),
     ],
-    "sst2": [
-        ("Review:\n{sentence}\nIs this movie review sentence negative or "
-         "positive?\n{options_}\nThe answer is:", "{answer}"),
-        ("{options_}\nShort movie review: {sentence}\nDid the critic thinking "
-         "positively or negatively of the movie?\n\n", "{answer}"),
-        ("Sentence from a movie review: {sentence}\nSelect your answer: was "
-         "the movie seen positively or negatively based on the preceding "
-         "review?\n\n{options_}", "{answer}"),
-        ("\"{sentence}\"\nHow would the sentiment of this sentence be "
-         "perceived --\n\n{options_}\nAnswer:", "{answer}"),
-        ("Is the sentiment of the following sentence positive or negative (see"
-         " options at the end)?\n{sentence}\n{options_}", "{answer}"),
-        ("What is the sentiment of the following movie (choose your answer "
-         "from the options) review sentence?\n{sentence}\n{options_}\nThe "
-         "answer is:", "{answer}"),
-        ("{options_}Would the following phrase be considered positive or "
-         "negative?\n\n{sentence}\n", "{answer}"),
-        ("Does the following review have a positive or negative opinion of the"
-         " movie?\n\n{sentence}\n{options_}", "{answer}"),
-        ("Write a \"{answer}\" movie review ({options_}).", "{sentence}"),
-        ("Generate a short movie review that has \"{answer}\" sentiment "
-         "({options_}).", "{sentence}"),
-    ],
+    # "sst2": [
+    #     ("Review:\n{sentence}\nIs this movie review sentence negative or "
+    #      "positive?\n{options_}\nThe answer is:", "{answer}"),
+    #     ("{options_}\nShort movie review: {sentence}\nDid the critic thinking "
+    #      "positively or negatively of the movie?\n\n", "{answer}"),
+    #     ("Sentence from a movie review: {sentence}\nSelect your answer: was "
+    #      "the movie seen positively or negatively based on the preceding "
+    #      "review?\n\n{options_}", "{answer}"),
+    #     ("\"{sentence}\"\nHow would the sentiment of this sentence be "
+    #      "perceived --\n\n{options_}\nAnswer:", "{answer}"),
+    #     ("Is the sentiment of the following sentence positive or negative (see"
+    #      " options at the end)?\n{sentence}\n{options_}", "{answer}"),
+    #     ("What is the sentiment of the following movie (choose your answer "
+    #      "from the options) review sentence?\n{sentence}\n{options_}\nThe "
+    #      "answer is:", "{answer}"),
+    #     ("{options_}Would the following phrase be considered positive or "
+    #      "negative?\n\n{sentence}\n", "{answer}"),
+    #     ("Does the following review have a positive or negative opinion of the"
+    #      " movie?\n\n{sentence}\n{options_}", "{answer}"),
+    #     ("Write a \"{answer}\" movie review ({options_}).", "{sentence}"),
+    #     ("Generate a short movie review that has \"{answer}\" sentiment "
+    #      "({options_}).", "{sentence}"),
+    # ],
     "mnli": [
         ("Premise: {premise}\n\nHypothesis: {hypothesis}\n\nDoes the premise "
          "entail the hypothesis?\n\n{options_}", "{answer}"),
@@ -1869,18 +1869,18 @@ PATTERNS = {
         ("{inputs} A:", "{targets}"),
     ],
     # Not in FLAN Templates (flan_templates):
-    "predict_next_turn_dialog": [
-        ("{dialog_}", "{answer}"),
-        ("{dialog_}\n", "{answer}"),
-        ("Read the dialog and predict the next turn. {dialog_}\n", "{answer}"),
-        ("What is the next dialog turn? {dialog_}", "{answer}"),
-        ("See the conversation. {dialog_}", "{answer}"),
-        ("Write the response. {dialog_}", "{answer}"),
-        ("Write the conversation response. {dialog_}", "{answer}"),
-        ("Fill in the response. {dialog_}", "{answer}"),
-        ("What was likely said next? {dialog_}", "{answer}"),
-        ("What was the response? {dialog_}", "{answer}"),
-    ],
+    # "predict_next_turn_dialog": [
+    #     ("{dialog_}", "{answer}"),
+    #     ("{dialog_}\n", "{answer}"),
+    #     ("Read the dialog and predict the next turn. {dialog_}\n", "{answer}"),
+    #     ("What is the next dialog turn? {dialog_}", "{answer}"),
+    #     ("See the conversation. {dialog_}", "{answer}"),
+    #     ("Write the response. {dialog_}", "{answer}"),
+    #     ("Write the conversation response. {dialog_}", "{answer}"),
+    #     ("Fill in the response. {dialog_}", "{answer}"),
+    #     ("What was likely said next? {dialog_}", "{answer}"),
+    #     ("What was the response? {dialog_}", "{answer}"),
+    # ],
     # Not in FLAN Templates (flan_templates):
     "t0_question_answer": [
         # t0 comes pre-templatized/formatted and generation task varies

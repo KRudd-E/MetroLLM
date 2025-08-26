@@ -8,12 +8,13 @@ import json
 from datetime import datetime
 
 from src.utils.utils import t2t_app_query, t2t_def_query
-from src.utils.ai_chat import get_API_key, ai_chat
+from src.utils.ai import AI_Assister
 from src.utils.patterns import PATTERNS
 
 class Text2TextGen:
     def __init__(self, config, src):
         self.config = config
+        self.ai_assist = AI_Assister()
         if src.lower() == 'applications'  : self.applicationsDB_Gen(config['applicationsDB'])
         if src.lower() == 'definitions'   : self.definitionsDB_Gen(config['definitionsDB'])
         if src.lower() == 'companies'     : self.companiesDB_Gen(config['companiesDB'])
@@ -24,7 +25,6 @@ class Text2TextGen:
     def applicationsDB_Gen(self, config):
         
         t2t_app_query(config['starting_subfolder'], config['output_dir'], config['append_or_overwrite'])
-        self = get_API_key(self)
         
         # Get Subfolder directories and names
         subdirs = sorted([x[0] for x in os.walk(os.getcwd() + config['source_dir'])][1:])
@@ -87,8 +87,7 @@ class Text2TextGen:
                     )
                     
                     # Generate output
-                    response = ai_chat(
-                        self=self,
+                    response = self.ai_assist.ai_chat(
                         model_source=config['model_source'],
                         model=config['model'],
                         input=ai_txt
@@ -138,8 +137,7 @@ class Text2TextGen:
                     definition=row[1]['definition']
                 )
                 
-                response = ai_chat(
-                    self=self,
+                response = self.ai_assist.ai_chat(
                     model_source=config['model_source'],
                     model=config['model'],
                     input=ai_txt

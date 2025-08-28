@@ -15,5 +15,3 @@ def disable_compilation():
 
     # Set attention implementation to eager (non-compiled)
     os.environ["ATTENTION_IMPLEMENTATION"] = "eager"
-
-    print("PyTorch compilation disabled for HPC compatibility")

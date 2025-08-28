@@ -40,9 +40,10 @@ class ClassificationWrapper:
             model_name,
             num_labels=config["data"]["class_no"],
             problem_type="multi_label_classification",
-            hidden_dropout_prob=float(config['training_args'].get('dropout', 0.1)),
-            attention_probs_dropout_prob=float(config['training_args'].get('dropout', 0.1)),
+            hidden_dropout_prob=float(config['training_args']['dropout']),
+            attention_probs_dropout_prob=float(config['training_args']['dropout']),
         )
+        #! IF DROPOUT CAUSES ISSUES DURING EVAL, SET UNDER CONFIG IN 'if run == 'train'.
         
         # Disable features which cause issues on HPC 
         if hasattr(model_config, 'compile_embeddings'):
@@ -86,7 +87,6 @@ class ClassificationWrapper:
                     delattr(embeddings, 'compiled_embeddings')
                     # Set a flag to indicate we're using non-compiled embeddings
                     embeddings._use_compiled = False
-                    print("Disabled compiled embeddings to prevent shared tensor issues")
                 except AttributeError:
                     # In case delattr still fails
                     pass

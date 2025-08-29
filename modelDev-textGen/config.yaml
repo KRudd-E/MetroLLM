@@ -1,0 +1,62 @@
+# NB: add '/' at the start of directories for ensured directory formatting
+
+config_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/config.yaml
+
+train:
+  data:
+    dir: "/gpfs01/home/efykr2/MetroLLM/data/3-formatted/textGen/textGen_train.csv"
+    task_col: "task"
+    input_col: "input"
+    output_col: "output"
+    max_seq_length: 2048
+
+  model:
+    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+    max_input_length: 2048
+    max_target_length: 2048
+
+  training_args:
+    output_dir:         "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/"
+    eval_strategy:      "epoch"
+    save_strategy:      "epoch"
+    logging_strategy:   epoch
+    logging_steps:      5
+    learning_rate:      5e-5
+    per_device_train_batch_size:    2
+    per_device_eval_batch_size:     2
+    gradient_accumulation_steps:    32
+    weight_decay:               0.01
+    warmup_ratio:               0.1
+    num_train_epochs:           6
+    predict_with_generate:      True
+    generation_max_length:      512
+    load_best_model_at_end:     True
+    metric_for_best_model:      "rouge1"
+    greater_is_better:          True
+    bf16:                       True
+    gradient_checkpointing:     True
+    dataloader_pin_memory:      False
+    label_smoothing_factor:     0.1
+    save_total_limit:           3
+    push_to_hub:                False
+
+    log_training_steps:   True
+    
+
+eval:
+  data:
+    dir: "/data/3-formatted/textGen/textGen_test.csv"
+    task_col: "task"
+    input_col: "input"
+    output_col: "output"
+    max_seq_length: 2048
+
+  model:
+    dir: "/modelDev-text2textGen/results/V2/checkpoint-1680/"
+    max_input_length: 2048
+    max_target_length: 2048
+
+  eval_args:
+    metric: "rouge"
+    batch_size: 8
+    output_dir: "/modelDev-text2textGen/results/V2/checkpoint-1680/eval_results.json"

@@ -25,6 +25,7 @@ class DeepSeekWrapper:
             # Add padding token if it doesn't exist
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.model.config.pad_token_id = self.tokenizer.pad_token_id
             
             # Update model config
             self.model.config.pad_token_id = self.tokenizer.pad_token_id
@@ -51,6 +52,7 @@ class DeepSeekWrapper:
             # Add padding token if it doesn't exist
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.model.config.pad_token_id = self.tokenizer.pad_token_id
                 
             self.data_collator = DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, 

@@ -43,6 +43,11 @@ class DatasetLoader:
         formatted_texts = []
         for input_text, output_text in zip(examples[config['data']['input_col']], examples[config['data']['output_col']]):
             
+            if not isinstance(input_text, str):
+                input_text = str(input_text) if input_text is not None else ""
+            if not isinstance(output_text, str):
+                output_text = str(output_text) if output_text is not None else ""
+                    
             messages = [
                 {"role": "user", "content": input_text},
                 {"role": "assistant", "content": output_text}

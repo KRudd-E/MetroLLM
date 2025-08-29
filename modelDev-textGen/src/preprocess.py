@@ -1,4 +1,4 @@
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, DatasetDict, Dataset
  
 class DatasetLoader:
     def __init__(self, config, run, model_wrapper):
@@ -11,6 +11,13 @@ class DatasetLoader:
         """Load and preprocess training data."""
         
         dataset = load_dataset("csv", data_files=config['data']['dir'], split="train")
+        dataset.column_names
+        # Remove 'id' column if it exists
+        try:
+            dataset = dataset.remove_columns(['id'])
+        except:
+            pass
+        
         train_dataset, val_dataset = dataset.train_test_split(test_size=0.1875).values()  # type: ignore
         
         tokenized_train = train_dataset.map(lambda x: self.preprocess_mapping(x, config), batched=True)
@@ -35,11 +42,13 @@ class DatasetLoader:
         # Format text using chat template @ hugging face
         formatted_texts = []
         for input_text, output_text in zip(examples[config['data']['input_col']], examples[config['data']['output_col']]):
+            
             messages = [
                 {"role": "user", "content": input_text},
                 {"role": "assistant", "content": output_text}
             ]
             
+            # ERROR: TypeError: can only concatenate str (not "NoneType") to str
             formatted_text = self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,

@@ -24,12 +24,12 @@ train:
     learning_rate:      5e-5
     per_device_train_batch_size:    1
     per_device_eval_batch_size:     1
-    eval_accumulation_steps:        8
+    eval_accumulation_steps:        1
     gradient_accumulation_steps:    32
     weight_decay:               0.01
     warmup_ratio:               0.1
     num_train_epochs:           6
-    predict_with_generate:      True
+    predict_with_generate:      False
     generation_max_length:      512
     load_best_model_at_end:     True
     metric_for_best_model:      "rouge1"

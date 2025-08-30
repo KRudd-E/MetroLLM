@@ -3,6 +3,7 @@ def parser():
     parser = argparse.ArgumentParser(description="Model Development for Text Generation")
     parser.add_argument('--run', '-r', type=str, choices=['train', 't', 'finetune', 'ft', 't', 'evaluate', 'eval', 'e'], required=True,
                         help="Specify whether to train, evaluate, or fine-tune the model.")
+    parser.add_argument('--local_rank', type=int, default=-1, help='Local rank for distributed training')
     if parser.parse_args().run.lower() in ['train', 't', 'finetune', 'ft']: run = 'train'
     elif parser.parse_args().run.lower() in ['evaluate', 'eval', 'e']: run = 'evaluate'
     else: raise ValueError("Invalid run type specified. Use 'train' or 'evaluate'.")

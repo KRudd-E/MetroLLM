@@ -70,6 +70,9 @@ class Trainer:
         
         torch.cuda.empty_cache()
 
+        if torch.distributed.is_initialized():
+            torch.distributed.destroy_process_group()
+
 
     # # essentially same as compute_metrics3
     # def compute_metrics4(self, eval_pred):

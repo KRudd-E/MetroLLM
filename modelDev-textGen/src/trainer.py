@@ -1,5 +1,6 @@
 import numpy as np
 import nltk
+import torch
 import evaluate
 from transformers import Trainer as HFTrainer
 from transformers import TrainingArguments
@@ -55,7 +56,7 @@ class Trainer:
 
         trainer = HFTrainer(
             model             = self.model,
-            #tokenizer         = self.tokenizer,
+            # tokenizer         = self.tokenizer,
             args              = training_args,
             train_dataset     = self.dataset["train"],
             eval_dataset      = self.dataset["val"],
@@ -65,6 +66,8 @@ class Trainer:
         )
 
         trainer.train()
+        
+        torch.cuda.empty_cache()
 
 
     # # essentially same as compute_metrics3

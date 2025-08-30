@@ -11,8 +11,7 @@ class DatasetLoader:
         """Load and preprocess training data."""
         
         dataset = load_dataset("csv", data_files=config['data']['dir'], split="train")
-        dataset.column_names
-        # Remove 'id' column if it exists
+        # Remove 'id' column if it exists
         try:
             dataset = dataset.remove_columns(['id'])
         except:
@@ -20,8 +19,23 @@ class DatasetLoader:
         
         train_dataset, val_dataset = dataset.train_test_split(test_size=0.1875).values()  # type: ignore
         
-        tokenized_train = train_dataset.map(lambda x: self.preprocess_mapping(x, config), batched=True)
-        tokenized_val = val_dataset.map(lambda x: self.preprocess_mapping(x, config), batched=True)
+        # Use remove_columns to ensure only tokenized features remain
+        tokenized_train = train_dataset.map(
+            lambda x: self.preprocess_mapping(x, config), 
+            batched=True, 
+            remove_columns=train_dataset.column_names
+        )
+        tokenized_val = val_dataset.map(
+            lambda x: self.preprocess_mapping(x, config), 
+            batched=True, 
+            remove_columns=val_dataset.column_names
+        )
+        
+        # Debug: Check data types
+        print("Sample tokenized example keys:", list(tokenized_train[0].keys()))
+        print("Sample input_ids type:", type(tokenized_train[0]["input_ids"]))
+        print("Sample input_ids length:", len(tokenized_train[0]["input_ids"]))
+        print("Sample input_ids first 5 values:", tokenized_train[0]["input_ids"][:5])
         
         return DatasetDict({"train": tokenized_train, "val": tokenized_val})
 
@@ -29,39 +43,51 @@ class DatasetLoader:
         """Load and preprocess evaluation data."""
         
         raw_test = load_dataset("csv", data_files=config['data']['dir'], split="train")
-        tokenized_test = raw_test.map(lambda x: self.preprocess_mapping(x, config), batched=True)
+        # Remove 'id' column if it exists
+        try:
+            raw_test = raw_test.remove_columns(['id'])
+        except:
+            pass
+            
+        tokenized_test = raw_test.map(
+            lambda x: self.preprocess_mapping(x, config), 
+            batched=True,
+            remove_columns=raw_test.column_names #type: ignore
+        )
         
         return tokenized_test
 
 
     #*** Preprocess Function ***#
     def preprocess_mapping(self, examples, config):
+        """
+        Process a batch of examples for causal language modeling.
+        examples: dict with keys like 'input', 'output' containing lists of strings
+        """
         
-        # https://huggingface.co/docs/transformers/main/chat_templating
-        
-        # Format text using chat template @ hugging face
+        # Format text using chat template
         formatted_texts = []
         for input_text, output_text in zip(examples[config['data']['input_col']], examples[config['data']['output_col']]):
-            
+            # Ensure strings
             if not isinstance(input_text, str):
                 input_text = str(input_text) if input_text is not None else ""
             if not isinstance(output_text, str):
                 output_text = str(output_text) if output_text is not None else ""
-                    
+                
+            # Create chat format
             messages = [
                 {"role": "user", "content": input_text},
                 {"role": "assistant", "content": output_text}
             ]
             
-            # ERROR: TypeError: can only concatenate str (not "NoneType") to str
             formatted_text = self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
                 add_generation_prompt=False
             )
             formatted_texts.append(formatted_text)
-        
-        # Tokenize formatted text
+
+        # Tokenize all formatted texts
         model_inputs = self.tokenizer(
             formatted_texts,
             max_length=config.get('data', {}).get('max_seq_length', 2048),
@@ -69,14 +95,18 @@ class DatasetLoader:
             truncation=True,
             return_tensors=None
         )
-        
-        
-        # Label masking: masks the input in labels so the model only learns from the output
-        model_inputs["labels"] = model_inputs["input_ids"].copy()
-    
-        for i, (input_text, formatted_text) in enumerate(zip(examples[config['data']['input_col']], formatted_texts)):
-            
-            # Find where assistant response starts
+
+        # Create labels (copy of input_ids)
+        labels = []
+        for input_ids in model_inputs["input_ids"]:
+            labels.append(input_ids.copy())
+
+        # Mask the user input part in labels
+        for i, input_text in enumerate(examples[config['data']['input_col']]):
+            if not isinstance(input_text, str):
+                input_text = str(input_text) if input_text is not None else ""
+                
+            # Create user-only message to find where to start loss computation
             user_msg = [{"role": "user", "content": input_text}]
             user_formatted = self.tokenizer.apply_chat_template(
                 user_msg,
@@ -84,27 +114,17 @@ class DatasetLoader:
                 add_generation_prompt=True
             )
             
-            # Tokenize just the user part to find where to start computing loss
+            # Tokenize user part to find length
             user_tokens = self.tokenizer(user_formatted, add_special_tokens=False)["input_ids"]
             user_length = len(user_tokens)
             
-            # Mask the user input part in labels by setting to -100 
-            for j in range(min(user_length, len(model_inputs["labels"][i]))):
-                model_inputs["labels"][i][j] = -100
+            # Mask user input tokens in labels (set to -100)
+            for j in range(min(user_length, len(labels[i]))):
+                labels[i][j] = -100
 
-        return model_inputs
-
-
-
-    # # https://www.digitalocean.com/community/tutorials/fine-tuning-deepseek-medical-cot
-    # def formatting_prompts_func(examples):
-    #     inputs = examples["Question"]
-    #     cots = examples["Complex_CoT"]
-    #     outputs = examples["Response"]
-    #     texts = []
-    #     for input, cot, output in zip(inputs, cots, outputs):
-    #         text = prompt_template.format(input, cot, output) + tokenizer.eos_token
-    #         texts.append(text)
-    #     return {
-    #         "text": texts,
-    #     }
+        # Return only the required tokenized features
+        return {
+            "input_ids": model_inputs["input_ids"],
+            "labels": labels,
+            "attention_mask": model_inputs["attention_mask"]
+        }

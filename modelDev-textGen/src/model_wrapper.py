@@ -32,7 +32,8 @@ class DeepSeekWrapper:
             
             self.data_collator = DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, 
-                mlm=False  # Causal LM, not masked LM
+                mlm=False,  # Causal LM (chat), not masked LM (e.g., direct classification)
+                pad_to_multiple_of=8
             )
         
         #*** Eval ***#

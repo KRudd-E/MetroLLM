@@ -17,7 +17,7 @@ class DatasetLoader:
         except:
             pass
         
-        train_dataset, val_dataset = dataset.train_test_split(test_size=0.1875).values()  # type: ignore
+        train_dataset, val_dataset = dataset.train_test_split(test_size=0.15).values()  # type: ignore
         
         # Use remove_columns to ensure only tokenized features remain
         tokenized_train = train_dataset.map(
@@ -30,12 +30,6 @@ class DatasetLoader:
             batched=True, 
             remove_columns=val_dataset.column_names
         )
-        
-        # Debug: Check data types
-        print("Sample tokenized example keys:", list(tokenized_train[0].keys()))
-        print("Sample input_ids type:", type(tokenized_train[0]["input_ids"]))
-        print("Sample input_ids length:", len(tokenized_train[0]["input_ids"]))
-        print("Sample input_ids first 5 values:", tokenized_train[0]["input_ids"][:5])
         
         return DatasetDict({"train": tokenized_train, "val": tokenized_val})
 

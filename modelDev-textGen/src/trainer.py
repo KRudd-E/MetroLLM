@@ -45,6 +45,7 @@ class Trainer:
             greater_is_better             =  bool(config['training_args']['greater_is_better']),
             bf16                          =  bool(config['training_args']['bf16']),
             gradient_checkpointing        =  bool(config['training_args']['gradient_checkpointing']),
+            max_grad_norm                 = float(config['training_args']['max_grad_norm']),
             dataloader_pin_memory         =  bool(config['training_args']['dataloader_pin_memory']),
             label_smoothing_factor        = float(config['training_args']['label_smoothing_factor']),
             save_total_limit              =   int(config['training_args']['save_total_limit']),
@@ -135,11 +136,32 @@ class Trainer:
     def compute_metrics3(self, eval_pred):
         predictions, labels = eval_pred
 
+        # Handle tuple predictions (common in generation tasks)
+        if isinstance(predictions, tuple):
+            predictions = predictions[0]
+
+        # Ensure predictions and labels are numpy arrays
+        predictions = np.array(predictions)
+        labels = np.array(labels)
+        
+        # Handle logits case - take argmax if predictions are 3D (batch, seq_len, vocab_size)
+        if len(predictions.shape) == 3:
+            predictions = np.argmax(predictions, axis=-1)
+
         # Remove -100s and decode
-        predictions = np.where(predictions != -100, predictions, self.tokenizer.pad_token_id) #-100 values are typically used as ignore indices in loss computation during training, but they need to be converted to valid token IDs before decoding.
+        predictions = np.where(predictions != -100, predictions, self.tokenizer.pad_token_id)
         labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
-        decoded_preds = self.tokenizer.batch_decode(predictions, skip_special_tokens=True)
-        decoded_labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
+        
+        # Ensure predictions and labels are proper integer arrays for decoding
+        try:
+            decoded_preds = self.tokenizer.batch_decode(predictions.astype(int), skip_special_tokens=True)
+            decoded_labels = self.tokenizer.batch_decode(labels.astype(int), skip_special_tokens=True)
+        except Exception as e:
+            print(f"Decoding error: {e}")
+            print(f"Predictions shape: {predictions.shape}, dtype: {predictions.dtype}")
+            print(f"Labels shape: {labels.shape}, dtype: {labels.dtype}")
+            # Fallback: return empty metrics
+            return {"exact_match": 0.0, "gen_len": 0.0}
 
         # Normalize text (tokenize into sentences for ROUGE)
         decoded_preds = [pred.strip() for pred in decoded_preds]

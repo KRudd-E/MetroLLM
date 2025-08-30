@@ -36,6 +36,7 @@ train:
     greater_is_better:          True
     bf16:                       True
     gradient_checkpointing:     True
+    max_grad_norm:              1.0
     dataloader_pin_memory:      False
     label_smoothing_factor:     0.1
     save_total_limit:           3

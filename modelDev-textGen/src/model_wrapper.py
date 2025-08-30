@@ -13,7 +13,6 @@ class DeepSeekWrapper:
                 config['model']['name'],
                 torch_dtype=torch.bfloat16,
                 low_cpu_mem_usage=True, 
-                device_map="auto",
                 trust_remote_code=True,
             )
             

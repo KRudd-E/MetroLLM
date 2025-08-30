@@ -36,6 +36,7 @@ class Trainer:
             per_device_train_batch_size   =   int(config['training_args']['per_device_train_batch_size']),
             per_device_eval_batch_size    =   int(config['training_args']['per_device_eval_batch_size']),
             gradient_accumulation_steps   =   int(config['training_args']['gradient_accumulation_steps']),
+            eval_accumulation_steps       =   int(config['training_args']['eval_accumulation_steps']),
             weight_decay                  = float(config['training_args']['weight_decay']),
             warmup_ratio                  = float(config['training_args']['warmup_ratio']),
             num_train_epochs              =   int(config['training_args']['num_train_epochs']),

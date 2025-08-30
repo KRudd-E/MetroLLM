@@ -63,9 +63,6 @@ class DeepSeekWrapper:
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Only move to device if not using device_map
-        if run == 'train':
-            self.model.to(self.device) #type: ignore
 
     def get_model(self):
         return self.model

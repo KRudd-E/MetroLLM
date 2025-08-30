@@ -57,7 +57,7 @@ def setup_training_output_dir(self):
     self.config['train']['log_dir'] = os.path.join(self.config['train']['output_dir']+ 'logs.json')
     
     # Make output folder
-    os.makedirs(self.config['train']['output_dir'], exist_ok=False)
+    os.makedirs(self.config['train']['output_dir'], exist_ok=True)
     
     # Make log file
     os.makedirs(os.path.dirname(self.config['train']['log_dir']), exist_ok=True)

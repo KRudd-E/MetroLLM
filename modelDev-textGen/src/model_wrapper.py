@@ -1,6 +1,7 @@
 # File: src/models/model_wrapper.py
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import DataCollatorForLanguageModeling
+from peft import LoraConfig, get_peft_model, TaskType
 import torch
 
 
@@ -16,6 +17,20 @@ class DeepSeekWrapper:
                 trust_remote_code=True,
             )
             
+            # Configure LoRA
+            lora_config = LoraConfig(
+                task_type=TaskType.CAUSAL_LM,
+                inference_mode=False,
+                r=config['lora']['rank'],
+                lora_alpha=config['lora']['alpha'],
+                lora_dropout=config['lora']['dropout'],
+                target_modules=config['lora']['target_modules'],
+            )
+            
+            # Apply LoRA to model
+            self.model = get_peft_model(self.model, lora_config)
+            self.model.print_trainable_parameters()
+            
             self.tokenizer = AutoTokenizer.from_pretrained(
                 config['model']['name'], 
                 trust_remote_code=True
@@ -24,10 +39,7 @@ class DeepSeekWrapper:
             # Add padding token if it doesn't exist
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
-            self.model.config.pad_token_id = self.tokenizer.pad_token_id
-            
-            # Update model config
-            self.model.config.pad_token_id = self.tokenizer.pad_token_id
+            self.model.pad_token_id = self.tokenizer.pad_token_id
             
             self.data_collator = DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, 

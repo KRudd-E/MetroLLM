@@ -29,6 +29,12 @@ class DeepSeekWrapper:
             
             # Apply LoRA to model
             self.model = get_peft_model(self.model, lora_config)
+            self.model.train()
+            
+            for name, param in self.model.named_parameters():
+                if "lora" in name:
+                    param.requires_grad = True
+            
             self.model.print_trainable_parameters()
             
             self.tokenizer = AutoTokenizer.from_pretrained(
@@ -39,7 +45,7 @@ class DeepSeekWrapper:
             # Add padding token if it doesn't exist
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
-            self.model.pad_token_id = self.tokenizer.pad_token_id
+            self.model.config.pad_token_id = self.tokenizer.pad_token_id # type: ignore
             
             self.data_collator = DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, 

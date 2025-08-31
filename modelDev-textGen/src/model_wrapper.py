@@ -29,11 +29,23 @@ class DeepSeekWrapper:
             
             # Apply LoRA to model
             self.model = get_peft_model(self.model, lora_config)
+            
+            # Enable gradient checkpointing compatibility with PEFT
+            if hasattr(self.model, 'enable_input_require_grads'):
+                self.model.enable_input_require_grads() # type: ignore
+            
+            # Ensure model is in training mode
             self.model.train()
             
+            # Debug: Print parameter status
+            trainable_params = 0
+            all_params = 0
             for name, param in self.model.named_parameters():
-                if "lora" in name:
-                    param.requires_grad = True
+                all_params += param.numel()
+                if param.requires_grad:
+                    trainable_params += param.numel()
+                    
+            print(f"Trainable params: {trainable_params:,} || All params: {all_params:,} || Trainable%: {100 * trainable_params / all_params:.4f}")
             
             self.model.print_trainable_parameters()
             

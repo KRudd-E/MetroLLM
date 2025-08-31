@@ -51,6 +51,7 @@ class Trainer:
             save_total_limit              =   int(config['training_args']['save_total_limit']),
             push_to_hub                   =  bool(config['training_args']['push_to_hub']),
             remove_unused_columns         = False,
+            ddp_find_unused_parameters    = False, 
         )
         
         logger = LoggingCallback(config['log_dir'], log_training_steps=config['training_args']['log_training_steps'])
@@ -66,8 +67,20 @@ class Trainer:
             compute_metrics   = self.compute_metrics3, 
             callbacks         = [logger, debugger],
         )
+        if torch.distributed.is_initialized():
+            # Use static graph for DDP compatibility with LoRA
+            try:
+                trainer.model._set_static_graph()  # type: ignore
+            except (AttributeError, RuntimeError):
+                pass
 
         trainer.train()
+        
+        # Save LoRA adapters specifically
+        if hasattr(self.model, 'save_pretrained'):
+            lora_output_dir = f"{config['output_dir']}/lora_adapters"
+            self.model.save_pretrained(lora_output_dir)
+            print(f"LoRA adapters saved to: {lora_output_dir}")
         
         torch.cuda.empty_cache()
 

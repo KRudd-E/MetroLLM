@@ -9,6 +9,7 @@ train:
     input_col: "input"
     output_col: "output"
     max_seq_length: 2048
+    max_tokenizer_length: 16384
 
   model:
     name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"

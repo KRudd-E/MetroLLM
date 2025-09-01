@@ -51,6 +51,8 @@ class DeepSeekWrapper:
             
             self.tokenizer = AutoTokenizer.from_pretrained(
                 config['model']['name'], 
+                max_length=config['data']['max_tokenizer_length'],
+                truncation=True,
                 trust_remote_code=True
             )
             

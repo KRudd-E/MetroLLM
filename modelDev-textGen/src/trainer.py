@@ -27,6 +27,7 @@ class Trainer:
     def train(self, config):
         
         training_args = TrainingArguments(
+            label_names=["labels"], # No error.
             output_dir                    =   str(config['output_dir']),
             eval_strategy                 =   str(config['training_args']['eval_strategy']),
             save_strategy                 =   str(config['training_args']['save_strategy']),

@@ -2,6 +2,7 @@ from transformers.trainer_callback import TrainerCallback
 import os
 import json
 import datetime
+import torch
 
 class LoggingCallback(TrainerCallback):
     def __init__(self, log_dir, log_training_steps=True):
@@ -70,3 +71,16 @@ class DebugCallback(TrainerCallback):
         if logs and "loss" in logs:
             if logs["loss"] == 0:
                 print("WARNING: Zero loss detected!")
+                
+                
+                
+class MemoryCleanupCallback(TrainerCallback):
+    def on_evaluate(self, args, state, control, **kwargs):
+        """Clear GPU cache after evaluation"""
+        torch.cuda.empty_cache()
+        
+    def on_save(self, args, state, control, **kwargs):
+        """Clear GPU cache after saving"""
+        torch.cuda.empty_cache()
+
+                

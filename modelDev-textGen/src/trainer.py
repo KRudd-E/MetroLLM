@@ -4,7 +4,7 @@ import torch
 import evaluate
 from transformers import Trainer as HFTrainer
 from transformers import TrainingArguments
-from src.utils.callbacks import LoggingCallback, DebugCallback
+from src.utils.callbacks import LoggingCallback, DebugCallback, MemoryCleanupCallback
 
 class Trainer:
     def __init__(self, model_wrapper, dataset, config):
@@ -57,6 +57,7 @@ class Trainer:
         
         logger = LoggingCallback(config['log_dir'], log_training_steps=config['training_args']['log_training_steps'])
         debugger = DebugCallback()
+        memory_cleanup = MemoryCleanupCallback()
 
         trainer = HFTrainer(
             model             = self.model,
@@ -66,7 +67,7 @@ class Trainer:
             eval_dataset      = self.dataset["val"],
             data_collator     = self.data_collator,
             compute_metrics   = self.compute_metrics3, 
-            callbacks         = [logger, debugger],
+            callbacks         = [logger, debugger, memory_cleanup],
         )
         if torch.distributed.is_initialized():
             # Use static graph for DDP compatibility with LoRA

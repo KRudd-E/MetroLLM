@@ -44,7 +44,7 @@ class DeepSeekWrapper:
                 trust_remote_code=True,
                 quantization_config=quant_config,
                 device_map=device_map,
-                attn_implementation="flash_attention_2" if torch.cuda.is_available() else None,
+                # attn_implementation="flash_attention_2" if torch.cuda.is_available() else None,
             )
             
             # Clear cache after model loading

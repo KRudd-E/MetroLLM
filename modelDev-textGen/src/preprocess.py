@@ -17,7 +17,7 @@ class DatasetLoader:
         except:
             pass
         
-        train_dataset, val_dataset = dataset.train_test_split(test_size=0.15).values()  # type: ignore
+        train_dataset, val_dataset = dataset.train_test_split(test_size=0.1).values()  # type: ignore
         
         # Use remove_columns to ensure only tokenized features remain
         tokenized_train = train_dataset.map(

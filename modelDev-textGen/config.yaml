@@ -29,7 +29,7 @@ train:
     save_strategy:      "steps"
     save_steps:         500
     logging_strategy:   "steps"           # Changed from epoch to steps for better control
-    logging_steps:      50                # Increased to reduce logging overhead
+    logging_steps:      250                # Increased to reduce logging overhead
     learning_rate:      2e-4
     per_device_train_batch_size:    1
     per_device_eval_batch_size:     1

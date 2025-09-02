@@ -20,8 +20,8 @@ class DeepSeekWrapper:
                 if is_distributed:
                     local_rank = int(os.environ.get("LOCAL_RANK", 0))
                     device_map = {"": local_rank}
-                    print(f"Distributed training detected. Using device {local_rank} for local rank {local_rank}")
-                    print(f"Global rank: {os.environ.get('RANK', 'unknown')}, World size: {os.environ.get('WORLD_SIZE', 'unknown')}")
+                    print(f"Distributed training detected. Using device {local_rank} for local rank {local_rank}\n")
+                    print(f"Global rank: {os.environ.get('RANK', 'unknown')}, World size: {os.environ.get('WORLD_SIZE', 'unknown')}\n")
                 else:
                     device_map = {"": torch.cuda.current_device()}
                     print(f"Single GPU training. Using device {torch.cuda.current_device()}")
@@ -44,7 +44,14 @@ class DeepSeekWrapper:
                 trust_remote_code=True,
                 quantization_config=quant_config,
                 device_map=device_map,
+                attn_implementation="flash_attention_2" if torch.cuda.is_available() else None,
             )
+            
+            # Clear cache after model loading
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            
+            print(f"Model loaded. Memory usage: {torch.cuda.memory_allocated()/1024**3:.2f}GB" if torch.cuda.is_available() else "Model loaded on CPU")
 
             #** LoRA Setup **#
             lora_config = LoraConfig(
@@ -82,7 +89,8 @@ class DeepSeekWrapper:
             self.data_collator = DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, 
                 mlm=False,  # Causal LM (chat), not masked LM (e.g., direct classification)
-                pad_to_multiple_of=8
+                pad_to_multiple_of=8,
+                return_tensors="pt"
             )
         
         #***** Eval *****#

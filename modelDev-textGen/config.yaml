@@ -28,13 +28,13 @@ train:
     eval_steps:         500
     save_strategy:      "steps"
     save_steps:         500
-    logging_strategy:   epoch
-    logging_steps:      5
+    logging_strategy:   "steps"           # Changed from epoch to steps for better control
+    logging_steps:      50                # Increased to reduce logging overhead
     learning_rate:      2e-4
     per_device_train_batch_size:    1
     per_device_eval_batch_size:     1
     eval_accumulation_steps:        2
-    gradient_accumulation_steps:    32
+    gradient_accumulation_steps:    16    # Reduced from 32 to save memory
     weight_decay:               0.01
     warmup_ratio:               0.1
     num_train_epochs:           6
@@ -48,8 +48,11 @@ train:
     max_grad_norm:              1.0
     dataloader_pin_memory:      False
     label_smoothing_factor:     0.1
-    save_total_limit:           3
+    save_total_limit:           2
     push_to_hub:                False
+    remove_unused_columns:      False
+    ddp_find_unused_parameters: False
+    group_by_length:            True
 
     log_training_steps:   True
     

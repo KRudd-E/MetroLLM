@@ -57,9 +57,8 @@ class DatasetLoader:
         """
         Process a batch of examples for causal language modeling.
         examples: dict with keys like 'input', 'output' containing lists of strings
-        """
-        
-        # Format text using chat template
+        """        
+
         formatted_texts = []
         for input_text, output_text in zip(examples[config['data']['input_col']], examples[config['data']['output_col']]):
             # Ensure strings
@@ -84,8 +83,8 @@ class DatasetLoader:
         # Tokenize all formatted texts
         model_inputs = self.tokenizer(
             formatted_texts,
-            max_length=config.get('data', {}).get('max_seq_length', 2048),
-            padding="max_length",
+            max_length=config['data']['max_seq_length'],
+            padding=False, 
             truncation=True,
             return_tensors=None
         )

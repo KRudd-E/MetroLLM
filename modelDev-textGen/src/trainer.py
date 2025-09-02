@@ -58,9 +58,15 @@ class Trainer:
             label_smoothing_factor        = float(config['training_args']['label_smoothing_factor']),
             save_total_limit              =   int(config['training_args']['save_total_limit']),
             push_to_hub                   =  bool(config['training_args']['push_to_hub']),
-            remove_unused_columns         = False,
-            ddp_find_unused_parameters    = False,
+            remove_unused_columns         =  bool(config['training_args']['remove_unused_columns']),
+            ddp_find_unused_parameters    =  bool(config['training_args']['ddp_find_unused_parameters']),
+            group_by_length               =  bool(config['training_args']['group_by_length']),
         )
+        
+        
+        #** Clear Cache **#
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
        
         
         #** Callbacks **#

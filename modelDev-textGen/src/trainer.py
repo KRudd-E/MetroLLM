@@ -21,6 +21,10 @@ class Trainer:
         
         nltk.download("punkt", quiet=True)
         
+        # Clear cache after loading metrics
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
         self.check_model_config()
 
 
@@ -113,6 +117,9 @@ class Trainer:
     def compute_metrics3(self, eval_pred):
         predictions, labels = eval_pred
 
+        # Clear GPU cache at start of metrics computation
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         #** Handling Unexpected Inputs & Formatting **#
         if isinstance(predictions, tuple):

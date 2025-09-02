@@ -75,12 +75,38 @@ class DebugCallback(TrainerCallback):
                 
                 
 class MemoryCleanupCallback(TrainerCallback):
+    def __init__(self):
+        self.eval_count = 0
+        
     def on_evaluate(self, args, state, control, **kwargs):
-        """Clear GPU cache after evaluation"""
-        torch.cuda.empty_cache()
+        """Clear GPU cache after evaluation with aggressive cleanup"""
+        self.eval_count += 1
+        print(f"Memory cleanup after evaluation #{self.eval_count}")
+        
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()  # Wait for all operations to complete
+            
+            # More aggressive cleanup every few evaluations
+            if self.eval_count % 3 == 0:
+                torch.cuda.ipc_collect()
+                print(f"Aggressive memory cleanup performed")
         
     def on_save(self, args, state, control, **kwargs):
         """Clear GPU cache after saving"""
-        torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            
+    def on_step_end(self, args, state, control, **kwargs):
+        """Periodic memory cleanup during training"""
+        if state.global_step % 100 == 0:  # Every 100 steps
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        """Clear cache after logging to prevent accumulation"""
+        if logs and torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
                 

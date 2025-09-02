@@ -11,7 +11,7 @@ train:
     max_seq_length: 2048
 
   model:
-    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+    name: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
     max_input_length: 2048
     max_target_length: 2048
 
@@ -33,22 +33,22 @@ train:
     learning_rate:      2e-4
     per_device_train_batch_size:    1
     per_device_eval_batch_size:     1
-    eval_accumulation_steps:        2
-    gradient_accumulation_steps:    16    # Reduced from 32 to save memory
+    eval_accumulation_steps:        1         # Reduced from 2 to minimize eval memory
+    gradient_accumulation_steps:    16    
     weight_decay:               0.01
     warmup_ratio:               0.1
     num_train_epochs:           6
     predict_with_generate:      False
     generation_max_length:      128
     load_best_model_at_end:     False
-    metric_for_best_model:      "rouge1"
+    metric_for_best_model:      "exact_match"  # Changed to simpler metric
     greater_is_better:          True
     bf16:                       True
     gradient_checkpointing:     True
     max_grad_norm:              1.0
     dataloader_pin_memory:      False
     label_smoothing_factor:     0.1
-    save_total_limit:           2
+    save_total_limit:           1             # Reduced from 2 to save disk space
     push_to_hub:                False
     remove_unused_columns:      False
     ddp_find_unused_parameters: False

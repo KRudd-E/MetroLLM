@@ -3,6 +3,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, \
     DataCollatorForLanguageModeling, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, TaskType
 import torch
+import os
 
 
 class DeepSeekWrapper:
@@ -11,8 +12,20 @@ class DeepSeekWrapper:
         #***** Train *****#
         if run == 'train':
             
+            #** Map device(s) **#
+            if torch.cuda.is_available():
+                if torch.distributed.is_available() and torch.distributed.is_initialized():
+                    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+                    device_map = {"": local_rank}
+                    print(f"Distributed training detected. Using device {local_rank} for rank {local_rank}")
+                else:
+                    device_map = {"": torch.cuda.current_device()}
+                    print(f"Single GPU training. Using device {torch.cuda.current_device()}")
+            else:
+                raise EnvironmentError("No CUDA available.")
+            
             #** 4-Bit Quantization **#
-            bnb_config = BitsAndBytesConfig(
+            quant_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.bfloat16,
                 bnb_4bit_use_double_quant=True,
@@ -22,13 +35,13 @@ class DeepSeekWrapper:
             #** Model Loader **#
             self.model = AutoModelForCausalLM.from_pretrained(
                 config['model']['name'],
-                torch_dtype=torch.bfloat16,
+                dtype=torch.bfloat16,
                 low_cpu_mem_usage=True, 
                 trust_remote_code=True,
-                quantization_config=bnb_config,
-                device_map={'': torch.cuda.current_device()} if torch.cuda.is_available() else {'': 'cpu'},
+                quantization_config=quant_config,
+                device_map=device_map,
             )
-            
+
             #** LoRA Setup **#
             lora_config = LoraConfig(
                 task_type=TaskType.CAUSAL_LM,
@@ -40,31 +53,23 @@ class DeepSeekWrapper:
             )
             self.model = get_peft_model(self.model, lora_config)
             
-            # Enable gradient checkpointing compatibility with PEFT
+            #** Enable gradient checkpointing compatibility with PEFT **#
             if hasattr(self.model, 'enable_input_require_grads'):
                 self.model.enable_input_require_grads() # type: ignore
             
-            # Ensure model is in training mode
+            #** Ensure model is in training mode **#
             self.model.train()
             
-            # Debug: Print parameter status
-            trainable_params = 0
-            all_params = 0
-            for name, param in self.model.named_parameters():
-                all_params += param.numel()
-                if param.requires_grad:
-                    trainable_params += param.numel()
-                    
-            print(f"Trainable params: {trainable_params:,} || All params: {all_params:,} || Trainable%: {100 * trainable_params / all_params:.4f}")
-            
+            #** Print trainable parameters **#
             self.model.print_trainable_parameters()
             
+            #** Tokenizer **#
             self.tokenizer = AutoTokenizer.from_pretrained(
                 config['model']['name'], 
                 trust_remote_code=True
             )
             
-            # Add padding token if it doesn't exist
+            #** Padding token handling **#
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             self.model.config.pad_token_id = self.tokenizer.pad_token_id # type: ignore
@@ -78,10 +83,25 @@ class DeepSeekWrapper:
         
         #***** Eval *****#
         elif run == 'eval': 
+            # Check if we're in a distributed training environment
+            is_distributed = torch.distributed.is_available() and torch.distributed.is_initialized()
+            
+            # Determine device map based on distributed training status
+            if torch.cuda.is_available():
+                if is_distributed:
+                    # In distributed training, use the local rank device
+                    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+                    device_map = {"": local_rank}
+                else:
+                    # Single GPU training
+                    device_map = {"": torch.cuda.current_device()}
+            else:
+                device_map = {"": "cpu"}
+                
             self.model = AutoModelForCausalLM.from_pretrained(
                 config['model']['dir'], 
                 low_cpu_mem_usage=True, 
-                device_map={'': torch.cuda.current_device()} if torch.cuda.is_available() else {'': 'cpu'},
+                device_map=device_map,
                 torch_dtype=torch.bfloat16,
                 trust_remote_code=True,
             )

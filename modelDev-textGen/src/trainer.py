@@ -26,6 +26,7 @@ class Trainer:
 
     def train(self, config):
         
+        #** Training Arguments **#
         training_args = TrainingArguments(
             label_names=["labels"], # No error.
             output_dir                    =   str(config['output_dir']),
@@ -52,13 +53,17 @@ class Trainer:
             save_total_limit              =   int(config['training_args']['save_total_limit']),
             push_to_hub                   =  bool(config['training_args']['push_to_hub']),
             remove_unused_columns         = False,
-            ddp_find_unused_parameters    = False, 
+            ddp_find_unused_parameters    = False,
         )
+       
         
+        #** Callbacks **#
         logger = LoggingCallback(config['log_dir'], log_training_steps=config['training_args']['log_training_steps'])
         debugger = DebugCallback()
         memory_cleanup = MemoryCleanupCallback()
 
+
+        #** Trainer **#
         trainer = HFTrainer(
             model             = self.model,
             # tokenizer         = self.tokenizer,
@@ -69,25 +74,132 @@ class Trainer:
             compute_metrics   = self.compute_metrics3, 
             callbacks         = [logger, debugger, memory_cleanup],
         )
+
+
+        #** LoRA & DDP Compatibility **#
         if torch.distributed.is_initialized():
-            # Use static graph for DDP compatibility with LoRA
             try:
                 trainer.model._set_static_graph()  # type: ignore
             except (AttributeError, RuntimeError):
                 pass
 
+
         trainer.train()
         
-        # Save LoRA adapters specifically
-        if hasattr(self.model, 'save_pretrained'):
-            lora_output_dir = f"{config['output_dir']}/lora_adapters"
-            self.model.save_pretrained(lora_output_dir)
-            print(f"LoRA adapters saved to: {lora_output_dir}")
         
+        #** Save LoRA adapters **#
+        if hasattr(self.model, 'save_pretrained'):
+            self.model.save_pretrained(f"{config['output_dir']}/lora_adapters")
+        
+        #** Cleanup **#
         torch.cuda.empty_cache()
-
         if torch.distributed.is_initialized():
             torch.distributed.destroy_process_group()
+
+
+    #** Metrics **#
+    def compute_metrics3(self, eval_pred):
+        predictions, labels = eval_pred
+
+
+        #** Handling Unexpected Inputs & Formatting **#
+        if isinstance(predictions, tuple):
+            predictions = predictions[0]
+
+        predictions = np.array(predictions)
+        labels = np.array(labels)
+        
+        if len(predictions.shape) == 3:   # (batch, seq_len, vocab_size)
+            predictions = np.argmax(predictions, axis=-1)
+
+
+        #** Remove user input tokens and decode **#
+        predictions = np.where(predictions != -100, predictions, self.tokenizer.pad_token_id)
+        labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
+        
+        try:
+            decoded_preds = self.tokenizer.batch_decode(predictions.astype(int), skip_special_tokens=True)
+            decoded_labels = self.tokenizer.batch_decode(labels.astype(int), skip_special_tokens=True)
+        except Exception as e:
+            print(f"Decoding error: {e}")
+            print(f"Predictions shape: {predictions.shape}, dtype: {predictions.dtype}")
+            print(f"Labels shape: {labels.shape}, dtype: {labels.dtype}")
+            return {"exact_match": 0.0, "gen_len": 0.0}
+
+
+        #** Normalize text **#
+        decoded_preds = [pred.strip() for pred in decoded_preds]
+        decoded_labels = [label.strip() for label in decoded_labels]
+        decoded_preds_sent = ["\n".join(nltk.sent_tokenize(pred)) for pred in decoded_preds]
+        decoded_labels_sent = ["\n".join(nltk.sent_tokenize(label)) for label in decoded_labels]
+
+
+        #** Metric accumulators **
+        exact_matches = []
+        bleu_preds = []
+        bleu_refs = []
+        rouge_preds = []
+        rouge_refs = []
+
+        for pred, label, pred_sent, label_sent in zip(decoded_preds, decoded_labels, decoded_preds_sent, decoded_labels_sent):
+            pred_len = len(pred.split())
+
+            #** Exact match **#
+            exact_matches.append(int(pred == label))
+
+            #** BLEU **#
+            if pred_len >= 10:
+                bleu_preds.append(pred)
+                bleu_refs.append([label])
+
+            #** ROUGE **#
+            if pred_len > 30 or '\n' in pred or '\n' in label:
+                rouge_preds.append(pred_sent)
+                rouge_refs.append(label_sent)
+
+
+        #** Aggregate metrics **#
+        results = {}
+        if exact_matches:
+            results["exact_match"] = round(np.mean(exact_matches) * 100, 2)
+        if bleu_preds:
+            bleu_result = self.bleu.compute(predictions=bleu_preds, references=bleu_refs)
+            if bleu_result is not None:
+                results.update(bleu_result)
+                results["bleu"] = round(results["bleu"] * 100, 2)
+        if rouge_preds:
+            rouge_scores = self.rouge.compute(predictions=rouge_preds, references=rouge_refs, use_stemmer=True)
+            if rouge_scores is not None:
+                for k, v in rouge_scores.items():
+                    results[k] = round(v * 100, 2)
+
+        results["gen_len"] = round(np.mean([len(p.split()) for p in decoded_preds]), 2)
+
+        return results
+
+
+    #** Model Config Check **#
+    def check_model_config(self):
+        config = self.model.config
+
+        if config.pad_token_id != self.tokenizer.pad_token_id:
+            print("Model and tokenizer pad tokens don't match - fixing.")
+            self.model.config.pad_token_id = self.tokenizer.pad_token_id
+        
+        print("Vocab size:", config.vocab_size)
+        print("Tokenizer vocab size:", len(self.tokenizer))
+        
+        
+
+
+
+
+
+
+
+
+
+#! Additional metric functions.
 
 
     # # essentially same as compute_metrics3
@@ -148,100 +260,7 @@ class Trainer:
     #     return results
 
 
-    def compute_metrics3(self, eval_pred):
-        predictions, labels = eval_pred
 
-        # Handle tuple predictions (common in generation tasks)
-        if isinstance(predictions, tuple):
-            predictions = predictions[0]
-
-        # Ensure predictions and labels are numpy arrays
-        predictions = np.array(predictions)
-        labels = np.array(labels)
-        
-        # Handle logits case - take argmax if predictions are 3D (batch, seq_len, vocab_size)
-        if len(predictions.shape) == 3:
-            predictions = np.argmax(predictions, axis=-1)
-
-        # Remove -100s and decode
-        predictions = np.where(predictions != -100, predictions, self.tokenizer.pad_token_id)
-        labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
-        
-        # Ensure predictions and labels are proper integer arrays for decoding
-        try:
-            decoded_preds = self.tokenizer.batch_decode(predictions.astype(int), skip_special_tokens=True)
-            decoded_labels = self.tokenizer.batch_decode(labels.astype(int), skip_special_tokens=True)
-        except Exception as e:
-            print(f"Decoding error: {e}")
-            print(f"Predictions shape: {predictions.shape}, dtype: {predictions.dtype}")
-            print(f"Labels shape: {labels.shape}, dtype: {labels.dtype}")
-            # Fallback: return empty metrics
-            return {"exact_match": 0.0, "gen_len": 0.0}
-
-        # Normalize text (tokenize into sentences for ROUGE)
-        decoded_preds = [pred.strip() for pred in decoded_preds]
-        decoded_labels = [label.strip() for label in decoded_labels]
-        decoded_preds_sent = ["\n".join(nltk.sent_tokenize(pred)) for pred in decoded_preds]
-        decoded_labels_sent = ["\n".join(nltk.sent_tokenize(label)) for label in decoded_labels]
-
-        # Metric accumulators
-        exact_matches = []
-        bleu_preds = []
-        bleu_refs = []
-        rouge_preds = []
-        rouge_refs = []
-
-        for pred, label, pred_sent, label_sent in zip(decoded_preds, decoded_labels, decoded_preds_sent, decoded_labels_sent):
-            pred_len = len(pred.split())
-
-            # Exact match
-            exact_matches.append(int(pred == label))
-
-            # BLEU if moderately long
-            if pred_len >= 10:
-                bleu_preds.append(pred)
-                bleu_refs.append([label])
-
-            # ROUGE if longer or paragraph-like
-            if pred_len > 30 or '\n' in pred or '\n' in label:
-                rouge_preds.append(pred_sent)
-                rouge_refs.append(label_sent)
-
-        results = {}
-
-        # Aggregate metrics
-        if exact_matches:
-            results["exact_match"] = round(np.mean(exact_matches) * 100, 2)
-        if bleu_preds:
-            bleu_result = self.bleu.compute(predictions=bleu_preds, references=bleu_refs)
-            if bleu_result is not None:
-                results.update(bleu_result)
-                results["bleu"] = round(results["bleu"] * 100, 2)
-        if rouge_preds:
-            rouge_scores = self.rouge.compute(predictions=rouge_preds, references=rouge_refs, use_stemmer=True)
-            if rouge_scores is not None:
-                for k, v in rouge_scores.items():
-                    results[k] = round(v * 100, 2)
-
-        results["gen_len"] = round(np.mean([len(p.split()) for p in decoded_preds]), 2)
-
-        return results
-
-
-
-    def check_model_config(self):
-        config = self.model.config
-        # Ensure pad tokens match
-        if config.pad_token_id != self.tokenizer.pad_token_id:
-            print("WARNING: Model and tokenizer pad tokens don't match!")
-            self.model.config.pad_token_id = self.tokenizer.pad_token_id
-        
-        print("Vocab size:", config.vocab_size)
-        print("Tokenizer vocab size:", len(self.tokenizer))
-        
-        
-        
-        
 
     # def compute_metrics1(self, eval_preds):
     #     preds, labels = eval_preds

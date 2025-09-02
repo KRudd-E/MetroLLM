@@ -25,7 +25,8 @@ class DeepSeekWrapper:
                 torch_dtype=torch.bfloat16,
                 low_cpu_mem_usage=True, 
                 trust_remote_code=True,
-                quantization_config=bnb_config
+                quantization_config=bnb_config,
+                device_map={'': torch.cuda.current_device()} if torch.cuda.is_available() else {'': 'cpu'},
             )
             
             #** LoRA Setup **#
@@ -80,7 +81,7 @@ class DeepSeekWrapper:
             self.model = AutoModelForCausalLM.from_pretrained(
                 config['model']['dir'], 
                 low_cpu_mem_usage=True, 
-                device_map="auto",
+                device_map={'': torch.cuda.current_device()} if torch.cuda.is_available() else {'': 'cpu'},
                 torch_dtype=torch.bfloat16,
                 trust_remote_code=True,
             )

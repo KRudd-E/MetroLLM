@@ -1,6 +1,6 @@
 # File: src/models/model_wrapper.py
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from transformers import DataCollatorForLanguageModeling
+from transformers import AutoTokenizer, AutoModelForCausalLM, \
+    DataCollatorForLanguageModeling, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, TaskType
 import torch
 
@@ -8,16 +8,27 @@ import torch
 class DeepSeekWrapper:
     def __init__(self, run, config):
        
-        #*** Train ***#
+        #***** Train *****#
         if run == 'train':
+            
+            #** 4-Bit Quantization **#
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4"
+            )
+            
+            #** Model Loader **#
             self.model = AutoModelForCausalLM.from_pretrained(
                 config['model']['name'],
                 torch_dtype=torch.bfloat16,
                 low_cpu_mem_usage=True, 
                 trust_remote_code=True,
+                quantization_config=bnb_config
             )
             
-            # Configure LoRA
+            #** LoRA Setup **#
             lora_config = LoraConfig(
                 task_type=TaskType.CAUSAL_LM,
                 inference_mode=False,
@@ -26,8 +37,6 @@ class DeepSeekWrapper:
                 lora_dropout=config['lora']['dropout'],
                 target_modules=config['lora']['target_modules'],
             )
-            
-            # Apply LoRA to model
             self.model = get_peft_model(self.model, lora_config)
             
             # Enable gradient checkpointing compatibility with PEFT
@@ -59,13 +68,14 @@ class DeepSeekWrapper:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             self.model.config.pad_token_id = self.tokenizer.pad_token_id # type: ignore
             
+            #** Data Collator **#
             self.data_collator = DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer, 
                 mlm=False,  # Causal LM (chat), not masked LM (e.g., direct classification)
                 pad_to_multiple_of=8
             )
         
-        #*** Eval ***#
+        #***** Eval *****#
         elif run == 'eval': 
             self.model = AutoModelForCausalLM.from_pretrained(
                 config['model']['dir'], 

@@ -1,8 +1,9 @@
-from src.utils.utils import get_config, parser, setup_training_output_dir
+from src.utils.utils import get_config, parser, setup_training_output_dir, setup_distributed
 
 class FinetunePipeline:
     def __init__(self):
         self.config = get_config()
+        setup_distributed()
         
     def run(self):
         run = parser()

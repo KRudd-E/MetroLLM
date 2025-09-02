@@ -26,6 +26,12 @@ class Trainer:
 
     def train(self, config):
         
+        #TEMP: Print distributed training info
+        if torch.distributed.is_initialized():
+            print(f"Trainer: Distributed training active - Rank {torch.distributed.get_rank()}/{torch.distributed.get_world_size()}")
+        else:
+            print("Trainer: Single process training")
+        
         #** Training Arguments **#
         training_args = TrainingArguments(
             label_names=["labels"], # No error.

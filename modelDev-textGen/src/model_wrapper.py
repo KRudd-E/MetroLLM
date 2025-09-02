@@ -14,10 +14,14 @@ class DeepSeekWrapper:
             
             #** Map device(s) **#
             if torch.cuda.is_available():
-                if torch.distributed.is_available() and torch.distributed.is_initialized():
+                is_distributed = ('RANK' in os.environ and 'WORLD_SIZE' in os.environ) or \
+                               (torch.distributed.is_available() and torch.distributed.is_initialized())
+                
+                if is_distributed:
                     local_rank = int(os.environ.get("LOCAL_RANK", 0))
                     device_map = {"": local_rank}
-                    print(f"Distributed training detected. Using device {local_rank} for rank {local_rank}")
+                    print(f"Distributed training detected. Using device {local_rank} for local rank {local_rank}")
+                    print(f"Global rank: {os.environ.get('RANK', 'unknown')}, World size: {os.environ.get('WORLD_SIZE', 'unknown')}")
                 else:
                     device_map = {"": torch.cuda.current_device()}
                     print(f"Single GPU training. Using device {torch.cuda.current_device()}")
@@ -83,8 +87,9 @@ class DeepSeekWrapper:
         
         #***** Eval *****#
         elif run == 'eval': 
-            # Check if we're in a distributed training environment
-            is_distributed = torch.distributed.is_available() and torch.distributed.is_initialized()
+            # Check for distributed training through environment variables
+            is_distributed = ('RANK' in os.environ and 'WORLD_SIZE' in os.environ) or \
+                           (torch.distributed.is_available() and torch.distributed.is_initialized())
             
             # Determine device map based on distributed training status
             if torch.cuda.is_available():
@@ -92,11 +97,14 @@ class DeepSeekWrapper:
                     # In distributed training, use the local rank device
                     local_rank = int(os.environ.get("LOCAL_RANK", 0))
                     device_map = {"": local_rank}
+                    print(f"Distributed evaluation. Using device {local_rank} for local rank {local_rank}")
                 else:
                     # Single GPU training
                     device_map = {"": torch.cuda.current_device()}
+                    print(f"Single GPU evaluation. Using device {torch.cuda.current_device()}")
             else:
                 device_map = {"": "cpu"}
+                print("Using CPU for evaluation.")
                 
             self.model = AutoModelForCausalLM.from_pretrained(
                 config['model']['dir'], 

@@ -66,3 +66,23 @@ def setup_training_output_dir(self):
 
     # Copy config file
     shutil.copy(self.config['config_dir'], os.path.join(self.config['train']['output_dir'] + 'config.yaml'))
+
+
+def setup_distributed():
+    """Initialize distributed training"""
+    import os
+    import torch
+    
+    if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
+        # Initialize
+        torch.distributed.init_process_group(backend='nccl')
+        
+        # Set the device for this process
+        local_rank = int(os.environ.get('LOCAL_RANK', 0))
+        torch.cuda.set_device(local_rank)
+        
+        print(f"Distributed training initialized. Rank: {torch.distributed.get_rank()}, "
+              f"World size: {torch.distributed.get_world_size()}, "
+              f"Local rank: {local_rank}")
+    else:
+        print("Single process training")

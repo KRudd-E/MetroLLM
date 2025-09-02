@@ -44,7 +44,7 @@ train:
     metric_for_best_model:      "rouge1"
     greater_is_better:          True
     bf16:                       True
-    gradient_checkpointing:     False
+    gradient_checkpointing:     True
     max_grad_norm:              1.0
     dataloader_pin_memory:      False
     label_smoothing_factor:     0.1

@@ -11,7 +11,7 @@ train:
     max_seq_length: 2048
 
   model:
-    name: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
     max_input_length: 2048
     max_target_length: 2048
 

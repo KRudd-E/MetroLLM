@@ -87,7 +87,7 @@ class Trainer:
             train_dataset     = self.dataset["train"],
             eval_dataset      = self.dataset["val"],
             data_collator     = self.data_collator,
-            compute_metrics   = self.compute_metrics3, 
+            # compute_metrics   = self.compute_metrics3, 
             callbacks         = [logger, debugger, memory_cleanup],
         )
 
@@ -111,6 +111,11 @@ class Trainer:
         torch.cuda.empty_cache()
         if torch.distributed.is_initialized():
             torch.distributed.destroy_process_group()
+
+
+
+
+
 
 
     #** Metrics **#
@@ -209,13 +214,6 @@ class Trainer:
         print("Tokenizer vocab size:", len(self.tokenizer))
         
         
-
-
-
-
-
-
-
 
 
 #! Additional metric functions.

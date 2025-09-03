@@ -29,10 +29,10 @@ train:
     do_train: true
     do_eval: true
     evaluation_strategy: "steps"  
-    eval_steps: 6            
+    eval_steps: 8            
     save_strategy: "steps"
     save_steps: 4
-    save_total_limit: 6
+    save_total_limit: 2
     logging_strategy: "steps"
     logging_steps: 2
     logging_nan_inf_filter: true

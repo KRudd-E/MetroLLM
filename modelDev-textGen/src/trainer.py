@@ -22,6 +22,10 @@ class Trainer:
 
         #nltk.download("punkt", quiet=True)
         
+        # Clear cache after loading metrics
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
         self.check_model_config()
 
 

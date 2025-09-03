@@ -39,7 +39,7 @@ train:
     warmup_ratio:               0.1
     num_train_epochs:           6
     predict_with_generate:      False
-    generation_max_length:      128
+    generation_max_length:      512
     load_best_model_at_end:     False
     metric_for_best_model:      "exact_match" 
     greater_is_better:          True
@@ -48,7 +48,7 @@ train:
     max_grad_norm:              1.0
     dataloader_pin_memory:      False
     label_smoothing_factor:     0.1
-    save_total_limit:           1   
+    save_total_limit:           4
     push_to_hub:                False
     remove_unused_columns:      False
     ddp_find_unused_parameters: False

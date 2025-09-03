@@ -1,7 +1,4 @@
-import numpy as np
-import nltk
 import torch
-import evaluate
 from transformers import Trainer as HFTrainer
 from transformers import TrainingArguments
 from src.utils.callbacks import LoggingCallback, DebugCallback, MemoryCleanupCallback
@@ -19,7 +16,7 @@ class Trainer:
         #self.bleu         = evaluate.load("bleu")
         #self.exact_match  = evaluate.load("exact_match")
         
-        nltk.download("punkt", quiet=True)
+        #nltk.download("punkt", quiet=True)
         
         # Clear cache after loading metrics
         if torch.cuda.is_available():

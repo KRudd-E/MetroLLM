@@ -28,32 +28,32 @@ train:
     # Core loop
     do_train: true
     do_eval: true
-    evaluation_strategy: "steps"     # correct name (not eval_strategy)
-    eval_steps: 100                  # less frequent to save RAM
+    evaluation_strategy: "steps"  
+    eval_steps: 6            
     save_strategy: "steps"
-    save_steps: 100
+    save_steps: 4
     save_total_limit: 4
     logging_strategy: "steps"
-    logging_steps: 25
+    logging_steps: 2
     logging_nan_inf_filter: true
 
     # Training setup
     learning_rate: 1e-4
     per_device_train_batch_size: 1
     per_device_eval_batch_size: 1
-    gradient_accumulation_steps: 16
+    gradient_accumulation_steps: 4
     eval_accumulation_steps: 1
     num_train_epochs: 2
-    max_steps: -1                    # use epochs, no forced step limit
+    max_steps: -1     
     warmup_ratio: 0.1
     weight_decay: 0.01
     max_grad_norm: 1.0
-    lr_scheduler_type: "linear"      # default and fine for LoRA
+    lr_scheduler_type: "linear"    
 
     # Precision / memory
     bf16: true
     gradient_checkpointing: true
-    dataloader_pin_memory: true      # better for throughput
+    dataloader_pin_memory: true     
     group_by_length: true
 
     # # Generation for metrics
@@ -66,7 +66,6 @@ train:
     metric_for_best_model: "exact_match"
     greater_is_better: true
 
-    # Label smoothing usually off for seq2seq classification-style tasks
     label_smoothing_factor: 0.0
 
     # Misc

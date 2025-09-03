@@ -76,7 +76,7 @@ class Trainer:
         )
 
         #** Callbacks **#
-        logger = LoggingCallback(config['log_dir'], log_training_steps=config['training_args']['log_training_steps'])
+        logger = LoggingCallback(log_path=config['log_dir'], log_training_steps=config['training_args']['log_training_steps'])
         debugger = DebugCallback()
         memory_cleanup = MemoryCleanupCallback()
         early_stopping = EarlyStoppingCallback(early_stopping_patience=2)

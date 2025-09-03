@@ -32,7 +32,7 @@ train:
     eval_steps: 6            
     save_strategy: "steps"
     save_steps: 4
-    save_total_limit: 4
+    save_total_limit: 6
     logging_strategy: "steps"
     logging_steps: 2
     logging_nan_inf_filter: true

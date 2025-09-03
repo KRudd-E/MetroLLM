@@ -29,12 +29,12 @@ train:
     do_train: true
     do_eval: true
     evaluation_strategy: "steps"  
-    eval_steps: 8            
+    eval_steps: 500
     save_strategy: "steps"
-    save_steps: 16
+    save_steps: 500
     save_total_limit: 2
     logging_strategy: "steps"
-    logging_steps: 2
+    logging_steps: 25
     logging_nan_inf_filter: true
 
     # Training setup

@@ -4,109 +4,98 @@ import json
 import datetime
 import torch
 
+def is_main_process():
+    """Return True only on process rank 0 (works with torchrun/slurm)."""
+    rank = os.environ.get("RANK") or os.environ.get("SLURM_PROCID") or os.environ.get("LOCAL_RANK")
+    try:
+        return int(rank) == 0 # type: ignore
+    except Exception:
+        return True
+
 class LoggingCallback(TrainerCallback):
-    def __init__(self, log_dir, log_training_steps=True):
-        self.log_dir = log_dir
+    """
+    Append-only, newline-delimited JSON logging. Only rank-0 writes.
+    This avoids repeatedly loading the entire file into memory.
+    """
+    def __init__(self, log_path, log_training_steps=True):
+        self.log_path = log_path
         self.log_training_steps = log_training_steps
-        
-        if not os.path.exists(log_dir):
-            with open(log_dir, 'w', encoding='utf-8') as f:
-                json.dump([], f, indent=4)
 
+        # Ensure file exists (empty)
+        if is_main_process() and not os.path.exists(log_path):
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, "w", encoding="utf-8") as f:
+                pass
 
-    #*** Load and Save Logs ***#
-    def load_logs(self) -> list:
+    def _append(self, record: dict):
+        if not is_main_process():
+            return
         try:
-            with open(self.log_dir, 'r', encoding='utf-8') as f:
-                logs = json.load(f)
-                if isinstance(logs, list):
-                    return logs
-                else:
-                    return []
-        except (json.JSONDecodeError, FileNotFoundError):
-            return []
-    
-    def save_logs(self, logs):
-        with open(self.log_dir, 'w', encoding='utf-8') as f:
-            json.dump(logs, f, indent=4)
-    
+            with open(self.log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        except Exception as e:
+            # avoid crashing the training loop on logging errors
+            print(f"LoggingCallback append error: {e}")
 
-    #*** Callbacks ***#
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
-        logs = self.load_logs()
-        
         y = {
             "type": "evaluation",
             "timestamp": datetime.datetime.now().isoformat(),
             "epoch": state.epoch,
             "step": state.global_step,
             "metrics": metrics
-            }
-        
-        logs.append(y)
-        self.save_logs(logs)
-        
+        }
+        self._append(y)
 
     def on_log(self, args, state, control, logs=None, **kwargs):
-        if self.log_training_steps and logs is not None:
-            
-            existing_logs = self.load_logs()
-            
-            y = {
-                "type": "train_log",
-                "timestamp": datetime.datetime.now().isoformat(),
-                "epoch": state.epoch,
-                "step": state.global_step,
-                "logs": logs
-            }
-            
-            existing_logs.append(y)
-            self.save_logs(existing_logs)
-        else:
-            return 
-    
+        if not self.log_training_steps or logs is None:
+            return
+        y = {
+            "type": "train_log",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "epoch": state.epoch,
+            "step": state.global_step,
+            "logs": logs
+        }
+        self._append(y)
+
 
 class DebugCallback(TrainerCallback):
     def on_step_end(self, args, state, control, logs=None, metrics=None, **kwargs):
         if logs and "loss" in logs:
-            if logs["loss"] == 0:
+            if logs["loss"] is not None and logs["loss"] == 0:
                 print("WARNING: Zero loss detected!")
-                
-                
-                
+
+
 class MemoryCleanupCallback(TrainerCallback):
-    def __init__(self):
+    """
+    Keep GPU cleanup minimal and only run expensive ops occasionally.
+    """
+    def __init__(self, aggressive_every=3, periodic_step=500):
         self.eval_count = 0
-        
+        self.aggressive_every = aggressive_every
+        self.periodic_step = periodic_step
+
     def on_evaluate(self, args, state, control, **kwargs):
-        """Clear GPU cache after evaluation with aggressive cleanup"""
         self.eval_count += 1
-        print(f"\nMemory cleanup after evaluation #{self.eval_count}\n")
-        
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-            torch.cuda.synchronize()  # Wait for all operations to complete
-            
-            # More aggressive cleanup every few evaluations
-            if self.eval_count % 3 == 0:
-                torch.cuda.ipc_collect()
-                print(f"\nAggressive memory cleanup performed\n")
-        
+            # synchronize only rarely
+            if self.eval_count % self.aggressive_every == 0:
+                try:
+                    torch.cuda.synchronize()
+                    torch.cuda.ipc_collect()
+                    print(f"Aggressive memory cleanup performed after eval #{self.eval_count}")
+                except Exception:
+                    pass
+
     def on_save(self, args, state, control, **kwargs):
-        """Clear GPU cache after saving"""
         if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            
-    def on_step_end(self, args, state, control, **kwargs):
-        """Periodic memory cleanup during training"""
-        if state.global_step % 100 == 0:  # Every 100 steps
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        """Clear cache after logging to prevent accumulation"""
-        if logs and torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-                
+    def on_step_end(self, args, state, control, **kwargs):
+        if state.global_step % self.periodic_step == 0 and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        return

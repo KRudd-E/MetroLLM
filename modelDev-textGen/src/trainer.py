@@ -33,33 +33,46 @@ class Trainer:
 
         #** Training Arguments **#
         training_args = TrainingArguments(
-            label_names=["labels"], # No error.
-            output_dir                    =   str(config['output_dir']),
-            eval_strategy                 =   str(config['training_args']['eval_strategy']),
-            save_strategy                 =   str(config['training_args']['save_strategy']),
-            logging_strategy              =   str(config['training_args']['logging_strategy']),
-            logging_steps                 =   int(config['training_args']['logging_steps']),
-            learning_rate                 = float(config['training_args']['learning_rate']),
-            per_device_train_batch_size   =   int(config['training_args']['per_device_train_batch_size']),
-            per_device_eval_batch_size    =   int(config['training_args']['per_device_eval_batch_size']),
-            gradient_accumulation_steps   =   int(config['training_args']['gradient_accumulation_steps']),
-            eval_accumulation_steps       =   int(config['training_args']['eval_accumulation_steps']),
-            weight_decay                  = float(config['training_args']['weight_decay']),
-            warmup_ratio                  = float(config['training_args']['warmup_ratio']),
-            num_train_epochs              =   int(config['training_args']['num_train_epochs']),
-            load_best_model_at_end        =  bool(config['training_args']['load_best_model_at_end']),
-            # metric_for_best_model         =   str(config['training_args']['metric_for_best_model']),
-            greater_is_better             =  bool(config['training_args']['greater_is_better']),
-            bf16                          =  bool(config['training_args']['bf16']),
-            gradient_checkpointing        =  bool(config['training_args']['gradient_checkpointing']),
-            max_grad_norm                 = float(config['training_args']['max_grad_norm']),
-            dataloader_pin_memory         =  bool(config['training_args']['dataloader_pin_memory']),
-            label_smoothing_factor        = float(config['training_args']['label_smoothing_factor']),
-            save_total_limit              =   int(config['training_args']['save_total_limit']),
-            push_to_hub                   =  bool(config['training_args']['push_to_hub']),
-            remove_unused_columns         =  bool(config['training_args']['remove_unused_columns']),
-            ddp_find_unused_parameters    =  bool(config['training_args']['ddp_find_unused_parameters']),
-            group_by_length               =  bool(config['training_args']['group_by_length']),
+            label_names                     = ["labels"],
+
+            output_dir                      = config['training_args']['output_dir'],
+            do_train                        = config['training_args']['do_train'],
+            do_eval                         = config['training_args']['do_eval'],
+            eval_strategy                   = config['training_args']['evaluation_strategy'],
+            eval_steps                      = config['training_args']['eval_steps'],
+            save_strategy                   = config['training_args']['save_strategy'],
+            save_steps                      = config['training_args']['save_steps'],
+            save_total_limit                = config['training_args']['save_total_limit'],
+            logging_strategy                = config['training_args']['logging_strategy'],
+            logging_steps                   = config['training_args']['logging_steps'],
+            logging_nan_inf_filter          = config['training_args']['logging_nan_inf_filter'],
+            
+            learning_rate                   = config['training_args']['learning_rate'],
+            per_device_train_batch_size     = config['training_args']['per_device_train_batch_size'],
+            per_device_eval_batch_size      = config['training_args']['per_device_eval_batch_size'],
+            gradient_accumulation_steps     = config['training_args']['gradient_accumulation_steps'],
+            eval_accumulation_steps         = config['training_args']['eval_accumulation_steps'],
+            num_train_epochs                = config['training_args']['num_train_epochs'],
+            max_steps                       = config['training_args']['max_steps'],
+            warmup_ratio                    = config['training_args']['warmup_ratio'],
+            weight_decay                    = config['training_args']['weight_decay'],
+            max_grad_norm                   = config['training_args']['max_grad_norm'],
+            lr_scheduler_type               = config['training_args']['lr_scheduler_type'],
+            
+            bf16                            = config['training_args']['bf16'],
+            gradient_checkpointing          = config['training_args']['gradient_checkpointing'],
+            dataloader_pin_memory           = config['training_args']['dataloader_pin_memory'],
+            group_by_length                 = config['training_args']['group_by_length'],
+
+            load_best_model_at_end          = config['training_args']['load_best_model_at_end'],
+            metric_for_best_model           = config['training_args']['metric_for_best_model'],
+            greater_is_better               = config['training_args']['greater_is_better'],
+            
+            report_to                       = config['training_args']['report_to'], 
+            remove_unused_columns           = config['training_args']['remove_unused_columns'],
+            ddp_find_unused_parameters      = config['training_args']['ddp_find_unused_parameters'],
+            run_name                        = config['training_args']['run_name'],
+
         )
 
         #** Callbacks **#
@@ -122,26 +135,31 @@ class Trainer:
         """Computes perplexity, exact match (EM), and F1. LIGHTER THAN OTHERS
         """
         preds, labels = eval_preds
-
+        
+        if isinstance(preds, tuple):
+            preds = preds[0]
+        if hasattr(preds, "ndim") and preds.ndim == 3:     # (B, T, V)
+            preds = preds.argmax(-1)
+            
         #** Remove user input tokens and decode **#
         labels = np.where(labels != -100, labels, 0)
 
         pred_texts = self.tokenizer.batch_decode(preds, skip_special_tokens=True)
         label_texts = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
 
-        #** Perplexity **#
-        loss = None
-        perplexity = None
-        if hasattr(eval_preds, "metrics") and "eval_loss" in eval_preds.metrics:
-            loss = eval_preds.metrics["eval_loss"]
-            perplexity = np.exp(loss) if loss < 20 else float("inf")
+        # #** Perplexity **#
+        # loss = None
+        # perplexity = None
+        # if hasattr(eval_preds, "metrics") and "eval_loss" in eval_preds.metrics:
+        #     loss = eval_preds.metrics["eval_loss"]
+        #     perplexity = np.exp(loss) if loss < 20 else float("inf")
 
         #** Exact Match & F1 **#
         em = self.em_metric.compute(predictions=pred_texts, references=label_texts)["exact_match"] #type: ignore
         f1 = self.f1_metric.compute(predictions=pred_texts, references=label_texts)["f1"] #type: ignore
 
         return {
-            "perplexity": perplexity,
+            # "perplexity": perplexity,
             "exact_match": em,
             "f1": f1,
         }

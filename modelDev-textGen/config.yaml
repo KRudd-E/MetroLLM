@@ -25,28 +25,28 @@ train:
   training_args:
     output_dir:         "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/"
     eval_strategy:      "steps"
-    eval_steps:         200
+    eval_steps:         50
     save_strategy:      "steps"
-    save_steps:         200
+    save_steps:         50
     logging_strategy:   "steps"  
     logging_steps:      50
-    learning_rate:      2e-4
+    learning_rate:      1e-4
     per_device_train_batch_size:    1
     per_device_eval_batch_size:     1
     eval_accumulation_steps:        1    
-    gradient_accumulation_steps:    16    
+    gradient_accumulation_steps:    16
     weight_decay:               0.01
     warmup_ratio:               0.1
-    num_train_epochs:           6
+    num_train_epochs:           2
     predict_with_generate:      False
-    load_best_model_at_end:     False
+    load_best_model_at_end:     True
     metric_for_best_model:      "exact_match" 
     greater_is_better:          True
     bf16:                       True
     gradient_checkpointing:     True
     max_grad_norm:              1.0
     dataloader_pin_memory:      False
-    label_smoothing_factor:     0.1
+    label_smoothing_factor:     0.0
     save_total_limit:           4
     push_to_hub:                False
     remove_unused_columns:      False

@@ -1,7 +1,10 @@
+import numpy as np
+import evaluate
 import torch
 from transformers import Trainer as HFTrainer
-from transformers import TrainingArguments
-from src.utils.callbacks import LoggingCallback, DebugCallback, MemoryCleanupCallback
+from transformers import TrainingArguments, EarlyStoppingCallback
+from src.utils.callbacks import LoggingCallback, DebugCallback, \
+    MemoryCleanupCallback
 
 class Trainer:
     def __init__(self, model_wrapper, dataset, config):
@@ -12,15 +15,12 @@ class Trainer:
         self.device           = model_wrapper.get_device()
         self.data_collator    = model_wrapper.get_data_collator()
         
+        self.f1_metric     = evaluate.load("f1")
+        self.em_metric     = evaluate.load("exact_match")
         #self.rouge        = evaluate.load("rouge")
         #self.bleu         = evaluate.load("bleu")
-        #self.exact_match  = evaluate.load("exact_match")
-        
+
         #nltk.download("punkt", quiet=True)
-        
-        # Clear cache after loading metrics
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
         
         self.check_model_config()
 
@@ -57,17 +57,12 @@ class Trainer:
             ddp_find_unused_parameters    =  bool(config['training_args']['ddp_find_unused_parameters']),
             group_by_length               =  bool(config['training_args']['group_by_length']),
         )
-        
-        
-        #** Clear Cache **#
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-       
-        
+
         #** Callbacks **#
         logger = LoggingCallback(config['log_dir'], log_training_steps=config['training_args']['log_training_steps'])
         debugger = DebugCallback()
         memory_cleanup = MemoryCleanupCallback()
+        early_stopping = EarlyStoppingCallback(early_stopping_patience=2)
 
 
         #** Trainer **#
@@ -78,8 +73,8 @@ class Trainer:
             train_dataset     = self.dataset["train"],
             eval_dataset      = self.dataset["val"],
             data_collator     = self.data_collator,
-            # compute_metrics   = self.compute_metrics3, 
-            callbacks         = [logger, debugger, memory_cleanup],
+            compute_metrics   = self.compute_metrics, 
+            callbacks         = [logger, debugger, memory_cleanup, early_stopping],
         )
 
 
@@ -104,6 +99,7 @@ class Trainer:
             torch.distributed.destroy_process_group()
 
 
+
     #** Model Config Check **#
     def check_model_config(self):
         config = self.model.config
@@ -117,7 +113,34 @@ class Trainer:
         
         
 
+    #** Metrics **#
+    def compute_metrics(self, eval_preds):
+        """Computes perplexity, exact match (EM), and F1. LIGHTER THAN OTHERS
+        """
+        preds, labels = eval_preds
 
+        #** Remove user input tokens and decode **#
+        labels = np.where(labels != -100, labels, 0)
+
+        pred_texts = self.tokenizer.batch_decode(preds, skip_special_tokens=True)
+        label_texts = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
+
+        #** Perplexity **#
+        loss = None
+        perplexity = None
+        if hasattr(eval_preds, "metrics") and "eval_loss" in eval_preds.metrics:
+            loss = eval_preds.metrics["eval_loss"]
+            perplexity = np.exp(loss) if loss < 20 else float("inf")
+
+        #** Exact Match & F1 **#
+        em = self.em_metric.compute(predictions=pred_texts, references=label_texts)["exact_match"] #type: ignore
+        f1 = self.f1_metric.compute(predictions=pred_texts, references=label_texts)["f1"] #type: ignore
+
+        return {
+            "perplexity": perplexity,
+            "exact_match": em,
+            "f1": f1,
+        }
 
 
 

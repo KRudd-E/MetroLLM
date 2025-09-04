@@ -36,7 +36,7 @@ class Preprocessor:
     def tok_fn(self, input):
         # Tokenize text
         out = self.tokenizer(
-            input["text"],
+            input["Text"],
             truncation=True,
             max_length=self.max_length,
         )

@@ -33,7 +33,7 @@ train:
     metric_for_best_model       : "f1_micro"
     load_best_model_at_end      : True
     logging_dir                 : modelDev-textClass-A/results/
-    logging_steps               : 50
+    logging_steps               : 20
     bf16                        : True
     push_to_hub                 : False
     save_safetensors            : True

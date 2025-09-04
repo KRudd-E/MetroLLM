@@ -29,9 +29,9 @@ train:
     do_train: true
     do_eval: true
     evaluation_strategy: "steps"  
-    eval_steps: 100
+    eval_steps: 300
     save_strategy: "steps"
-    save_steps: 100
+    save_steps: 300
     save_total_limit: 2
     logging_strategy: "steps"
     logging_steps: 25

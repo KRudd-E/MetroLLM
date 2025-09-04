@@ -17,7 +17,7 @@ class DatasetLoader:
         except:
             pass
         
-        train_dataset, val_dataset = dataset.train_test_split(test_size=0.1).values() # type: ignore
+        train_dataset, val_dataset = dataset.train_test_split(test_size=config['data']['test_size']).values() # type: ignore
          
         print(f"Training samples: {len(train_dataset)} | Validation samples: {len(val_dataset)}")
         

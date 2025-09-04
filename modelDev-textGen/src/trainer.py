@@ -79,7 +79,7 @@ class Trainer:
         logger = LoggingCallback(log_path=config['log_dir'], log_training_steps=config['training_args']['log_training_steps'])
         debugger = DebugCallback()
         memory_cleanup = MemoryCleanupCallback()
-        early_stopping = EarlyStoppingCallback(early_stopping_patience=4)
+        early_stopping = EarlyStoppingCallback(early_stopping_patience=config['training_args']['early_stopping_patience'])
 
 
         print(f'\nTrain length: {len(self.dataset["train"])}\n'

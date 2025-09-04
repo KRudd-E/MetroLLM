@@ -9,6 +9,7 @@ train:
     input_col: "input"
     output_col: "output"
     max_seq_length: 2048
+    test_size: 0.1
 
   model:
     name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
@@ -75,6 +76,7 @@ train:
     run_name: "deepseek-lora-finetune"
     
     
+    early_stopping_patience: 5
     log_training_steps:   True
     
 

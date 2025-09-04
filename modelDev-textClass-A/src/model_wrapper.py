@@ -1,3 +1,8 @@
+""" model_wrapper.py
+Wrapper class for text classification models using Hugging Face Transformers.
+Includes a custom class for weighted binary cross-entropy loss to handle class imbalance.
+"""
+
 import torch
 import torch.nn as nn
 import numpy as np
@@ -9,11 +14,9 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 
 class WeightedBCEModel(AutoModelForSequenceClassification):
-    """Custom model that uses Weighted Binary Cross Entropy to handle class imbalance."""
-    
     def __init__(self, config, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
-        self.pos_weight = None  # Will be set after initialization
+        self.pos_weight = None
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore

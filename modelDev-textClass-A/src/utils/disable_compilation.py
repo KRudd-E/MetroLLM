@@ -1,6 +1,6 @@
-"""
+""" disable_compilation.py
 Disable PyTorch compilation features to avoid CUDA compilation issues in HPC environments.
-Import this before any other PyTorch/transformers imports.
+Must be done early in the script, ideally before importing torch or transformers.
 """
 def disable_compilation():
     import os

@@ -1,3 +1,8 @@
+""" callbacks.py
+Custom callbacks for logging and debugging during model training and evaluation.
+Includes a logging callback to save evaluation metrics and training logs to a JSON file.
+"""
+
 from transformers.trainer_callback import TrainerCallback
 import os
 import json
@@ -64,7 +69,7 @@ class LoggingCallback(TrainerCallback):
         else:
             return 
 
-
+#***** Loss Check - Debug *****#
 class DebugCallback(TrainerCallback):
     def on_step_end(self, args, state, control, logs=None, metrics=None, **kwargs):
         if logs and "loss" in logs:

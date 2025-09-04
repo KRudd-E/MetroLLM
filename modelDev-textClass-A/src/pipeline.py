@@ -1,12 +1,14 @@
+# pipeline.py
+# This script contains the FineTunePipeline class which employs the various TC-A modules to run either training or evaluation.
+
 from src.utils.misc import get_config, parser, setup_training_output_dir
 from src.utils.disable_compilation import disable_compilation
 from src.preprocess import Preprocessor
 from src.model_wrapper import ClassificationWrapper, compute_pos_weights
 
-
 class FineTunePipeline:
     def __init__(self):
-        disable_compilation() 
+        disable_compilation() # Resolve errors in HPC env.
         self.config = get_config()
         
     def run(self):
@@ -16,7 +18,7 @@ class FineTunePipeline:
         if run_mode == 'train':
             from src.train import Trainer_Object
 
-            self = setup_training_output_dir(self)
+            setup_training_output_dir(self)
             
             preprocessor = Preprocessor(self.config['train'])
             ds_tok, task_names, y_labels = preprocessor.run()

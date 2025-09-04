@@ -41,7 +41,7 @@ class Trainer_Object:
             # New
             max_grad_norm                 =  float(self.config['training_args']['max_grad_norm']),  # gradient clipping
             lr_scheduler_type             =    str(self.config['training_args']['lr_scheduler_type']),  # scheduler type
-#            label_smoothing_factor        =  float(self.config['training_args']['label_smoothing_factor']),  # label smoothing
+            # label_smoothing_factor        =  float(self.config['training_args']['label_smoothing_factor']),  # label smoothing
             )
 
 
@@ -50,7 +50,7 @@ class Trainer_Object:
             args              = args,
             train_dataset     = ds_tok["train"],
             eval_dataset      = ds_tok["test"],
-            tokenizer         = self.tokenizer,
+            #tokenizer         = self.tokenizer,
             data_collator     = self.data_collator,
             compute_metrics   = self.compute_metrics,
             callbacks         = [

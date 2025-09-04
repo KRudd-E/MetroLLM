@@ -106,7 +106,7 @@ class Trainer:
                 pass
 
 
-        trainer.train(resume_from_checkpoint='/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/2025-09-04_12-56-04/checkpoint-850')
+        trainer.train()
         
         
         #** Save LoRA adapters **#

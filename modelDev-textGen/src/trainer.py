@@ -35,7 +35,7 @@ class Trainer:
         training_args = TrainingArguments(
             label_names                     = ["labels"],
 
-            output_dir                      = str(config['training_args']['output_dir']),
+            output_dir                      = str(config['output_dir']),
             do_train                        = bool(config['training_args']['do_train']),
             do_eval                         = bool(config['training_args']['do_eval']),
             eval_strategy                   = str(config['training_args']['evaluation_strategy']),
@@ -79,10 +79,13 @@ class Trainer:
         logger = LoggingCallback(log_path=config['log_dir'], log_training_steps=config['training_args']['log_training_steps'])
         debugger = DebugCallback()
         memory_cleanup = MemoryCleanupCallback()
-        early_stopping = EarlyStoppingCallback(early_stopping_patience=2)
+        early_stopping = EarlyStoppingCallback(early_stopping_patience=4)
 
 
-        #** Trainer **#
+        print(f'\nTrain length: {len(self.dataset["train"])}\n'
+              f'Validation length: {len(self.dataset["val"])}\n')
+        
+        #** Trainer **# 
         trainer = HFTrainer(
             model             = self.model,
             # tokenizer         = self.tokenizer,
@@ -103,7 +106,7 @@ class Trainer:
                 pass
 
 
-        trainer.train()
+        trainer.train(resume_from_checkpoint='/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/2025-09-04_12-56-04/checkpoint-850')
         
         
         #** Save LoRA adapters **#

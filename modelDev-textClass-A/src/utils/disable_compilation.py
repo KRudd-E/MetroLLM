@@ -15,3 +15,7 @@ def disable_compilation():
 
     # Set attention implementation to eager (non-compiled)
     os.environ["ATTENTION_IMPLEMENTATION"] = "eager"
+    
+    # Disable flash attention specifically for ModernBERT
+    os.environ["FLASH_ATTENTION_FORCE_EAGER"] = "1"
+    os.environ["MODERNBERT_ATTENTION_IMPLEMENTATION"] = "eager"

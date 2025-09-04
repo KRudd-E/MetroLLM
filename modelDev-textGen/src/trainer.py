@@ -131,7 +131,7 @@ class Trainer:
         
 
     #** Metrics **#
-    def compute_metrics(self, eval_preds):
+    def compute_metrics(self, eval_preds,  chunk_size: int = 8):
         """Computes perplexity, exact match (EM), and F1. LIGHTER THAN OTHERS
         """
         preds, labels = eval_preds
@@ -141,11 +141,24 @@ class Trainer:
         if hasattr(preds, "ndim") and preds.ndim == 3:     # (B, T, V)
             preds = preds.argmax(-1)
             
-        #** Remove user input tokens and decode **#
-        labels = np.where(labels != -100, labels, 0)
+        pad_id = getattr(self.tokenizer, "pad_token_id", None)
+        if pad_id is None:
+            pad_id = self.tokenizer.eos_token_id  # fallback
+        labels = np.where(labels != -100, labels, pad_id)
+        
+        preds = np.array(preds)
+        labels = np.array(labels)
+                
 
-        pred_texts = self.tokenizer.batch_decode(preds, skip_special_tokens=True)
-        label_texts = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
+        pred_texts = []
+        label_texts = []
+        n = len(preds)
+        for i in range(0, n, chunk_size):
+            chunk_preds = preds[i : i + chunk_size].tolist()
+            chunk_labels = labels[i : i + chunk_size].tolist()
+            pred_texts.extend(self.tokenizer.batch_decode(chunk_preds, skip_special_tokens=True))
+            label_texts.extend(self.tokenizer.batch_decode(chunk_labels, skip_special_tokens=True))
+
 
         # #** Perplexity **#
         # loss = None
@@ -155,8 +168,8 @@ class Trainer:
         #     perplexity = np.exp(loss) if loss < 20 else float("inf")
 
         #** Exact Match & F1 **#
-        em = self.em_metric.compute(predictions=pred_texts, references=label_texts)["exact_match"] #type: ignore
-        f1 = self.f1_metric.compute(predictions=pred_texts, references=label_texts)["f1"] #type: ignore
+        em = float(self.em_metric.compute(predictions=pred_texts, references=label_texts)["exact_match"]) #type: ignore
+        f1 = float(self.f1_metric.compute(predictions=pred_texts, references=label_texts)["f1"]) #type: ignore
 
         return {
             # "perplexity": perplexity,

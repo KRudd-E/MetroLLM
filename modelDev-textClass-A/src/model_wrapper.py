@@ -17,7 +17,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 class WeightedBCEModel(AutoModelForSequenceClassification):
     def __init__(self, config, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
-        self.pos_weight = None
+        self.pos_weight = getattr(config, "pos_weight", None)
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore

@@ -19,20 +19,20 @@ train:
   training_args:
     #*- Transformers Training Arguments -*#
     output_dir                  : /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/
-    learning_rate               : 2e-6
-    per_device_train_batch_size : 8
-    per_device_eval_batch_size  : 8
+    learning_rate               : 8e-7
+    per_device_train_batch_size : 4
+    per_device_eval_batch_size  : 4
     gradient_accumulation_steps : 1
     num_train_epochs            : 3
     gradient_checkpointing      : True
-    warmup_ratio                : 0.05
+    warmup_ratio                : 0.1
     weight_decay                : 0.1
     eval_strategy               : "steps"
-    eval_steps                  : 10
+    eval_steps                  : 12
     save_strategy               : "steps"
-    save_steps                  : 10
+    save_steps                  : 12
     logging_strategy            : "steps"
-    logging_steps               : 10
+    logging_steps               : 12
     save_total_limit            : 8
     metric_for_best_model       : "f1_micro"
     load_best_model_at_end      : True
@@ -41,9 +41,9 @@ train:
     bf16                        : True
     push_to_hub                 : False
     save_safetensors            : True
-    max_grad_norm               : 1
-    lr_scheduler_type           : linear
-    # label_smoothing_factor      : 0.1
+    max_grad_norm               : 0.1
+    lr_scheduler_type           : cosine
+    label_smoothing_factor      : 0.1
     
     #*- Other -*#
     dropout: 0.3

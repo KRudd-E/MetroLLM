@@ -45,7 +45,7 @@ class Trainer_Object:
             # New
             max_grad_norm                 =  float(self.config['training_args']['max_grad_norm']),  # gradient clipping
             lr_scheduler_type             =    str(self.config['training_args']['lr_scheduler_type']),  # scheduler type
-            # label_smoothing_factor        =  float(self.config['training_args']['label_smoothing_factor']),  # label smoothing
+            label_smoothing_factor        =  float(self.config['training_args']['label_smoothing_factor']),  # label smoothing
             )
 
 

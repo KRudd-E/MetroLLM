@@ -68,6 +68,14 @@ class WeightedBCEModelWrapper(nn.Module):
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
+        
+    def gradient_checkpointing_enable(self, gradient_checkpointing_kwargs=None):
+        """Enable gradient checkpointing on the base model."""
+        return self.base_model.gradient_checkpointing_enable(gradient_checkpointing_kwargs)
+
+    def gradient_checkpointing_disable(self):
+        """Disable gradient checkpointing on the base model."""
+        return self.base_model.gradient_checkpointing_disable()
 
     def get_model(self):
         return self
@@ -83,6 +91,7 @@ class WeightedBCEModelWrapper(nn.Module):
 
     def get_mlb(self):
         return self.mlb
+
 
 
 def compute_pos_weights(y_labels) -> torch.Tensor:

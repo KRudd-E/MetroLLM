@@ -27,7 +27,13 @@ class WeightedBCEModel(AutoModelForSequenceClassification):
         return model
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
-        outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore
+        # Call HF forward but disable built-in loss by dropping labels
+        outputs = super().forward( # type: ignore
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            labels=None,
+            **kwargs
+        )
         logits = outputs.logits
 
         loss = None

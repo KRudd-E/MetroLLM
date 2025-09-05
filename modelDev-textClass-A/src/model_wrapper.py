@@ -10,6 +10,7 @@ from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForSequenceClassification   
 from transformers.data.data_collator import DataCollatorWithPadding
 from transformers.models.auto.configuration_auto import AutoConfig
+from transformers.modeling_outputs import SequenceClassifierOutput
 from sklearn.preprocessing import MultiLabelBinarizer
 
 
@@ -22,12 +23,17 @@ class WeightedBCEModel(AutoModelForSequenceClassification):
         outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore
         logits = outputs.logits
 
+        loss = None
         if labels is not None and self.pos_weight is not None:
-            # Apply weighted binary cross entropy loss
             loss_fct = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(logits.device))
             loss = loss_fct(logits, labels.float())
-            return {"loss": loss, "logits": logits}
-        return outputs
+
+        return SequenceClassifierOutput(
+            loss=loss,
+            logits=logits,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
+        )
     
     def save_pretrained(self, save_directory, **kwargs):
         # Force safe serialization to handle shared tensors

@@ -94,7 +94,7 @@ class DeepSeekWrapper:
             )
         
         #***** Eval *****#
-        elif run == 'eval': 
+        elif run == 'evaluate': 
             # Check for distributed training through environment variables
             is_distributed = ('RANK' in os.environ and 'WORLD_SIZE' in os.environ) or \
                            (torch.distributed.is_available() and torch.distributed.is_initialized())

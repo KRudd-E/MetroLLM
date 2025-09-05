@@ -52,7 +52,7 @@ class ClassificationWrapper:
             hidden_dropout_prob=float(config['training_args']['dropout']),
             attention_probs_dropout_prob=float(config['training_args']['dropout']),
         )
-        #! IF DROPOUT CAUSES ISSUES DURING EVAL, SET UNDER CONFIG IN 'if run == 'train'.
+        model_config.pos_weight = pos_weights
         
         # Disable features which cause issues on HPC 
         if hasattr(model_config, 'compile_embeddings'):

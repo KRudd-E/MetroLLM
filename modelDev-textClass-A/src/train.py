@@ -3,7 +3,7 @@ import evaluate
 from transformers.trainer import Trainer
 from transformers.training_args import TrainingArguments
 from src.utils.callbacks import LoggingCallback, DebugCallback
-from sklearn.metrics import f1_score, precision_score, recall_score, average_precision_score, roc_auc_score
+from sklearn.metrics import f1_score, precision_score, recall_score # , average_precision_score, roc_auc_score
 import torch
 
 class Trainer_Object:
@@ -82,10 +82,10 @@ class Trainer_Object:
             "recall_micro": recall_score(labels, preds, average="micro", zero_division=0),
             "precision_macro": precision_score(labels, preds, average="macro", zero_division=0),
             "recall_macro": recall_score(labels, preds, average="macro", zero_division=0),
-            "macro_auroc": roc_auc_score(labels, probabilities, average="macro"),
-            "micro_auroc": roc_auc_score(labels, probabilities, average="micro"),
-            "macro_auprc": average_precision_score(labels, probabilities, average="macro"),
-            "micro_auprc": average_precision_score(labels, probabilities, average="micro"),
+            # "macro_auroc": roc_auc_score(labels, probabilities, average="macro"),
+            # "micro_auroc": roc_auc_score(labels, probabilities, average="micro"),
+            # "macro_auprc": average_precision_score(labels, probabilities, average="macro"),
+            # "micro_auprc": average_precision_score(labels, probabilities, average="micro"),
         }
         
         # # Per-class F1 scores for monitoring individual class performance

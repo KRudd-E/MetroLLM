@@ -3,7 +3,7 @@ import evaluate
 from transformers.trainer import Trainer
 from transformers.training_args import TrainingArguments
 from src.utils.callbacks import LoggingCallback, DebugCallback
-from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.metrics import f1_score, precision_score, recall_score, average_precision_score, roc_auc_score
 import torch
 
 class Trainer_Object:
@@ -29,6 +29,7 @@ class Trainer_Object:
             warmup_ratio                  = float(self.config['training_args']['warmup_ratio']),
             weight_decay                  = float(self.config['training_args']['weight_decay']),
             eval_strategy                 =   str(self.config['training_args']['eval_strategy']),
+            eval_steps                    =   int(self.config['training_args'].get('eval_steps', 500)),  # Default to 500 if not specified
             save_strategy                 =   str(self.config['training_args']['save_strategy']),
             save_total_limit              =   int(self.config['training_args']['save_total_limit']),
             metric_for_best_model         =   str(self.config['training_args']['metric_for_best_model']),
@@ -80,12 +81,16 @@ class Trainer_Object:
             "recall_micro": recall_score(labels, preds, average="micro", zero_division=0),
             "precision_macro": precision_score(labels, preds, average="macro", zero_division=0),
             "recall_macro": recall_score(labels, preds, average="macro", zero_division=0),
+            "macro_auroc": roc_auc_score(labels, probabilities, average="macro"),
+            "micro_auroc": roc_auc_score(labels, probabilities, average="micro"),
+            "macro_auprc": average_precision_score(labels, probabilities, average="macro"),
+            "micro_auprc": average_precision_score(labels, probabilities, average="micro"),
         }
         
-        # Per-class F1 scores for monitoring individual class performance
-        per_class_f1 = f1_score(labels, preds, average=None, zero_division=0)
-        if isinstance(per_class_f1, np.ndarray):
-            results.update({f"f1_class_{i}": score for i, score in enumerate(per_class_f1)})
+        # # Per-class F1 scores for monitoring individual class performance
+        # per_class_f1 = f1_score(labels, preds, average=None, zero_division=0)
+        # if isinstance(per_class_f1, np.ndarray):
+        #     results.update({f"f1_class_{i}": score for i, score in enumerate(per_class_f1)})
             
         if self.pos_weights is not None:
             loss_fct = torch.nn.BCEWithLogitsLoss(

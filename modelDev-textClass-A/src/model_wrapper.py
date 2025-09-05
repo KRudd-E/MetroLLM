@@ -14,10 +14,11 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 from sklearn.preprocessing import MultiLabelBinarizer
 
 
+
 class WeightedBCEModel(AutoModelForSequenceClassification):
-    def __init__(self, config, pos_weights, *args, **kwargs):
+    def __init__(self, config, pos_weight=None, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
-        self.pos_weight = pos_weights
+        self.pos_weight = pos_weight
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore
@@ -59,16 +60,14 @@ class ClassificationWrapper:
         if hasattr(model_config, 'attention_implementation'):
             model_config.attention_implementation = "eager"
 
+
         self.model = WeightedBCEModel.from_pretrained(
             model_name,
             config=model_config,
-            pos_weights=pos_weights,
+            pos_weight=pos_weights,
             **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
         )
-
-        # Set pos_weight only if provided
         if pos_weights is not None:
-            self.model.pos_weight = pos_weights
             print(f"\nSet pos_weight for training: {pos_weights}\n")
 
         # Disable compilation.

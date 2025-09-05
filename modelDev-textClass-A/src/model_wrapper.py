@@ -8,7 +8,7 @@ model and applies BCEWithLogitsLoss with per-class pos_weight.
 import torch
 import torch.nn as nn
 from torch.nn import BCEWithLogitsLoss
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, DataCollatorWithPadding
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, DataCollatorWithPadding, AutoConfig
 from transformers.modeling_outputs import SequenceClassifierOutput
 from sklearn.preprocessing import MultiLabelBinarizer
 
@@ -16,10 +16,26 @@ from sklearn.preprocessing import MultiLabelBinarizer
 class WeightedBCEModelWrapper(nn.Module):
     def __init__(self, model_name: str, config, pos_weight: torch.Tensor = None, device=None): # type: ignore
         super().__init__()
-        # Load the base HF model
+        
+        # Create model config with correct num_labels
+        model_config = AutoConfig.from_pretrained(
+            model_name,
+            num_labels=config["data"]["class_no"],
+            problem_type="multi_label_classification",
+            hidden_dropout_prob=float(config['training_args']['dropout']),
+            attention_probs_dropout_prob=float(config['training_args']['dropout']),
+        )
+        
+        # Disable features which cause issues on HPC 
+        if hasattr(model_config, 'compile_embeddings'):
+            model_config.compile_embeddings = False
+        if hasattr(model_config, 'attention_implementation'):
+            model_config.attention_implementation = "eager"
+        
+        # Load the base HF model with proper config
         self.base_model = AutoModelForSequenceClassification.from_pretrained(
             model_name,
-            config=config
+            config=model_config
         )
         
         # Register pos_weight as buffer so it is saved + moves with .to(device)

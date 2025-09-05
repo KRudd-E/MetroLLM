@@ -27,7 +27,7 @@ class FinetunePipeline:
 
         #************ Evaluate ************#
         elif run == 'evaluate':
-            from src.evaluator import Evaluator
+            from src.evaluator import MMLU_Evaluator, Task_Evaluator
             
             model_wrapper = DeepSeekWrapper(run, self.config['eval'])
             
@@ -35,5 +35,8 @@ class FinetunePipeline:
             dataset = ds_loader.load_evaluation_data(self.config['eval'])
 
 
-            evaluator = Evaluator(model_wrapper, dataset, self.config)
-            evaluator.evaluate(self.config['eval'])
+            mmlu_evaluator = MMLU_Evaluator(model_wrapper, self.config['eval'])
+            mmlu_evaluator.evaluate()
+            
+            task_evaluator = Task_Evaluator(model_wrapper, dataset, self.config['eval'])
+            task_evaluator.evaluate()

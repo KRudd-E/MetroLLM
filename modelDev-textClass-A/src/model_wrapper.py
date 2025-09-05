@@ -19,6 +19,12 @@ class WeightedBCEModel(AutoModelForSequenceClassification):
     def __init__(self, config, pos_weight=None, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
         self.pos_weight = pos_weight
+        
+    @classmethod
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, pos_weight=None, **kwargs):
+        model = super().from_pretrained(pretrained_model_name_or_path, *model_args, **kwargs)
+        model.pos_weight = pos_weight
+        return model
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore
@@ -67,8 +73,7 @@ class ClassificationWrapper:
             pos_weight=pos_weights,
             **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
         )
-        if pos_weights is not None:
-            print(f"\nSet pos_weight for training: {pos_weights}\n")
+        #self.model.pos_weight = pos_weights
 
         # Disable compilation.
         self._disable_compilation()

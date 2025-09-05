@@ -15,9 +15,9 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 
 class WeightedBCEModel(AutoModelForSequenceClassification):
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, config, pos_weights, *args, **kwargs):
         super().__init__(config, *args, **kwargs)
-        self.pos_weight = getattr(config, "pos_weight", None)
+        self.pos_weight = pos_weights
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         outputs = super().forward(input_ids=input_ids, attention_mask=attention_mask, labels=None, **kwargs) # type: ignore
@@ -52,7 +52,6 @@ class ClassificationWrapper:
             hidden_dropout_prob=float(config['training_args']['dropout']),
             attention_probs_dropout_prob=float(config['training_args']['dropout']),
         )
-        model_config.pos_weight = pos_weights
         
         # Disable features which cause issues on HPC 
         if hasattr(model_config, 'compile_embeddings'):
@@ -63,6 +62,7 @@ class ClassificationWrapper:
         self.model = WeightedBCEModel.from_pretrained(
             model_name,
             config=model_config,
+            pos_weights=pos_weights,
             **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
         )
 

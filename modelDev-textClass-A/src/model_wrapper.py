@@ -54,19 +54,16 @@ class ClassificationWrapper:
         if hasattr(model_config, 'attention_implementation'):
             model_config.attention_implementation = "eager"
 
-        if run == "train" and pos_weights is not None:
-            self.model = WeightedBCEModel.from_pretrained(
-                model_name,
-                config=model_config,
-            )
-            # Set the pos_weight after model creation
+        self.model = WeightedBCEModel.from_pretrained(
+            model_name,
+            config=model_config,
+            **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
+        )
+
+        # Set pos_weight only if provided
+        if pos_weights is not None:
             self.model.pos_weight = pos_weights
-        else:
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                model_name,
-                config=model_config,
-                **({"low_cpu_mem_usage": True, "device_map": "auto"} if run != "train" else {}),
-            )
+            print(f"\nSet pos_weight for training: {pos_weights}\n")
 
         # Disable compilation.
         self._disable_compilation()

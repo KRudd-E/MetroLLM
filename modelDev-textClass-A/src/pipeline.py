@@ -26,7 +26,7 @@ class FineTunePipeline:
             pos_weights = compute_pos_weights(y_labels)
             model_wrapper = ClassificationWrapper(run=run_mode, config=self.config['train'], pos_weights=pos_weights)
             
-            trainer = Trainer_Object(self.config['train'], model_wrapper)
+            trainer = Trainer_Object(self.config['train'], model_wrapper, pos_weights)
             trainer.run(ds_tok)
 
         #************ Evaluate ************#

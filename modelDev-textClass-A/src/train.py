@@ -4,15 +4,16 @@ from transformers.trainer import Trainer
 from transformers.training_args import TrainingArguments
 from src.utils.callbacks import LoggingCallback, DebugCallback
 from sklearn.metrics import f1_score, precision_score, recall_score
-
+import torch
 
 class Trainer_Object:
-    def __init__(self, config, model_wrapper):
+    def __init__(self, config, model_wrapper, pos_weights=None):
         self.config = config
         self.model = model_wrapper.get_model()
         self.tokenizer = model_wrapper.get_tokenizer()
         self.data_collator = model_wrapper.get_data_collator()
         self.metric = evaluate.load("f1")
+        self.pos_weights = pos_weights
         
 
     def run(self, ds_tok):
@@ -85,5 +86,16 @@ class Trainer_Object:
         per_class_f1 = f1_score(labels, preds, average=None, zero_division=0)
         if isinstance(per_class_f1, np.ndarray):
             results.update({f"f1_class_{i}": score for i, score in enumerate(per_class_f1)})
+            
+        if self.pos_weights is not None:
+            loss_fct = torch.nn.BCEWithLogitsLoss(
+                pos_weight=self.pos_weights.to(logits.device if hasattr(logits, "device") else "cpu"),
+                reduction="mean",
+            )
+            # torch expects tensors
+            logits_t = torch.tensor(logits)
+            labels_t = torch.tensor(labels).float()
+            weighted_loss = loss_fct(logits_t, labels_t).item()
+            results["weighted_eval_loss"] = weighted_loss
         
         return results

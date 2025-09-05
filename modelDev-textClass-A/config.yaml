@@ -23,12 +23,13 @@ train:
     per_device_train_batch_size : 8
     per_device_eval_batch_size  : 8
     gradient_accumulation_steps : 1
-    num_train_epochs            : 8
+    num_train_epochs            : 10
     gradient_checkpointing      : True
     warmup_ratio                : 0.05
     weight_decay                : 0.01
     eval_strategy               : "epoch"
     save_strategy               : "epoch"
+    logging_strategy            : "epoch"
     save_total_limit            : 8
     metric_for_best_model       : "f1_micro"
     load_best_model_at_end      : True

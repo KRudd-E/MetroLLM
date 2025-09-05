@@ -13,17 +13,17 @@ train:
     class_no: 21
   
   model:
-    name: answerdotai/ModernBERT-base # answerdotai/ModernBERT-large
+    name: answerdotai/ModernBERT-large # answerdotai/ModernBERT-large
     max_length: 8192
     
   training_args:
     #*- Transformers Training Arguments -*#
     output_dir                  : /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/
-    learning_rate               : 2.5e-5
+    learning_rate               : 2e-5
     per_device_train_batch_size : 4
     per_device_eval_batch_size  : 4
     gradient_accumulation_steps : 16
-    num_train_epochs            : 15
+    num_train_epochs            : 20
     gradient_checkpointing      : True
     warmup_ratio                : 0.05
     weight_decay                : 0.01
@@ -35,16 +35,16 @@ train:
     metric_for_best_model       : "f1_micro"
     load_best_model_at_end      : True
     logging_dir                 : modelDev-textClass-A/results/
-    logging_steps               : 20
+    logging_steps               : 10
     bf16                        : True
     push_to_hub                 : False
     save_safetensors            : True
     max_grad_norm               : 1
     lr_scheduler_type           : linear
-    label_smoothing_factor      : 0.1
+    # label_smoothing_factor      : 0.1
     
     #*- Other -*#
-    dropout: 0.25
+    dropout: 0.15
     log_training_steps:   True
 
 

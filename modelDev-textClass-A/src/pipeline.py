@@ -4,7 +4,7 @@
 from src.utils.misc import get_config, parser, setup_training_output_dir
 from src.utils.disable_compilation import disable_compilation
 from src.preprocess import Preprocessor
-from src.model_wrapper import ClassificationWrapper, compute_pos_weights
+from src.model_wrapper import WeightedBCEModelWrapper, compute_pos_weights
 
 class FineTunePipeline:
     def __init__(self):
@@ -24,7 +24,7 @@ class FineTunePipeline:
             ds_tok, task_names, y_labels = preprocessor.run()
             
             pos_weights = compute_pos_weights(y_labels)
-            model_wrapper = ClassificationWrapper(run=run_mode, config=self.config['train'], pos_weights=pos_weights)
+            model_wrapper = WeightedBCEModelWrapper(model_name=self.config['train']['model']['name'], config=self.config['train'], pos_weight=pos_weights)
             
             trainer = Trainer_Object(self.config['train'], model_wrapper, pos_weights)
             trainer.run(ds_tok)
@@ -36,8 +36,8 @@ class FineTunePipeline:
             preprocessor = Preprocessor(self.config['eval'])
             ds_tok, task_names, y_labels = preprocessor.run()
             
-            model_wrapper = ClassificationWrapper(run=run_mode, config=self.config['eval'])
+            #model_wrapper = WeightedBCEModelWrapper( config=self.config['eval'])
             
-            evaluator = Evaluator(self.config['eval'], model_wrapper)
-            evaluator.run(ds_tok)
+            # evaluator = Evaluator(self.config['eval'], model_wrapper)
+            # evaluator.run(ds_tok)
             

@@ -29,15 +29,16 @@ class Trainer_Object:
             warmup_ratio                  = float(self.config['training_args']['warmup_ratio']),
             weight_decay                  = float(self.config['training_args']['weight_decay']),
             eval_strategy                 =   str(self.config['training_args']['eval_strategy']),
-            eval_steps                    =   int(self.config['training_args'].get('eval_steps', 500)),  # Default to 500 if not specified
+            eval_steps                    =   int(self.config['training_args']['eval_steps']),
             save_strategy                 =   str(self.config['training_args']['save_strategy']),
+            save_steps                    =   int(self.config['training_args']['save_steps']),
             save_total_limit              =   int(self.config['training_args']['save_total_limit']),
             metric_for_best_model         =   str(self.config['training_args']['metric_for_best_model']),
             load_best_model_at_end        =  bool(self.config['training_args']['load_best_model_at_end']),
             #logging_dir                  =   str(self.config['training_args']['logging_dir']),
             logging_steps                 =   int(self.config['training_args']['logging_steps']),
             bf16                          =  bool(self.config['training_args']['bf16']),
-            push_to_hub                   =  bool(self.config['training_args']['push_to_hub']), # type: ignore
+            push_to_hub                   =  bool(self.config['training_args']['push_to_hub']),
             save_safetensors              =  bool(self.config['training_args']['save_safetensors']),
 
             # New

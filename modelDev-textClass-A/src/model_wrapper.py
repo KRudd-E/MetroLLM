@@ -19,6 +19,7 @@ class WeightedBCEModelWrapper(nn.Module):
         self.max_labels = config['model']['max_labels']
         self.count_penalty_weight = config['model']['count_penalty_weight']
         self.threshold = config['model']['threshold']
+        self.pos_weight = pos_weight
 
         #** Model config **#
         model_config = AutoConfig.from_pretrained(

@@ -52,6 +52,8 @@ class Evaluator:
         preds_classes_limited = predict_with_count_limit(preds_tensor, self.config['model']['threshold'], self.config['model']['max_labels'])
         preds_classes_limited = preds_classes_limited.numpy().astype(int)
 
+        print(f"Predicted classes limited example: {preds_classes_limited[:5]}")
+        
         pred_strs_standard = []
         pred_strs_limited = []
         label_strs = []

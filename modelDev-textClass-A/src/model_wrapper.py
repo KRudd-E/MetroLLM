@@ -116,9 +116,6 @@ class WeightedBCEModelWrapper(nn.Module):
 
     def get_data_collator(self):
         return self.data_collator
-
-    def get_mlb(self):
-        return self.mlb
     
     
 

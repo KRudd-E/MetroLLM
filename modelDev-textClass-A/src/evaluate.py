@@ -19,6 +19,19 @@ class Evaluator:
         self.task_names = task_names  # list of class names
 
     def run(self, dataset):
+
+        print("[DEBUG] Task names (order):", self.task_names)
+
+        try:
+            first_item = dataset[0]
+            if isinstance(first_item, dict) and "labels" in first_item:
+                print("[DEBUG] First label vector from dataset:", first_item["labels"])
+            else:
+                print("[DEBUG] First item from dataset (no 'labels' key):", first_item)
+        except Exception as e:
+            print(f"[DEBUG] Could not access first item in dataset: {e}")
+
+
         dataloader = DataLoader(
             dataset,
             batch_size=self.config["evaluation_args"]["batch_size"],
@@ -41,8 +54,8 @@ class Evaluator:
         labels = np.concatenate(labels, axis=0)
         
         print("Task names used for evaluation:", self.task_names)
-        print("\nFirst 5 label vectors:\n", labels[:5])
-        print("First 5 label vectors:\n", preds[:5])
+        print("\nFirst 5 label vectors (from dataloader):\n", labels[:5])
+        print("First 5 prediction vectors (from model):\n", preds[:5])
 
         preds_probs = 1 / (1 + np.exp(-preds))
         preds_classes_standard = (preds_probs >= self.config['model']['threshold']).astype(int)

@@ -36,7 +36,8 @@ class FineTunePipeline:
             preprocessor = Preprocessor(self.config['eval'])
             ds_tok, task_names, y_labels = preprocessor.run(run_mode)
 
-            model_wrapper = WeightedBCEModelWrapper(config=self.config['eval'], checkpoint_dir=self.config['eval']['model']['checkpoint_dir'])
+            pos_weights = compute_pos_weights(y_labels)
+            model_wrapper = WeightedBCEModelWrapper(self.config['eval'], pos_weights, checkpoint_dir=self.config['eval']['model']['checkpoint_dir'])
 
             evaluator = Evaluator(self.config['eval'], model_wrapper, task_names)
             evaluator.run(ds_tok)

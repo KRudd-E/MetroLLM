@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+from src.model_wrapper import predict_with_count_limit
 
 class Evaluator:
     def __init__(self, config, model_wrapper, task_names):
@@ -10,6 +11,7 @@ class Evaluator:
 
         self.device = model_wrapper.get_device()
         self.model = model_wrapper.get_model()
+        self.model_wrapper = model_wrapper  # Store reference to wrapper for count-limited predictions
         self.tokenizer = model_wrapper.get_tokenizer()
         self.data_collator = model_wrapper.get_data_collator()
 
@@ -39,24 +41,37 @@ class Evaluator:
         labels = np.concatenate(labels, axis=0)
 
         preds_probs = 1 / (1 + np.exp(-preds))
-        preds_classes = (preds_probs >= 0.5).astype(int)
+        preds_classes_standard = (preds_probs >= self.config['model']['threshold']).astype(int)
+        
+        # Count-limited predictions
+        preds_tensor = torch.tensor(preds)
+        preds_classes_limited = predict_with_count_limit(preds_tensor, self.config['model']['threshold'], self.config['model']['max_labels'])
+        preds_classes_limited = preds_classes_limited.numpy().astype(int)
 
-        # convert to readable labels
-        pred_strs = []
+        pred_strs_standard = []
+        pred_strs_limited = []
         label_strs = []
-        for pred_row, label_row in zip(preds_classes, labels):
-            pred_labels = [self.task_names[i] for i, val in enumerate(pred_row) if val == 1]
+        
+        for pred_std, pred_lim, label_row in zip(preds_classes_standard, preds_classes_limited, labels):
+            pred_labels_std = [self.task_names[i] for i, val in enumerate(pred_std) if val == 1]
+            pred_labels_lim = [self.task_names[i] for i, val in enumerate(pred_lim) if val == 1]
             true_labels = [self.task_names[i] for i, val in enumerate(label_row) if val == 1]
-            pred_strs.append(f"[{','.join(pred_labels)}]")
+            
+            pred_strs_standard.append(f"[{','.join(pred_labels_std)}]")
+            pred_strs_limited.append(f"[{','.join(pred_labels_lim)}]")
             label_strs.append(f"[{','.join(true_labels)}]")
 
         df = pd.DataFrame({
-            "predictions": pred_strs,
-            "labels": label_strs
+            "predictions_standard": pred_strs_standard,
+            "predictions_limited": pred_strs_limited,
+            "labels": label_strs,
+            "pred_count_standard": [len(pred_std.nonzero()[0]) for pred_std in preds_classes_standard],
+            "pred_count_limited": [len(pred_lim.nonzero()[0]) for pred_lim in preds_classes_limited],
+            "true_count": [len(label.nonzero()[0]) for label in labels]
         })
 
         csv_path = f"{self.output_dir}/results.csv"
         df.to_csv(csv_path, index=False)
 
         print(f"Saved predictions and labels to {csv_path}")
-        return preds_classes, labels
+        return preds_classes_standard, preds_classes_limited, labels

@@ -52,19 +52,19 @@ train:
 #*** EVALUATE CONFIG ***#
 eval:
   data: 
-    source_dir: /Users/kieranrudd/Library/CloudStorage/OneDrive-TheUniversityofNottingham/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
+    source_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
     task_col: Task
     text_col: Text
     class_no: 21
 
   model:
     name: answerdotai/ModernBERT-base
-    source_dir: /Users/kieranrudd/Library/CloudStorage/OneDrive-TheUniversityofNottingham/MetroLLM/modelDev-textClass-A/results/models/base/checkpoint-248/
+    source_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v5
     max_length: 8192
   
   training_args:
     dropout: 0.1
     
   evaluation_args:
-    output_dir: /Users/kieranrudd/Library/CloudStorage/OneDrive-TheUniversityofNottingham/MetroLLM/modelDev-textClass-A/results/evaluations/
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v5/
     batch_size: 1

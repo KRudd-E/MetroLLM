@@ -47,6 +47,7 @@ class Preprocessor:
             y = self.mlb.transform(df["Task"])
 
         task_names = self.mlb.classes_
+        print(f'task_names:\n{task_names}')
         df["label_vec"] = y.tolist() # type: ignore
 
         ds = Dataset.from_pandas(df[["Text", "label_vec"]])

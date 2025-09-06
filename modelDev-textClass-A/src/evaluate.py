@@ -39,6 +39,9 @@ class Evaluator:
 
         preds = np.concatenate(preds, axis=0)
         labels = np.concatenate(labels, axis=0)
+        
+        print("Task names used for evaluation:", self.task_names)
+        print("First 5 label vectors:", labels[:5])
 
         preds_probs = 1 / (1 + np.exp(-preds))
         preds_classes_standard = (preds_probs >= self.config['model']['threshold']).astype(int)

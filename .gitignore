@@ -8,3 +8,8 @@ data/*
 _misc/csvAnalysis/data/*
 **/results/*
 _misc/updatedTask/data/*
+modelDev-textClass-A/src/utils/threshold_optimization.py
+modelDev-textClass-A/src/utils/SHARED_TENSOR_FIX.md
+modelDev-textClass-A/src/utils/HPC_COMPATIBILITY_FIX.md
+modelDev-textClass-A/src/utils/CLASS_IMBALANCE_REFACTOR.md
+modelDev-textClass-A/src/utils/evaluate copy.py

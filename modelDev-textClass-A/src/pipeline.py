@@ -45,6 +45,6 @@ class FineTunePipeline:
                 config=self.config['eval'],
             )
             
-            evaluator = Evaluator(self.config['eval'], model_wrapper)
+            evaluator = Evaluator(self.config['eval'], model_wrapper, task_names)
             evaluator.run(ds_tok)
             

@@ -127,7 +127,19 @@ class Trainer_Object:
             # torch expects tensors
             logits_t = torch.tensor(logits)
             labels_t = torch.tensor(labels).float()
-            weighted_loss = loss_fct(logits_t, labels_t).item()
-            results["weighted_eval_loss"] = weighted_loss
+            
+            # From model_wrapper.py !!!
+            
+            weighted_bce_loss = loss_fct(logits_t, labels_t)
+            
+            probs = torch.sigmoid(logits_t)
+            predicted_counts = (probs > self.config['model']['threshold']).sum(dim=1).float()
+            excess_labels = torch.clamp(predicted_counts - self.config['model']['max_labels'], min=0)
+            count_penalty = (excess_labels ** 2).mean()  # Quadratic penalty
+            
+            weighted_loss = weighted_bce_loss + self.config['model']['count_penalty_weight'] * count_penalty
+
+                
+            results["weighted_eval_loss"] = weighted_loss.item()
         
         return results

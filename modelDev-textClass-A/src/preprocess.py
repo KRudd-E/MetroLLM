@@ -16,7 +16,7 @@ class Preprocessor:
         self.tokenizer = AutoTokenizer.from_pretrained(config["model"]["name"],use_fast=True)
         self.max_length = self.config["model"]['max_length']
 
-    def run(self):
+    def run(self, run_mode):
         df = pd.read_csv(self.config["data"]["source_dir"])
         df.Task = df.Task.apply(literal_eval) # str -> list
         
@@ -27,7 +27,8 @@ class Preprocessor:
         df["label_vec"] = y.tolist() #type: ignore
 
         ds = Dataset.from_pandas(df[["Text", "label_vec"]])
-        ds = ds.train_test_split(test_size=0.15, seed=42)
+        if run_mode == 'train':
+            ds = ds.train_test_split(test_size=0.15, seed=42)
         ds_tok = ds.map(self.tok_fn, batched=True, remove_columns=["Text", "label_vec"])
 
         return ds_tok, task_names, y

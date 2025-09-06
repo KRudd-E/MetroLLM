@@ -58,8 +58,8 @@ eval:
     class_no: 21
 
   model:
-    name: answerdotai/ModernBERT-base
-    source_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v5
+    name: answerdotai/ModernBERT-large
+    checkpoint_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v5/
     max_length: 8192
     threshold: 0.5
     max_labels: 2

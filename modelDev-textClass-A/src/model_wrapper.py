@@ -1,5 +1,4 @@
-"""
-model_wrapper.py
+"""model_wrapper.py
 
 Defines WeightedBCEModelWrapper: wraps a HuggingFace AutoModelForSequenceClassification
 model and applies BCEWithLogitsLoss with per-class pos_weight.
@@ -14,15 +13,14 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 
 class WeightedBCEModelWrapper(nn.Module):
-    def __init__(self, config, pos_weight: torch.Tensor = None, device=None): # type: ignore
+    def __init__(self, config, pos_weight: torch.Tensor = None, device=None, checkpoint_dir=None): # type: ignore
         super().__init__()
-        
-        # Store label count constraint parameters
+
         self.max_labels = config['model']['max_labels']
         self.count_penalty_weight = config['model']['count_penalty_weight']
         self.threshold = config['model']['threshold']
-        
-        # Create model config with correct num_labels
+
+        #** Model config **#
         model_config = AutoConfig.from_pretrained(
             config["model"]["name"],
             num_labels=config["data"]["class_no"],
@@ -30,28 +28,28 @@ class WeightedBCEModelWrapper(nn.Module):
             hidden_dropout_prob=float(config['training_args']['dropout']),
             attention_probs_dropout_prob=float(config['training_args']['dropout']),
         )
-        
-        # Disable features which cause issues on HPC 
+
+        #** Disable compilation features which cause issues on HPC **#
         if hasattr(model_config, 'compile_embeddings'):
             model_config.compile_embeddings = False
         if hasattr(model_config, 'attention_implementation'):
             model_config.attention_implementation = "eager"
-        
-        # Load the base HF model with proper config
-        self.base_model = AutoModelForSequenceClassification.from_pretrained(
-            config["model"]["name"],
-            config=model_config
-        )
-        
-        # Register pos_weight as buffer so it is saved + moves with .to(device)
-        if pos_weight is not None:
-            pw = pos_weight.detach().clone().float().view(-1)
-            self.register_buffer("pos_weight", pw)
-        else:
-            self.pos_weight = None
 
-        # Tokenizer + data collator
-        self.tokenizer = AutoTokenizer.from_pretrained(config["model"]["name"], use_fast=True)
+        #** Load model weights if eval **#
+        if checkpoint_dir is not None:
+            self.base_model = AutoModelForSequenceClassification.from_pretrained(
+                checkpoint_dir,
+                config=model_config
+            )
+            self.tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir, use_fast=True)
+        #** Load pre-trained model if train **#
+        else:
+            self.base_model = AutoModelForSequenceClassification.from_pretrained(
+                config["model"]["name"],
+                config=model_config
+            )
+            self.tokenizer = AutoTokenizer.from_pretrained(config["model"]["name"], use_fast=True)
+
         self.data_collator = DataCollatorWithPadding(self.tokenizer, padding="longest")
         self.mlb = MultiLabelBinarizer()
         self.device = device or (torch.device("cuda" if torch.cuda.is_available() else "cpu"))
@@ -72,27 +70,23 @@ class WeightedBCEModelWrapper(nn.Module):
             labels_t = labels.float().to(logits.device)
 
             if logits.shape != labels_t.shape:
-                raise RuntimeError(
-                    f"Shape mismatch: logits {logits.shape} vs labels {labels_t.shape}."
-                )
+                raise RuntimeError(f"Shape mismatch: logits {logits.shape} vs labels {labels_t.shape}.")
 
-            # Standard BCE loss
-            if getattr(self, "pos_weight", None) is not None:
-                loss_fct = BCEWithLogitsLoss(pos_weight=self.pos_weight.to(logits.device)) # type: ignore
-            else:
-                loss_fct = BCEWithLogitsLoss()
-
+            #** Weighted BCE loss **#
+            loss_fct = BCEWithLogitsLoss(pos_weight=self.pos_weight.to(logits.device)) # type: ignore
             bce_loss = loss_fct(logits, labels_t)
 
+            #** Penalty for train **#
             if self.count_penalty_weight > 0.0:
                 probs = torch.sigmoid(logits)
                 predicted_counts = (probs > self.threshold).sum(dim=1).float()
                 
                 excess_labels = torch.clamp(predicted_counts - self.max_labels, min=0)
                 count_penalty = (excess_labels ** 2).mean()  # Quadratic penalty
-            else: # eval case.
+            else: 
                 count_penalty = torch.tensor(0.0, device=logits.device)
             
+            #** Total loss **#
             loss = bce_loss + self.count_penalty_weight * count_penalty
 
         return SequenceClassifierOutput(

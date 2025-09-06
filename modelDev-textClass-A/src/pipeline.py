@@ -25,19 +25,19 @@ class FineTunePipeline:
             
             pos_weights = compute_pos_weights(y_labels)
             model_wrapper = WeightedBCEModelWrapper(self.config['train'], pos_weights)
-            
+
             trainer = Trainer_Object(self.config['train'], model_wrapper, pos_weights)
             trainer.run(ds_tok)
 
         #************ Evaluate ************#
         elif run_mode == 'evaluate':
             from src.evaluate import Evaluator
-            
+
             preprocessor = Preprocessor(self.config['eval'])
             ds_tok, task_names, y_labels = preprocessor.run(run_mode)
-            
-            model_wrapper = WeightedBCEModelWrapper(config=self.config['eval'])
-            
+
+            model_wrapper = WeightedBCEModelWrapper(config=self.config['eval'], checkpoint_dir=self.config['eval']['model']['checkpoint_dir'])
+
             evaluator = Evaluator(self.config['eval'], model_wrapper, task_names)
             evaluator.run(ds_tok)
             

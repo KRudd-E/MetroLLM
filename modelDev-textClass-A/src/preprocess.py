@@ -1,6 +1,4 @@
 """preprocess.py
-This script contains the Preprocessor class which handles data loading, 
-multi-label binarization, and tokenization for text classification tasks.
 """
 
 import pandas as pd
@@ -8,23 +6,48 @@ from datasets import Dataset
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from ast import literal_eval
+import os
+
 
 class Preprocessor:
     def __init__(self, config):
         self.config = config
         self.mlb = MultiLabelBinarizer()
-        self.tokenizer = AutoTokenizer.from_pretrained(config["model"]["name"],use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(config["model"]["name"], use_fast=True)
         self.max_length = self.config["model"]['max_length']
 
     def run(self, run_mode):
-        df = pd.read_csv(self.config["data"]["source_dir"])
-        df.Task = df.Task.apply(literal_eval) # str -> list
+        import pickle 
         
-        # Multi-label binarization
-        y = self.mlb.fit_transform(df["Task"])
-        task_names = self.mlb.classes_
+        df = pd.read_csv(self.config["data"]["source_dir"])
+        df.Task = df.Task.apply(literal_eval) # str -> list
 
-        df["label_vec"] = y.tolist() #type: ignore
+        if run_mode == 'train':
+            #** Fit Binarizer **#
+            y = self.mlb.fit_transform(df["Task"])
+            
+            #** Save mlb **#
+            os.makedirs(self.config['output_dir'], exist_ok=True)
+            mlb_path = os.path.join(self.config['output_dir'] + '/' + 'mlb.pkl')
+            with open(mlb_path, 'wb') as f:
+                pickle.dump(self.mlb, f)
+        
+        else:
+            #** Load mlb **#
+            mlb_path = os.path.join(self.config['model']['checkpoint_dir'] + '/' + 'mlb.pkl')
+            if os.path.exists(mlb_path):
+                import pickle
+                with open(mlb_path, 'rb') as f:
+                    self.mlb = pickle.load(f)
+                print(f"Loaded MultiLabelBinarizer from {mlb_path}")
+            else:
+                raise FileNotFoundError(f"mlb.pkl not found at {mlb_path}. You must provide the label binarizer from training.")
+            
+            #** Transform labels **#
+            y = self.mlb.transform(df["Task"])
+
+        task_names = self.mlb.classes_
+        df["label_vec"] = y.tolist() # type: ignore
 
         ds = Dataset.from_pandas(df[["Text", "label_vec"]])
         if run_mode == 'train':
@@ -35,12 +58,11 @@ class Preprocessor:
 
 
     def tok_fn(self, input):
-        # Tokenize text
         out = self.tokenizer(
             input["Text"],
             truncation=True,
             max_length=self.max_length,
         )
-        # Convert labels to float for binary cross entropy loss
         out["labels"] = [list(map(float, label_vec)) for label_vec in input["label_vec"]]
         return out
+

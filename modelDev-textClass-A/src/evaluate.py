@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
+import pandas as pd 
 
 class Evaluator:
     def __init__(self, config, model_wrapper):
@@ -34,9 +35,16 @@ class Evaluator:
         preds = np.concatenate(preds, axis=0)
         labels = np.concatenate(labels, axis=0)
 
-        # save for later metrics
-        np.save(f"{self.output_dir}/preds.npy", preds)
-        np.save(f"{self.output_dir}/labels.npy", labels)
+        preds_probs = 1 / (1 + np.exp(-preds))
+        preds_classes = (preds_probs >= 0.5).astype(int)
 
-        print(f"Saved predictions and labels to {self.output_dir}")
-        return preds, labels
+        num_classes = preds_classes.shape[1]
+        pred_cols = {f"pred_class_{i}": preds_classes[:, i] for i in range(num_classes)}
+        label_cols = {f"label_class_{i}": labels[:, i] for i in range(num_classes)}
+        df = pd.DataFrame({**pred_cols, **label_cols})
+
+        csv_path = f"{self.output_dir}/results.csv"
+        df.to_csv(csv_path, index=False)
+
+        print(f"Saved predictions and labels to {csv_path}")
+        return preds_classes, labels

@@ -40,8 +40,11 @@ class FineTunePipeline:
             preprocessor = Preprocessor(self.config['eval'])
             ds_tok, task_names, y_labels = preprocessor.run()
             
-            #model_wrapper = WeightedBCEModelWrapper( config=self.config['eval'])
+            model_wrapper = WeightedBCEModelWrapper(
+                model_name=self.config['eval']['model']['name'],
+                config=self.config['eval'],
+            )
             
-            # evaluator = Evaluator(self.config['eval'], model_wrapper)
-            # evaluator.run(ds_tok)
+            evaluator = Evaluator(self.config['eval'], model_wrapper)
+            evaluator.run(ds_tok)
             

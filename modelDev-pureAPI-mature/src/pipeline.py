@@ -155,11 +155,11 @@ class Pipeline:
                         names=['measurement extent','measurement tolerance'],
                         
                         options={'measurement extent': self.config['measurement_extent_list_v2'],
-                                    'measurement tolerance': self.config['measurement_tolerance_list_v2']},
+                                    'measurement tolerance': self.config['measurement_tolerance_list_v1']},
                         
                         prompt=self.config['measurement_metrics_prompt'].format(
                             measurement_extent_list=self.config['measurement_extent_list_v2'],
-                            measurement_tolerance_list=self.config['measurement_tolerance_list_v2'],
+                            measurement_tolerance_list=self.config['measurement_tolerance_list_v1'],
                             txt=case_study_text),
                     )
                     
@@ -181,6 +181,7 @@ class Pipeline:
                             measured_object_properties_list=self.config['measured_object_properties_list_v2'],
                             txt=case_study_text)
                     )
+                    surface_interaction_and_measured_object_properties_dict = self.remove_brackets_from_dict_vals(surface_interaction_and_measured_object_properties_dict)
                 else:
                     surface_interaction_and_measured_object_properties_dict: dict = {'surface interaction': '', 'object properties': ''}
                 
@@ -188,10 +189,10 @@ class Pipeline:
                 if self.config['use_tools_and_methods']:
                     tools_and_methods_dict: dict = self.retriever.retrieve_multiple(
                         names=['tools and methods'],
-                        options={'tools and methods': self.config['tools_methods_list_v2']},
+                        options={'tools and methods': self.config['tools_methods_list']},
                         
                         prompt=self.config['tools_methods_prompt'].format(
-                            tools_methods_list=self.config['tools_methods_list_v2'],
+                            tools_methods_list=self.config['tools_methods_list'],
                             txt=case_study_text)
                     )
                 else:
@@ -224,7 +225,8 @@ class Pipeline:
                         prompt=self.config['user_model_prompt'].format(
                             txt=case_study_text,
                             company=subdir_name.replace(' - UNPROCESSED', '')
-                            )
+                            ),
+                        print_responses=False,
                     )
                 else:
                     user_model_dict: dict = {'user': '', 'user branch location or group': '', 'user partners': '', 'model': ''}

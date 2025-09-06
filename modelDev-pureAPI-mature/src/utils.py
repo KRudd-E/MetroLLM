@@ -11,7 +11,7 @@ def pureAPI_query(config):
             elif user_input.lower() in ['no', 'n']:
                 exit()
 
-def get_config(config_path='modelDev-pureAPI/config.yaml'):
+def get_config(config_path='modelDev-pureAPI-mature/config.yaml'):
     import yaml
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)

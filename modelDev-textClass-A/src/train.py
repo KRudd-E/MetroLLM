@@ -5,14 +5,18 @@ from transformers.training_args import TrainingArguments
 from src.utils.callbacks import LoggingCallback, DebugCallback
 from sklearn.metrics import f1_score, precision_score, recall_score # , average_precision_score, roc_auc_score
 import torch
+from src.model_wrapper import predict_with_count_limit
 
 class Trainer_Object:
     def __init__(self, config, model_wrapper, pos_weights=None):
         self.config = config
+        
         self.model = model_wrapper.get_model()
+        self.model_wrapper = model_wrapper  # Store reference to wrapper for count-limited predictions
         self.tokenizer = model_wrapper.get_tokenizer()
         self.data_collator = model_wrapper.get_data_collator()
         self.metric = evaluate.load("f1")
+        
         self.pos_weights = pos_weights
         
 
@@ -71,28 +75,49 @@ class Trainer_Object:
         probabilities = 1 / (1 + np.exp(-logits))  # sigmoid
         
         # Standard 0.5 threshold predictions
-        preds = (probabilities >= 0.5).astype(int)
+        preds_standard = (probabilities >= self.config['model']['threshold']).astype(int)
+        
+        # Count-limited predictions using the model wrapper
+        logits_tensor = torch.tensor(logits)
+        preds_limited = predict_with_count_limit(logits_tensor, self.config['model']['threshold'], self.config['model']['max_labels'])
+        preds_limited = preds_limited.numpy().astype(int)
+        
         labels = labels.astype(int)
 
-        # Basic metrics
+        # non limited metrics
         results = {
-            "f1_micro": f1_score(labels, preds, average="micro", zero_division=0),
-            "f1_macro": f1_score(labels, preds, average="macro", zero_division=0),
-            "f1_weighted": f1_score(labels, preds, average="weighted", zero_division=0),
-            "precision_micro": precision_score(labels, preds, average="micro", zero_division=0),
-            "recall_micro": recall_score(labels, preds, average="micro", zero_division=0),
-            "precision_macro": precision_score(labels, preds, average="macro", zero_division=0),
-            "recall_macro": recall_score(labels, preds, average="macro", zero_division=0),
-            # "macro_auroc": roc_auc_score(labels, probabilities, average="macro"),
-            # "micro_auroc": roc_auc_score(labels, probabilities, average="micro"),
-            # "macro_auprc": average_precision_score(labels, probabilities, average="macro"),
-            # "micro_auprc": average_precision_score(labels, probabilities, average="micro"),
+            "f1_micro": f1_score(labels, preds_standard, average="micro", zero_division=0),
+            "f1_macro": f1_score(labels, preds_standard, average="macro", zero_division=0),
+            "f1_weighted": f1_score(labels, preds_standard, average="weighted", zero_division=0),
+            "precision_micro": precision_score(labels, preds_standard, average="micro", zero_division=0),
+            "recall_micro": recall_score(labels, preds_standard, average="micro", zero_division=0),
+            "precision_macro": precision_score(labels, preds_standard, average="macro", zero_division=0),
+            "recall_macro": recall_score(labels, preds_standard, average="macro", zero_division=0),
         }
         
-        # # Per-class F1 scores for monitoring individual class performance
-        # per_class_f1 = f1_score(labels, preds, average=None, zero_division=0)
-        # if isinstance(per_class_f1, np.ndarray):
-        #     results.update({f"f1_class_{i}": score for i, score in enumerate(per_class_f1)})
+        # limited metrics
+        results.update({
+            "f1_micro_limited": f1_score(labels, preds_limited, average="micro", zero_division=0),
+            "f1_macro_limited": f1_score(labels, preds_limited, average="macro", zero_division=0),
+            "f1_weighted_limited": f1_score(labels, preds_limited, average="weighted", zero_division=0),
+            "precision_micro_limited": precision_score(labels, preds_limited, average="micro", zero_division=0),
+            "recall_micro_limited": recall_score(labels, preds_limited, average="micro", zero_division=0),
+            "precision_macro_limited": precision_score(labels, preds_limited, average="macro", zero_division=0),
+            "recall_macro_limited": recall_score(labels, preds_limited, average="macro", zero_division=0),
+        })
+        
+        # Label count statistics
+        pred_counts_standard = np.sum(preds_standard, axis=1)
+        pred_counts_limited = np.sum(preds_limited, axis=1)
+        true_counts = np.sum(labels, axis=1)
+        
+        results.update({
+            "avg_pred_count_standard": np.mean(pred_counts_standard),
+            "avg_pred_count_limited": np.mean(pred_counts_limited),
+            "avg_true_count": np.mean(true_counts),
+            "max_pred_count_standard": np.max(pred_counts_standard),
+            "max_pred_count_limited": np.max(pred_counts_limited),
+        })
             
         if self.pos_weights is not None:
             loss_fct = torch.nn.BCEWithLogitsLoss(

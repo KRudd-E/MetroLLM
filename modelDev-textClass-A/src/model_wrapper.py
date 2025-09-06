@@ -14,12 +14,17 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 
 class WeightedBCEModelWrapper(nn.Module):
-    def __init__(self, model_name: str, config, pos_weight: torch.Tensor = None, device=None): # type: ignore
+    def __init__(self, config, pos_weight: torch.Tensor = None, device=None): # type: ignore
         super().__init__()
+        
+        # Store label count constraint parameters
+        self.max_labels = config['model']['max_labels']
+        self.count_penalty_weight = config['model']['count_penalty_weight']
+        self.threshold = config['model']['threshold']
         
         # Create model config with correct num_labels
         model_config = AutoConfig.from_pretrained(
-            model_name,
+            config["model"]["name"],
             num_labels=config["data"]["class_no"],
             problem_type="multi_label_classification",
             hidden_dropout_prob=float(config['training_args']['dropout']),
@@ -34,7 +39,7 @@ class WeightedBCEModelWrapper(nn.Module):
         
         # Load the base HF model with proper config
         self.base_model = AutoModelForSequenceClassification.from_pretrained(
-            model_name,
+            config["model"]["name"],
             config=model_config
         )
         
@@ -46,7 +51,7 @@ class WeightedBCEModelWrapper(nn.Module):
             self.pos_weight = None
 
         # Tokenizer + data collator
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(config["model"]["name"], use_fast=True)
         self.data_collator = DataCollatorWithPadding(self.tokenizer, padding="longest")
         self.mlb = MultiLabelBinarizer()
         self.device = device or (torch.device("cuda" if torch.cuda.is_available() else "cpu"))
@@ -71,12 +76,24 @@ class WeightedBCEModelWrapper(nn.Module):
                     f"Shape mismatch: logits {logits.shape} vs labels {labels_t.shape}."
                 )
 
+            # Standard BCE loss
             if getattr(self, "pos_weight", None) is not None:
                 loss_fct = BCEWithLogitsLoss(pos_weight=self.pos_weight.to(logits.device)) # type: ignore
             else:
                 loss_fct = BCEWithLogitsLoss()
 
-            loss = loss_fct(logits, labels_t)
+            bce_loss = loss_fct(logits, labels_t)
+
+            if self.count_penalty_weight > 0.0:
+                probs = torch.sigmoid(logits)
+                predicted_counts = (probs > self.threshold).sum(dim=1).float()
+                
+                excess_labels = torch.clamp(predicted_counts - self.max_labels, min=0)
+                count_penalty = (excess_labels ** 2).mean()  # Quadratic penalty
+            else: # eval case.
+                count_penalty = torch.tensor(0.0, device=logits.device)
+            
+            loss = bce_loss + self.count_penalty_weight * count_penalty
 
         return SequenceClassifierOutput(
             loss=loss,
@@ -107,7 +124,40 @@ class WeightedBCEModelWrapper(nn.Module):
 
     def get_mlb(self):
         return self.mlb
+    
+    
 
+def predict_with_count_limit(logits, threshold, max_labels):
+    """
+    Apply count limit to predictions.
+    Returns predictions with at most max_labels positive predictions per sample.
+    """
+    probabilities = torch.sigmoid(logits)
+    batch_size, num_labels = probabilities.shape
+    
+    predictions = torch.zeros_like(probabilities)
+    
+    for i in range(batch_size):
+        sample_probs = probabilities[i]
+        
+        # Get top predictions above threshold
+        above_threshold = sample_probs > threshold
+        above_threshold_indices = torch.where(above_threshold)[0]
+        
+        if len(above_threshold_indices) <= max_labels:
+            # If we have max_labels or fewer above threshold, use them all
+            predictions[i, above_threshold_indices] = 1
+        else:
+            # If we have more than max_labels above threshold, take the top max_labels
+            top_values, top_indices = torch.topk(sample_probs, max_labels)
+            predictions[i, top_indices] = 1
+            
+        # Ensure at least 1 prediction if no labels are above threshold
+        if predictions[i].sum() == 0:
+            top_value, top_index = torch.topk(sample_probs, 1)
+            predictions[i, top_index] = 1
+    
+    return predictions
 
 
 def compute_pos_weights(y_labels) -> torch.Tensor:

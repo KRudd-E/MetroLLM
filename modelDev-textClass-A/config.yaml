@@ -15,6 +15,9 @@ train:
   model:
     name: answerdotai/ModernBERT-large
     max_length: 8192
+    threshold: 0.5
+    max_labels: 2
+    count_penalty_weight: 1.0
     
   training_args:
     #*- Transformers Training Arguments -*#
@@ -61,6 +64,9 @@ eval:
     name: answerdotai/ModernBERT-base
     source_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v5
     max_length: 8192
+    threshold: 0.5
+    max_labels: 2
+    count_penalty_weight: 0.0
   
   training_args:
     dropout: 0.1

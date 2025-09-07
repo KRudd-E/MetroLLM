@@ -1,13 +1,9 @@
-import json
-import torch
+import json, torch, os, re, random
 from tqdm import tqdm
+import pandas as pd
 import numpy as np
 from datasets import load_dataset
-import random
-import re
-import os
-import pandas as pd
-
+from src.utils.retrieve import Retriever
 
 class MMLU_Evaluator:
     def __init__(self, model_wrapper, config, mmlu_subset="test"):
@@ -90,7 +86,8 @@ class MMLU_Evaluator:
             # ** Generate outputs **
             with torch.no_grad():
                 outputs = self.model.generate(
-                    **inputs,
+                    input_ids=inputs['input_ids'],
+                    attention_mask=inputs['attention_mask'],
                     max_new_tokens=self.config["max_new_tokens"],
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
@@ -216,7 +213,8 @@ class Test_Set_Evaluator:
             #** Generate outputs **#
             with torch.no_grad():
                 outputs = self.model.generate(
-                    **inputs,
+                    input_ids=inputs['input_ids'],
+                    attention_mask=inputs['attention_mask'],
                     max_new_tokens=self.config["max_length"],
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
@@ -259,27 +257,32 @@ class Task_Evaluator:
 
     def evaluate(self):
         print("Evaluating on specific tasks.\n")
-        
         print("Dataset:", self.dataset.head())
         print("Dataset size:", len(self.dataset))
         print("Data columns:", self.dataset.columns)
-        
+
+        all_predicted = []
+        all_actual = []
+        retriever = Retriever(self.config)
+
         for i in tqdm(range(0, len(self.dataset), self.batch_size)):
-            batch = self.dataset[i:i+self.batch_size]
             
-            input_prompt = self.config['task_prompt'].format(
+            #** Prepare batch **#
+            batch = self.dataset.iloc[i:i+self.batch_size]
+
+            prompts = [self.config['task_prompt'].format(
                 task_list=self.config['task_list'],
-                txt=batch['Text']
-            )
-            
+                txt=row['Text']) for _, row in batch.iterrows()]
+
             inputs = self.tokenizer(
-                input_prompt,
+                prompts,
                 return_tensors="pt",
                 padding=True,
                 truncation=True,
                 max_length=self.config["max_length"]
             ).to(self.device)
-            
+
+            #** Generate outputs **#
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
@@ -287,13 +290,31 @@ class Task_Evaluator:
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
                 )
-                
-                generated_texts = []
-                for j, output in enumerate(outputs):
-                    input_length = inputs['input_ids'][j].shape[0]
-                    generated_part = output[input_length:]
-                    generated_text = self.tokenizer.decode(generated_part, skip_special_tokens=True)
-                    generated_texts.append(generated_text.strip())
-                    
-                print("Generated texts:", generated_texts)
-            
+
+            #** Decode batch outputs **#
+            generated_texts = []
+            for j, output in enumerate(outputs):
+                input_length = inputs['input_ids'][j].shape[0]
+                generated_part = output[input_length:]
+                generated_text = self.tokenizer.decode(generated_part, skip_special_tokens=True)
+                generated_texts.append(generated_text.strip())
+
+            #** Retrieve predicted tasks **#
+            for j, gen in enumerate(generated_texts):
+                vals = retriever.retrieve_multiple(
+                    names=['task'],
+                    options=self.config['task_list'],
+                    response=gen,
+                )
+                all_predicted.append(vals['task'])
+
+                all_actual.append(batch.iloc[j]['Task'])
+
+        # Save results to CSV
+        results_df = pd.DataFrame({
+            'predicted_label': all_predicted,
+            'actual_label': all_actual
+        })
+        output_path = os.path.join(self.config.get('output_dir', '.'), 'task_eval_results.csv')
+        results_df.to_csv(output_path, index=False)
+        print(f"Saved predictions and labels to {output_path}")

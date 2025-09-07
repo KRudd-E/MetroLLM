@@ -189,7 +189,7 @@ class Test_Set_Evaluator:
     def evaluate(self):
         
         if self.config['run'] == False:
-            print("Test Set evaluation skipped.\n")
+            print("\nTest Set evaluation skipped.\n")
             return
         
         print("Dataset:", self.dataset)
@@ -215,7 +215,7 @@ class Test_Set_Evaluator:
                 outputs = self.model.generate(
                     input_ids=inputs['input_ids'],
                     attention_mask=inputs['attention_mask'],
-                    max_new_tokens=self.config["max_length"],
+                    max_new_tokens=self.config["max_new_tokens"],
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
                 )
@@ -286,7 +286,7 @@ class Task_Evaluator:
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
-                    max_new_tokens=self.config["max_length"],
+                    max_new_tokens=self.config["max_new_tokens"],
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
                 )

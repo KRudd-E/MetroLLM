@@ -34,11 +34,11 @@ class FinetunePipeline:
             ds_loader = DatasetLoader(self.config, run, model_wrapper)
             dataset = ds_loader.load_evaluation_data(self.config['eval'])
 
-            mmlu_evaluator = MMLU_Evaluator(model_wrapper, self.config['eval'])
+            mmlu_evaluator = MMLU_Evaluator(model_wrapper, self.config['eval']['mmlu_args'])
             mmlu_evaluator.evaluate()
             
-            test_set_evaluator = Test_Set_Evaluator(model_wrapper, self.config['eval'], dataset)
+            test_set_evaluator = Test_Set_Evaluator(model_wrapper, self.config['eval']['test_set_args'], dataset)
             test_set_evaluator.evaluate()
             
-            task_evaluator = Task_Evaluator(model_wrapper, self.config['eval'])
+            task_evaluator = Task_Evaluator(model_wrapper, self.config['eval']['task_args'])
             task_evaluator.evaluate()

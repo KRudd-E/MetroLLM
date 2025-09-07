@@ -318,9 +318,8 @@ class Task_Evaluator:
                             input_ids=inputs['input_ids'][j].unsqueeze(0),
                             attention_mask=inputs['attention_mask'][j].unsqueeze(0),
                             max_new_tokens=self.config["max_new_tokens"] + 12,
-                            do_sample=False,
-                            pad_token_id=self.tokenizer.pad_token_id,
-                            seed=random.randint(0, 1000)
+                            do_sample=True,
+                            pad_token_id=self.tokenizer.pad_token_id
                         )
                         gen = self.tokenizer.decode(
                             regenerated_output[0, inputs['input_ids'][j].shape[0]:],

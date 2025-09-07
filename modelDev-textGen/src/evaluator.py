@@ -55,10 +55,15 @@ class MMLU_Evaluator:
 
         print(f"Evaluating on {self.eval_split} split with {len(self.dataset)} samples.") # type: ignore
 
+        print(type(self.dataset))
+        print(self.dataset)
+        print(self.dataset[0]) 
+
+
         for i in tqdm(range(0, len(self.dataset), self.batch_size)):  # type: ignore
 
             # ** Batch prep **
-            batch_entries = self.dataset[i:i + self.batch_size] # type: ignore
+            batch_entries = [self.dataset[j] for j in range(i, min(i+self.batch_size, len(self.dataset)))]
             batch_prompts = []
             for entry in batch_entries:
                 prefix = self.prompts[entry['category']]

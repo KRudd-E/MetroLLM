@@ -9,7 +9,7 @@ def parser():
     else: raise ValueError("Invalid run type specified. Use 'train' or 'evaluate'.")
     return run
 
-def modelDev_text2text_query(run: str, config: dict) -> None:
+def modelDev_textgen_query(run: str, config: dict) -> None:
 
     if run.lower() in ['train', 't', 'finetune', 'ft']:
         user_input = input(f"\n         ********************* >>>>> -- ModelDev TextGen -- <<<<< *********************          \n\nThis script is used to fine-tune or evaluate a Text Generation model.\nYou have opted to **Fine-tune** **{config['train']['model']['name']}**, using data at dir. **{config['train']['data']['dir']}**.\nDo you wish to continue? (y/n): ")

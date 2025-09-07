@@ -105,8 +105,17 @@ class MMLU_Evaluator:
 
 
 
+class Test_Set_Evaluator:
+    def __init__(self, model_wrapper, config, dataset):
+        pass
+    
+    def evaluate(self):
+        print("Evaluating on test set.\n")
+        pass
+
+
 class Task_Evaluator:
-    def __init__(self, model_wrapper, dataset, config):
+    def __init__(self, model_wrapper, config):
         self.config = config
         
         self.model = model_wrapper.get_model()
@@ -114,9 +123,8 @@ class Task_Evaluator:
         self.device = model_wrapper.get_device()
         self.batch_size = config["task_eval_args"]['batch_size']
         
-        self.dataset = dataset
 
 
     def evaluate(self):
-        print(self.dataset)
+        print("Evaluating on specific tasks.\n")
         pass

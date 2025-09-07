@@ -1,7 +1,9 @@
-# NB: add '/' at the start of directories for ensured directory formatting
+# config.yaml
+# Containing arguments for training and evaluation processes.
 
 config_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/config.yaml
 
+#**- Train -**#
 train:
   data:
     dir: "/gpfs01/home/efykr2/MetroLLM/data/3-formatted/textGen/textGen_train.csv"
@@ -16,17 +18,15 @@ train:
     max_input_length: 2048
     max_target_length: 2048
 
-  # LoRA Configuration
   lora:
-    rank: 16                # LoRA rank (lower = fewer parameters, faster training)
-    alpha: 32               # LoRA scaling parameter (typically 2x rank)
-    dropout: 0.1            # LoRA dropout for regularization
-    target_modules: ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]  # Modules to apply LoRA to
+    rank: 16
+    alpha: 32
+    dropout: 0.1
+    target_modules: ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
 
   training_args:
     output_dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/"
 
-    # Core loop
     do_train: true
     do_eval: true
     evaluation_strategy: "steps"  
@@ -38,7 +38,6 @@ train:
     logging_steps: 10
     logging_nan_inf_filter: true
 
-    # Training setup
     learning_rate: 1e-4
     per_device_train_batch_size: 1
     per_device_eval_batch_size: 1
@@ -51,27 +50,19 @@ train:
     max_grad_norm: 1.0
     lr_scheduler_type: "linear"    
 
-    # Precision / memory
     bf16: true
     gradient_checkpointing: true
     dataloader_pin_memory: true     
     group_by_length: true
 
-    # # Generation for metrics
-    # predict_with_generate: true
-    # generation_max_new_tokens: 128
-    # generation_num_beams: 1
-
-    # Model saving / selection
     load_best_model_at_end: True
     metric_for_best_model: "eval_loss"
     greater_is_better: False
 
     label_smoothing_factor: 0.0
 
-    # Misc
-    report_to: ["none"]              # or ["tensorboard"] if you want TB logs
-    remove_unused_columns: true      # let HF drop unused dataset cols
+    report_to: ["none"]
+    remove_unused_columns: true
     ddp_find_unused_parameters: false
     run_name: "deepseek-lora-finetune"
     
@@ -80,20 +71,29 @@ train:
     log_training_steps:   True
     
 
+#**- Evaluation -**#
 eval:
   data:
-    dir: "/data/3-formatted/textGen/textGen_test.csv"
+    dir: "/gpfs01/home/efykr2/MetroLLM/data/3-formatted/textGen/textGen_test.csv"
     task_col: "task"
     input_col: "input"
     output_col: "output"
     max_seq_length: 2048
 
   model:
-    dir: "/modelDev-text2textGen/results/V2/checkpoint-1680/"
-    max_input_length: 2048
-    max_target_length: 2048
+    dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v2/" 
 
-  eval_args:
-    metric: "rouge"
+
+  mmlu_eval_args:
     batch_size: 8
-    output_dir: "/modelDev-text2textGen/results/V2/checkpoint-1680/eval_results.json"
+    max_length: 1024
+    output_dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v2/mmlu_results.json"
+
+
+  task_eval_args:
+    batch_size: 8
+
+
+    
+
+

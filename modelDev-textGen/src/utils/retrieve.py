@@ -1,0 +1,119 @@
+from tqdm import tqdm
+import ast
+import re
+import torch
+
+class Retriever:
+    def __init__(self, config):
+        self.config = config
+    
+    
+    # multiple inputs and respective lists
+    # multiple inputs and some lists
+    # multiple inputs and no list
+        
+    
+    def retrieve_multiple(self, names: list, options: dict | None, response: str, print_responses: bool = False, tries: int = 2, expect_result: bool = False) -> dict:
+        """
+        Retrieves selected information from a case study text.
+
+        Args:
+            names (list): List of field names to retrieve.
+            options (dict | None): Optional filtering options for each field.
+            response (str): Generated text from which to extract information.
+            print_responses (bool): OPTIONAL - Whether to print the model responses for debugging.
+            tries (int): Number of attempts to retrieve the information.
+            expect_result (bool): If True, expects all fields to have non-empty values.
+
+        Returns:
+            dict: Mapping of each name to a list of retrieved values.
+        """
+        if options:
+            assert set(names) == set(options.keys()), "Names and options keys do not match."
+
+        vals = {name: [] for name in names}
+        options_list = self.flatten_top_level_values(options) if options else {}
+
+        for i in range(tries):  # Retry loop
+            try:
+                if print_responses:
+                    tqdm.write(f"Response {i+1} for {names}:\n{response}")
+                # Attempt to extract the first full JSON/dict-like block
+                match = re.search(r'\{.*?\}', response, re.DOTALL)
+                if not match:
+                    raise ValueError("No JSON-like dictionary found in response.")
+
+                parsed_response = ast.literal_eval(match.group(0))
+                if not isinstance(parsed_response, dict):
+                    raise ValueError("Parsed content is not a dictionary.")
+
+                for key, value in parsed_response.items():
+                    if key not in names:
+                        continue
+
+                    # Normalize to list of strings
+                    if isinstance(value, list):
+                        result = [str(v).strip() for v in value]
+                    elif value is None:
+                        result = []
+                    else:
+                        result = [str(value).strip()]
+
+                    # Apply filtering if options exist
+                    if options_list.get(key):
+                        vals[key] = [v for v in result if v in options_list[key]]
+                    else:
+                        vals[key] = result
+
+                if expect_result and all(vals[name] for name in names):
+                    return vals
+                elif not expect_result:
+                    return vals
+
+            except Exception as e:
+                tqdm.write(f"Error retrieving values for {names}: {e}\n{response}")
+
+        return vals  # fallback
+                
+    
+    
+    @staticmethod
+    def flatten_top_level_values(data: dict) -> dict:
+        """Flattens the top-level values of a dictionary, collecting all values from nested dictionaries and lists.
+        
+        Maintains the top-level keys and collects all values beneath each key into a single list,
+        regardless of how deeply nested the structure is or whether values are single items or lists.
+
+        Args:
+            data (dict): The input dictionary with potentially nested structures.
+
+        Returns:
+            dict: A new dictionary with top-level keys and all nested values collected into lists.
+        """
+        def collect_all_values(val):
+            """Recursively collect all values from nested structures."""
+            collected = []
+            
+            if isinstance(val, dict):
+                # If it's a dictionary, recursively collect values from all nested items
+                for nested_val in val.values():
+                    collected.extend(collect_all_values(nested_val))
+            elif isinstance(val, list):
+                # If it's a list, recursively collect values from each item
+                for item in val:
+                    collected.extend(collect_all_values(item))
+            else:
+                # If it's a single value, add it to the collection
+                collected.append(val)
+            
+            return collected
+
+        result = {}
+        for top_key, nested_structure in data.items():
+            # Collect all values under this top-level key
+            result[top_key] = collect_all_values(nested_structure)
+        return result
+
+
+        
+        

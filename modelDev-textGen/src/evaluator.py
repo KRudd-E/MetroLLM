@@ -6,6 +6,7 @@ from datasets import load_dataset
 import random
 import re
 import os
+import pandas as pd
 
 
 class MMLU_Evaluator:
@@ -17,35 +18,37 @@ class MMLU_Evaluator:
         self.device = model_wrapper.get_device()
         self.batch_size = config['batch_size']
         
+                # Load dataset and immediately convert to pandas
         self.full_dataset = load_dataset("TIGER-Lab/MMLU-Pro")
-        self.dataset = self.full_dataset[mmlu_subset]
+        self.dataset= self.full_dataset[mmlu_subset].to_pandas() # type: ignore
         self.eval_split = mmlu_subset
 
-        self.categories = ['computer science', 'math', 'chemistry', 'engineering', 'law', 
-                           'biology', 'health', 'physics', 'business', 'philosophy', 
-                           'economics', 'other', 'psychology', 'history']
+        self.categories = [
+            "computer science", "math", "chemistry", "engineering", "law",
+            "biology", "health", "physics", "business", "philosophy",
+            "economics", "other", "psychology", "history"
+        ]
 
-        #** Per-category prompts **#
-        self.prompts = {c: '' for c in self.categories}
-        
-        val_split = self.full_dataset["validation"]
-        self.prompts = {c: '' for c in self.categories}
-        for d in val_split:
-            self.prompts[d['category']] += ( # type: ignore
-                'Q: ' + d['question'] + '\n' + # type: ignore
-                self.form_options(d['options']) + '\n' + # type: ignore
-                d['cot_content'] + '\n\n' # type: ignore
+        # Build category-specific prompts from validation split
+        val_df = self.full_dataset["validation"].to_pandas() # type: ignore
+        self.prompts = {c: "" for c in self.categories}
+        for _, row in val_df.iterrows():# type: ignore
+            self.prompts[row["category"]] += (
+                f"Q: {row['question']}\n"
+                f"{self.form_options(row['options'])}\n"
+                f"{row['cot_content']}\n\n"
             )
+
             
         # src:      https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
         # example:  https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
 
     def evaluate(self):
-        if not self.config['run']:
+        if not self.config["run"]:
             print("MMLU evaluation skipped.\n")
             return
-        else:
-            print("Evaluating on MMLU dataset.\n")
+
+        print(f"Evaluating on MMLU {self.eval_split} split with {len(self.dataset)} samples.\n")# type: ignore
 
         per_category_accuracy = {c: [0, 0] for c in self.categories}
         success, fail = 0, 0
@@ -53,21 +56,15 @@ class MMLU_Evaluator:
 
         self.model.eval()
 
-        print(f"Evaluating on {self.eval_split} split with {len(self.dataset)} samples.") # type: ignore
+        # Iterate in batches using pandas iloc
+        for i in tqdm(range(0, len(self.dataset), self.batch_size)):# type: ignore
+            batch_df = self.dataset.iloc[i : i + self.batch_size]# type: ignore
+            batch_entries = batch_df.to_dict(orient="records")  # list of dicts
 
-        print(type(self.dataset))
-        print(self.dataset)
-        print(self.dataset[0]) 
-
-
-        for i in tqdm(range(0, len(self.dataset), self.batch_size)):  # type: ignore
-
-            # ** Batch prep **
-            batch_entries = [self.dataset[j] for j in range(i, min(i+self.batch_size, len(self.dataset)))]
             batch_prompts = []
             for entry in batch_entries:
-                prefix = self.prompts[entry['category']]
-                query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:'
+                prefix = self.prompts[entry["category"]]
+                query = prefix + f"Q: {entry['question']}\n{self.form_options(entry['options'])}\nAnswer:"
                 batch_prompts.append(query)
 
             inputs = self.tokenizer(
@@ -75,49 +72,50 @@ class MMLU_Evaluator:
                 return_tensors="pt",
                 padding=True,
                 truncation=True,
-                max_length=self.config["max_length"]
+                max_length=self.config["max_length"],
             ).to(self.device)
 
-            # ** Generate outputs **
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
                     max_new_tokens=self.config["max_new_tokens"],
                     do_sample=False,
-                    pad_token_id=self.tokenizer.pad_token_id
+                    pad_token_id=self.tokenizer.pad_token_id,
                 )
 
-            # ** Decode batch outputs **
             gen_texts = self.tokenizer.batch_decode(
-                outputs[:, inputs['input_ids'].shape[1]:],
-                skip_special_tokens=True
+                outputs[:, inputs["input_ids"].shape[1]:],
+                skip_special_tokens=True,
             )
 
-            # ** Process predictions **
             for entry, gen in zip(batch_entries, gen_texts):
                 gen = gen.strip()
-                entry['solution'] = gen
+                entry["solution"] = gen
                 answers.append(entry)
 
-                prediction = self.get_prediction(gen, len(entry['options']))
+                prediction = self.get_prediction(gen, len(entry["options"]))
                 if entry["answer"] == prediction:
                     success += 1
-                    per_category_accuracy[entry['category']][0] += 1
+                    per_category_accuracy[entry["category"]][0] += 1
                 else:
                     fail += 1
-                    per_category_accuracy[entry['category']][1] += 1
+                    per_category_accuracy[entry["category"]][1] += 1
 
-            print("Overall accuracy:", success / (success + fail))
+            print("Overall accuracy:", success / max(1, (success + fail)))
 
-        # ** Save results **
+        # Save raw answers
+        os.makedirs(self.config["output_dir"], exist_ok=True)
         with open(os.path.join(self.config["output_dir"], "MMLU_raw.json"), "w") as f:
             json.dump(answers, f, indent=2)
 
-        accuracies = {k: (v[0] / (v[0] + v[1]) if (v[0] + v[1]) > 0 else 0) for k, v in per_category_accuracy.items()}
+        accuracies = {
+            k: (v[0] / (v[0] + v[1]) if (v[0] + v[1]) > 0 else 0)
+            for k, v in per_category_accuracy.items()
+        }
         with open(os.path.join(self.config["output_dir"], "MMLU.json"), "w") as f:
             json.dump(accuracies, f, indent=2)
-        print("\nPer-category accuracies:\n", accuracies)
-            
+
+        print("\nPer-category accuracies:\n", accuracies)      
             
     @staticmethod
     def form_options(options: list):

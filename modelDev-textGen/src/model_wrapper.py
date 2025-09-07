@@ -142,9 +142,7 @@ class DeepSeekWrapper:
             )
 
         
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-
     def get_model(self):
         return self.model
 
@@ -152,7 +150,7 @@ class DeepSeekWrapper:
         return self.tokenizer
 
     def get_device(self):
-        return self.device
+        return self.model.device
 
     def get_data_collator(self):
         return self.data_collator

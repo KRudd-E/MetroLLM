@@ -113,8 +113,8 @@ eval:
       Task list:
       {task_list}
 
-      Return the task(s) in a JSON format, with the single key named 'task'. Do not include the section from the task list in the JSON dictionary.
-      Provide no additional information or CoT reasoning. 
+      Return the task(s) in a JSON ```json{}``` format, with the single key named 'task'. Do not include the section from the task list in the JSON dictionary.
+      Provide no additional information or CoT reasoning, and remember to return **no more than two** tasks.
 
       Case study text:
       {txt}

@@ -85,13 +85,15 @@ eval:
     dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/checkpoint-750/" 
 
 
-  mmlu_eval_args:
+  mmlu_args:
     batch_size: 8
     max_length: 1024
     output_dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/mmlu_results.json"
 
+  test_set_args:
+    batch_size: 8
 
-  task_eval_args:
+  task_args:
     batch_size: 8
 
 

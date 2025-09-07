@@ -107,7 +107,7 @@ class MMLU_Evaluator:
                     fail += 1
                     per_category_accuracy[entry["category"]][1] += 1
 
-            print("Overall accuracy:", success / max(1, (success + fail)))
+            tqdm.write(f"Overall accuracy:{success / max(1, (success + fail))}")
 
         # Save raw answers
         os.makedirs(self.config["output_dir"], exist_ok=True)
@@ -242,16 +242,16 @@ class Task_Evaluator:
         self.model = model_wrapper.get_model()
         self.tokenizer = model_wrapper.get_tokenizer()
         self.device = model_wrapper.get_device()
-        self.batch_size = config["task_eval_args"]['batch_size']
+        self.batch_size = config['batch_size']
         
-        self.dataset = None
+        self.dataset = pd.read_csv(self.config['data_dir'])
 
 
     def evaluate(self):
         print("Evaluating on specific tasks.\n")
         
         
-        
+        print("Dataset:", self.dataset.head())
         
         # all_predictions = []
         # self.model.eval()

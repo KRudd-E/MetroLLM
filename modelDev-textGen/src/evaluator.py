@@ -17,7 +17,8 @@ class MMLU_Evaluator:
         self.device = model_wrapper.get_device()
         self.batch_size = config['batch_size']
         
-        self.dataset = load_dataset("TIGER-Lab/MMLU-Pro", split=mmlu_subset)
+        self.full_dataset = load_dataset("TIGER-Lab/MMLU-Pro")
+        self.dataset = self.full_dataset[mmlu_subset]
         self.eval_split = mmlu_subset
 
         self.categories = ['computer science', 'math', 'chemistry', 'engineering', 'law', 
@@ -27,11 +28,13 @@ class MMLU_Evaluator:
         #** Per-category prompts **#
         self.prompts = {c: '' for c in self.categories}
         
-        for d in self.dataset:
-            self.prompts[d['category']] += (                # type: ignore
-                'Q: ' + d['question'] + '\n' +              # type: ignore
-                self.form_options(d['options']) + '\n' +    # type: ignore
-                d['cot_content'] + '\n\n'                   # type: ignore
+        val_split = self.full_dataset["validation"]
+        self.prompts = {c: '' for c in self.categories}
+        for d in val_split:
+            self.prompts[d['category']] += ( # type: ignore
+                'Q: ' + d['question'] + '\n' + # type: ignore
+                self.form_options(d['options']) + '\n' + # type: ignore
+                d['cot_content'] + '\n\n' # type: ignore
             )
             
         # src:      https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
@@ -50,15 +53,16 @@ class MMLU_Evaluator:
 
         self.model.eval()
 
-        print('----------------- Start Answering -------------------')
-        for i in tqdm(range(0, len(self.dataset), self.batch_size)): # type: ignore
+        print(f"Evaluating on {self.eval_split} split with {len(self.dataset)} samples.") # type: ignore
+
+        for i in tqdm(range(0, len(self.dataset), self.batch_size)):  # type: ignore
 
             # ** Batch prep **
             batch_entries = self.dataset[i:i + self.batch_size] # type: ignore
             batch_prompts = []
             for entry in batch_entries:
-                prefix = self.prompts[entry['category']] # type: ignore
-                query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:' # type: ignore
+                prefix = self.prompts[entry['category']]
+                query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:'
                 batch_prompts.append(query)
 
             inputs = self.tokenizer(

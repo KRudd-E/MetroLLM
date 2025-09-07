@@ -301,14 +301,17 @@ class Task_Evaluator:
 
             #** Retrieve predicted tasks **#
             for j, gen in enumerate(generated_texts):
-                vals = retriever.retrieve_multiple(
+                vals: dict = retriever.retrieve_multiple(
                     names=['task'],
-                    options=self.config['task_list'],
+                    options={'task': self.config['task_list']},
                     response=gen,
                 )
                 all_predicted.append(vals['task'])
 
                 all_actual.append(batch.iloc[j]['Task'])
+
+
+
 
         # Save results to CSV
         results_df = pd.DataFrame({

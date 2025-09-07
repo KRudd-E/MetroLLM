@@ -312,10 +312,15 @@ class Task_Evaluator:
                     all_predicted.append(vals['task'])
                     all_actual.append(row['Task'])
                     break
-                if i == 20:
-                    raise ValueError(f"Failed to extract task after 20 attempts. Last generated text: {generated_text}")
+                
+                i += 1
+                if i == 15:
+                    tqdm.write(f"Failed to extract task after 15 attempts.")
+                    all_predicted.append(vals['task'])
+                    all_actual.append(row['Task'])
+                    break
                         
-                torch.cuda.empty_cache()
+            torch.cuda.empty_cache()
 
 
         # Save results to CSV

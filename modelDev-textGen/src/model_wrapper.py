@@ -20,10 +20,12 @@ class DeepSeekWrapper:
                 if is_distributed:
                     local_rank = int(os.environ.get("LOCAL_RANK", 0))
                     device_map = {"": local_rank}
+                    self.device = torch.device(f"cuda:{local_rank}")
                     print(f"Distributed training detected. Using device {local_rank} for local rank {local_rank}\n")
                     print(f"Global rank: {os.environ.get('RANK', 'unknown')}, World size: {os.environ.get('WORLD_SIZE', 'unknown')}\n")
                 else:
                     device_map = {"": torch.cuda.current_device()}
+                    self.device = torch.device(f"cuda:{torch.cuda.current_device()}")
                     print(f"Single GPU training. Using device {torch.cuda.current_device()}")
             else:
                 raise EnvironmentError("No CUDA available.")
@@ -140,7 +142,7 @@ class DeepSeekWrapper:
             )
 
         
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        #self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
 
     def get_model(self):

@@ -59,7 +59,7 @@ eval:
 
   model:
     name: answerdotai/ModernBERT-large
-    checkpoint_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v5/
+    checkpoint_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v10/checkpoint-427
     max_length: 8192
     threshold: 0.5
     max_labels: 2
@@ -69,5 +69,5 @@ eval:
     dropout: 0.1
     
   evaluation_args:
-    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v5/
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v10/checkpoint-427
     batch_size: 1

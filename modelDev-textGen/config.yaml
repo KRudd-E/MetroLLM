@@ -81,13 +81,14 @@ eval:
     max_seq_length: 2048
 
   model:
-    dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v2/" 
+    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+    dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/checkpoint-750/" 
 
 
   mmlu_eval_args:
     batch_size: 8
     max_length: 1024
-    output_dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v2/mmlu_results.json"
+    output_dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/mmlu_results.json"
 
 
   task_eval_args:

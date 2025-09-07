@@ -3,6 +3,9 @@ import torch
 from tqdm import tqdm
 import numpy as np
 from datasets import load_dataset
+import random
+import re
+import os
 
 
 class MMLU_Evaluator:
@@ -15,41 +18,162 @@ class MMLU_Evaluator:
         self.batch_size = config['batch_size']
         
         self.dataset = load_dataset("TIGER-Lab/MMLU-Pro", split=mmlu_subset)
-        # src: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
-        # example: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
+        self.eval_split = mmlu_subset
+
+        self.categories = ['computer science', 'math', 'chemistry', 'engineering', 'law', 
+                           'biology', 'health', 'physics', 'business', 'philosophy', 
+                           'economics', 'other', 'psychology', 'history']
+
+        #** Per-category prompts **#
+        self.prompts = {c: '' for c in self.categories}
+        for d in self.dataset['validation']:
+            self.prompts[d['category']] += (                # type: ignore
+                'Q: ' + d['question'] + '\n' +              # type: ignore
+                self.form_options(d['options']) + '\n' +    # type: ignore
+                d['cot_content'] + '\n\n'                   # type: ignore
+            )
+            
+        # src:      https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
+        # example:  https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
 
     def evaluate(self):
-        print("Evaluating.\n")
+        
+        if self.config['run'] == False:
+            print("MMLU evaluation skipped.\n"); return
+        else:
+            print("Evaluating on MMLU dataset.\n")
 
-        #** Get data components **#
-        examples = list(self.dataset)
-        prompts = [self.format_prompt(ex) for ex in examples]
-        answers = [ex["answer"] for ex in examples]
-        num_choices = [len(ex["options"]) for ex in examples]
+        per_category_accuracy = {c: [0, 0] for c in self.categories}
+        success, fail = 0, 0
+        answers = []
+        
+        self.model.eval()
+        self.model.to(self.device)
+        
+        for entry in tqdm(self.dataset[self.eval_split]):
+            
+            #** Prepare input **#
+            prefix = self.prompts[entry['category']]
+            query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:'
+            
+            inputs = self.tokenizer(
+                query, return_tensors="pt", truncation=True,
+                max_length=self.config["max_length"]
+            ).to(self.device)
 
+            #** Generate output **#
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=self.config["max_length"],
+                    do_sample=False,
+                    pad_token_id=self.tokenizer.pad_token_id
+                )
+                gen = self.tokenizer.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True).strip()
+
+            entry['solution'] = gen
+            answers.append(entry)
+
+            #** Extract prediction **#
+            prediction = self.get_prediction(gen, len(entry['options']))
+            if entry["answer"] == prediction:
+                success += 1
+                per_category_accuracy[entry['category']][0] += 1
+            else:
+                fail += 1
+                per_category_accuracy[entry['category']][1] += 1
+
+            print("Overall accuracy:",success / (success + fail))
+
+
+        #** Raw results **#
+        with open(os.path.join(self.config["output_dir"] + "MMLU_raw.json"), "w") as f:
+            json.dump(answers, f, indent=2)
+
+        #** Save & Print per-category accuracy **#
+        accuracies = {k: (v[0] / (v[0] + v[1]) if (v[0] + v[1]) > 0 else 0) for k, v in per_category_accuracy.items()}
+        with open(os.path.join(self.config["output_dir"] + "MMLU.json"), "w") as f:
+            json.dump(accuracies, f, indent=2)
+        print("\nPer-category accuracies:\n", accuracies)
+        
+        
+    @staticmethod
+    def form_options(options: list):
+        #** Format multiple-choice **#
+        option_str = 'Options are:\n'
+        opts = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+        for opt, o in zip(options, opts):
+            option_str += f'({o}): {opt}\n'
+        return option_str
+
+    @staticmethod
+    def get_prediction(output, num_choices):
+        
+        #** Look for "the answer is X" **#
+        pattern = r"answer is \(?([A-J])\)?"
+        match = re.search(pattern, output, flags=re.IGNORECASE)
+        if match:
+            return match.group(1).upper()
+        
+        #** Fallback: find 1st A, B, C ... **#
+        for char in output:
+            if char.upper() in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']:
+                return char.upper()
+        
+        #** Fail **#
+        tqdm.write("No valid answer found.")
+        return random.choice(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])
+
+
+
+
+class Test_Set_Evaluator:
+    """ Evaluator for the post-training test set. """
+    def __init__(self, model_wrapper, config, dataset):
+        self.config = config
+        
+        self.dataset = dataset
+        self.model = model_wrapper.get_model()
+        self.tokenizer = model_wrapper.get_tokenizer()
+        self.device = model_wrapper.get_device()
+        
+        self.batch_size = config['batch_size']
+        
+    
+    def evaluate(self):
+        
+        if self.config['run'] == False:
+            print("Test Set evaluation skipped.\n")
+            return
+        
+        print("Dataset:", self.dataset)
+        
         all_predictions = []
         self.model.eval()
         self.model.to(self.device)
+        
+        for i in tqdm(range(0, len(self.dataset), self.batch_size)):
+            batch = self.dataset[i:i+self.batch_size]
 
-        for i in tqdm(range(0, len(prompts), self.batch_size)):
-            
             #** Prepare batch **#
-            batch_prompts = prompts[i:i+self.batch_size]
-            batch_num_choices = num_choices[i:i+self.batch_size]
+            input_prompt = self.config['task_prompt'].format(
+                task_list=self.config['task_list'],
+                txt=batch['input'] #??
+            )
             
             inputs = self.tokenizer(
-                batch_prompts,
+                input_prompt,
                 return_tensors="pt",
                 padding=True,
                 truncation=True,
                 max_length=self.config["max_length"]
             ).to(self.device)
-            
+
             #** Generate outputs **#
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
-                    max_new_tokens=self.config["batch_size"],
+                    max_new_tokens=self.config["max_length"],
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
                 )
@@ -60,60 +184,21 @@ class MMLU_Evaluator:
                     input_length = inputs['input_ids'][j].shape[0]
                     generated_part = output[input_length:]
                     generated_text = self.tokenizer.decode(generated_part, skip_special_tokens=True)
-                    # print(f"Generated text: {generated_text}")
                     generated_texts.append(generated_text.strip())
                     
-                for j, gen in enumerate(generated_texts):
-                    pred = self.extract_choice(gen, batch_num_choices[j])
-                    all_predictions.append(pred)
-
-        #** Compute accuracy **#
-        correct = [int(p == a) for p, a in zip(all_predictions, answers)]
-        accuracy = np.mean(correct) * 100
-        results = {"accuracy": round(accuracy, 2)}
+                all_predictions.extend(generated_texts)
         
-        #** Print and save results **#
-        print(results)
-        with open(self.config["output_dir"], "w") as f:
-            json.dump(results, f, indent=4)
-
-
-    def format_prompt(self, example):
-        #** Get components of data **#
-        context = example.get("context", "")
-        question = example["question"]
-        choices = example["options"] 
-
-        #** Format for use as prompt **#
-        prompt = ""
-
-        if context:
-            prompt += context.strip() + "\n"
-        prompt += question.strip() + "\n"
-        for idx, option in enumerate(choices):
-            letter = chr(ord('A') + idx)
-            prompt += f"{letter}. {option.strip()}\n"
-        prompt += "Answer:"
-
-        return prompt
-
-    def extract_choice(self, generated_text, num_choices):
-        #** Extract the first valid choice **#
-        for char in generated_text.strip():
-            if char.upper() in [chr(ord('A') + i) for i in range(num_choices)]:
-                return char.upper() #? A, B, C...
-        #** No effective response **#
-        return "?"
+        #** Compute metrics **#
+        
+        # perplexity
+        
+        # accuracy
+        
+        # F1-score
+        
 
 
 
-class Test_Set_Evaluator:
-    def __init__(self, model_wrapper, config, dataset):
-        pass
-    
-    def evaluate(self):
-        print("Evaluating on test set.\n")
-        pass
 
 
 class Task_Evaluator:

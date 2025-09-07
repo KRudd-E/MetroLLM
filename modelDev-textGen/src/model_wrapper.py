@@ -115,7 +115,7 @@ class DeepSeekWrapper:
             base_model = AutoModelForCausalLM.from_pretrained(
                 config['model']['name'],
                 device_map=device_map,
-                torch_dtype=torch.bfloat16,
+                dtype=torch.bfloat16,
                 trust_remote_code=True,
                 low_cpu_mem_usage=True,
             )

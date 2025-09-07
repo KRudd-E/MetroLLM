@@ -43,11 +43,11 @@ class MMLU_Evaluator:
         if clip_percentage < 1.0:
             clipped_data = []
             for category in self.categories:
-            category_data = [entry for entry in self.dataset if entry['category'] == category] # type: ignore
-            clip_size = max(1, int(len(category_data) * clip_percentage))
-            clipped_data.extend(random.sample(category_data, clip_size))
-            self.dataset = clipped_data
-            
+                category_data = [entry for entry in self.dataset if entry['category'] == category] # type: ignore
+                clip_size = max(1, int(len(category_data) * clip_percentage))
+                clipped_data.extend(random.sample(category_data, clip_size))
+                self.dataset = clipped_data
+                
         # src:      https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
         # example:  https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
 

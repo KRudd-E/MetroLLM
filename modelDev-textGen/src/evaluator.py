@@ -300,8 +300,9 @@ class Task_Evaluator:
                     outputs[0, inputs['input_ids'].shape[1]:],
                     skip_special_tokens=True
                 ).strip()
-
-                tqdm.write(f"Generated text (attempt {i}): {generated_text}")
+                
+                prnt = generated_text.replace('\n', ' ')
+                tqdm.write(f"Generated text (attempt {i}): {prnt}")
 
                 vals: dict = retriever.retrieve_multiple(
                     names=['task'],
@@ -316,7 +317,7 @@ class Task_Evaluator:
                 i += 1
                 if i == 15:
                     tqdm.write(f"Failed to extract task after 15 attempts.")
-                    all_predicted.append(vals['task'])
+                    all_predicted.append('ERR')
                     all_actual.append(row['Task'])
                     break
                         

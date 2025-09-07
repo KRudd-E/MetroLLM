@@ -299,6 +299,8 @@ class Task_Evaluator:
                 generated_text = self.tokenizer.decode(generated_part, skip_special_tokens=True)
                 generated_texts.append(generated_text.strip())
 
+            tqdm.write(f"Generated:\n{generated_texts}")
+            
             #** Retrieve predicted tasks **#
             for j, gen in enumerate(generated_texts):
                 vals: dict = retriever.retrieve_multiple(

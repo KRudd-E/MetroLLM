@@ -86,15 +86,57 @@ eval:
 
 
   mmlu_args:
+    run: False
     batch_size: 8
     max_length: 1024
-    output_dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/mmlu_results.json"
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
 
   test_set_args:
+    run: True
     batch_size: 8
 
   task_args:
+    run: True
     batch_size: 8
+
+
+
+    task_prompt: | 
+      You are an information retrieval expert. You are analyzing a metrological case study. From the case study, identify **up to two** tasks from the proceeding task list which best represent the task that has been performed, the task that the technology enables, etc. Prefer selecting one task over two, only selecting two when no single task is descriptive enough.
+
+      Task list:
+      {task_list}
+
+      Return the task(s) in a JSON format, with the single key named 'task'. Do not include the section from the task list in the JSON dictionary.
+
+      Case study text:
+      {txt}
+
+    task_list:
+      - Inspection
+      - 3D modelling
+      - Reverse Engineering
+      - Alignment
+      - Calibration
+      - Automation
+      - Measuring Technology
+      - CAD compare
+      - Deformation
+      - 3D shape
+      - Testing & Quality
+      - Visualization Modelling & Data (Other)
+      - Monitoring & Tracking
+      - Specialized Measurement
+      - Build/set
+      - Assembly
+      - Robotics & Automation
+      - Tracking
+      - Strain/Stress
+      - CAD Comparison
+      - Engineering & Construction (Other)
+
+
+
 
 
     

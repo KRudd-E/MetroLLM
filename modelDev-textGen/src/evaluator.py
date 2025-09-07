@@ -30,149 +30,27 @@ class MMLU_Evaluator:
         self.prompts = {c: '' for c in self.categories}
         
         val_split = self.full_dataset["validation"]
-        self.prompts = {c: '' for c in self.categories}
         for d in val_split:
-            self.prompts[d['category']] += (                # type: ignore
-            'Q: ' + d['question'] + '\n' +              # type: ignore
-            self.form_options(d['options']) + '\n' +    # type: ignore
-            d['cot_content'] + '\n\n'                   # type: ignore
-            )
+            category = d['category']  # type: ignore
+            if category in self.prompts:
+                self.prompts[category] += (
+                    'Q: ' + d['question'] + '\n' +              # type: ignore
+                    self.form_options(d['options']) + '\n' +    # type: ignore
+                    d['cot_content'] + '\n\n'                   # type: ignore
+                )
 
         #** Clip dataset **#
-        clip_percentage = config['data_reduction']  # Default to 100% if not provided
+        clip_percentage = config.get('data_reduction', 1.0)  # Default to 100% if not provided
         if clip_percentage < 1.0:
             clipped_data = []
             for category in self.categories:
                 category_data = [entry for entry in self.dataset if entry['category'] == category] # type: ignore
                 clip_size = max(1, int(len(category_data) * clip_percentage))
                 clipped_data.extend(random.sample(category_data, clip_size))
-                self.dataset = clipped_data
+            self.dataset = clipped_data
                 
         # src:      https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
         # example:  https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
-
-
-    def evaluate(self):
-        if not self.config["run"]:
-            print("MMLU evaluation skipped.\n")
-            return
-
-        print(f"Evaluating on MMLU {self.eval_split} split with {len(self.dataset)} samples.\n")    # type: ignore
-
-        per_category_accuracy = {c: [0, 0] for c in self.categories}
-        success, fail = 0, 0
-        answers = []
-        batch_prompts = []
-
-        self.model.eval()
-
-        self.model.to(self.device)
-
-        for i in tqdm(range(0, len(self.dataset), self.batch_size)):  # type: ignore
-
-            # ** Batch prep **
-            batch = self.dataset.select(range(i, min(i + self.batch_size, len(self.dataset))))  # type: ignore
-            batch_entries = [dict(row) for row in batch]
-            
-            for entry in batch_entries:
-                prefix = self.prompts[entry['category']]
-                query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:'
-                batch_prompts.append(query)
-
-            inputs = self.tokenizer(
-                batch_prompts,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=self.config["max_length"]
-            ).to(self.device)
-
-            # ** Generate outputs **
-            with torch.no_grad():
-                outputs = self.model.generate(
-                    **inputs,
-                    max_new_tokens=self.config["max_new_tokens"],
-                    do_sample=False,
-                    pad_token_id=self.tokenizer.pad_token_id
-                )
-
-            # ** Decode batch outputs **
-            gen_texts = self.tokenizer.batch_decode(
-                outputs[:, inputs['input_ids'].shape[1]:],
-                skip_special_tokens=True
-            )
-
-            # ** Process predictions **
-            for entry, gen in zip(batch_entries, gen_texts):
-                gen = gen.strip()
-                entry['solution'] = gen
-                answers.append(entry)
-
-                prediction = self.get_prediction(gen, len(entry['options']))
-                if entry["answer"] == prediction:
-                    success += 1
-                    per_category_accuracy[entry['category']][0] += 1
-                else:
-                    fail += 1
-                    per_category_accuracy[entry['category']][1] += 1
-
-            print("Overall accuracy:", success / (success + fail))
-
-        # ** Save results **
-        with open(os.path.join(self.config["output_dir"], "MMLU_raw.json"), "w") as f:
-            json.dump(answers, f, indent=2)
-
-        accuracies = {k: (v[0] / (v[0] + v[1]) if (v[0] + v[1]) > 0 else 0) for k, v in per_category_accuracy.items()}
-        with open(os.path.join(self.config["output_dir"], "MMLU.json"), "w") as f:
-            json.dump(accuracies, f, indent=2)
-        print("\nPer-category accuracies:\n", accuracies)
-                
-    @staticmethod
-    def form_options(options: list):
-        #** Format multiple-choice **#
-        option_str = 'Options are:\n'
-        opts = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-        for opt, o in zip(options, opts):
-            option_str += f'({o}): {opt}\n'
-        return option_str
-
-    @staticmethod
-    def get_prediction(output, num_choices):
-        
-        #** Standardize **#
-        out = output.strip().upper()
-
-        #** Look for patterns **#
-        patterns = [
-            r"ANSWER:? ?\(?([A-J])\)?",
-            r"OPTION:? ?\(?([A-J])\)?",
-            r"THE CORRECT ANSWER (?:IS|:) ?\(?([A-J])\)?",
-            r"\(([A-J])\)\s*(?:IS CORRECT|IS THE ANSWER)",
-        ]
-        for pat in patterns:
-            match = re.search(pat, out, flags=re.IGNORECASE)
-            if match:
-                return match.group(1).upper()
-
-        #** Fallback: look for first standalone letter **#
-        for char in out:
-            if char in list("ABCDEFGHIJ")[:num_choices]:
-                return char
-
-        #** Random **#
-        tqdm.write(f"No valid answer found in: {output[:100]}...")
-        return random.choice(list("ABCDEFGHIJ")[:num_choices])
-        
-    def _to_serializable(self, obj):
-        # Recursively convert numpy arrays to lists for JSON serialization
-        if isinstance(obj, dict):
-            return {k: self._to_serializable(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [self._to_serializable(v) for v in obj]
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        else:
-            return obj
 
 class Test_Set_Evaluator:
     """ Evaluator for the post-training test set. """

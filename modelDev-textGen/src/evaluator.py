@@ -26,7 +26,8 @@ class MMLU_Evaluator:
 
         #** Per-category prompts **#
         self.prompts = {c: '' for c in self.categories}
-        for d in self.dataset['validation']:
+        
+        for d in self.dataset:
             self.prompts[d['category']] += (                # type: ignore
                 'Q: ' + d['question'] + '\n' +              # type: ignore
                 self.form_options(d['options']) + '\n' +    # type: ignore

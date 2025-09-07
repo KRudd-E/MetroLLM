@@ -71,9 +71,9 @@ class Retriever:
                     return vals
 
             except Exception as e:
-                tqdm.write(f"Error retrieving values for {names}: {e}\n{response}")
+                pass
 
-        return vals  # fallback
+        return {}  # fallback
                 
     
     

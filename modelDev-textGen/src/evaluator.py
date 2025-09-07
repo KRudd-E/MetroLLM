@@ -281,7 +281,7 @@ class Task_Evaluator:
                 truncation=True,
                 max_length=self.config["max_length"]
             ).to(self.device)
-
+            
             #** Generate outputs **#
             with torch.no_grad():
                 outputs = self.model.generate(
@@ -303,15 +303,32 @@ class Task_Evaluator:
             
             #** Retrieve predicted tasks **#
             for j, gen in enumerate(generated_texts):
-                vals: dict = retriever.retrieve_multiple(
-                    names=['task'],
-                    options={'task': self.config['task_list']},
-                    response=gen,
-                )
-                all_predicted.append(vals['task'])
+                while True:
+                    vals: dict = retriever.retrieve_multiple(
+                        names=['task'],
+                        options={'task': self.config['task_list']},
+                        response=gen,
+                    )
+                    if vals.get('task'):  # Check if 'task' key has a value
+                        break
 
+
+                    with torch.no_grad():
+                        regenerated_output = self.model.generate(
+                            input_ids=inputs['input_ids'][j].unsqueeze(0),
+                            attention_mask=inputs['attention_mask'][j].unsqueeze(0),
+                            max_new_tokens=self.config["max_new_tokens"],
+                            do_sample=False,
+                            pad_token_id=self.tokenizer.pad_token_id
+                        )
+                        gen = self.tokenizer.decode(
+                            regenerated_output[0, inputs['input_ids'][j].shape[0]:],
+                            skip_special_tokens=True
+                        ).strip()
+
+                all_predicted.append(vals['task'])
                 all_actual.append(batch.iloc[j]['Task'])
-                
+                    
             torch.cuda.empty_cache()
 
 

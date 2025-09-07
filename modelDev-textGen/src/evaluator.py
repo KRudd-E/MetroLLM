@@ -23,8 +23,8 @@ class MMLU_Evaluator:
         self.eval_split = mmlu_subset
 
         self.categories = ['computer science', 'math', 'chemistry', 'engineering', 'law', 
-                           'biology', 'health', 'physics', 'business', 'philosophy', 
-                           'economics', 'other', 'psychology', 'history']
+                   'biology', 'health', 'physics', 'business', 'philosophy', 
+                   'economics', 'other', 'psychology', 'history']
 
         #** Per-category prompts **#
         self.prompts = {c: '' for c in self.categories}
@@ -33,10 +33,20 @@ class MMLU_Evaluator:
         self.prompts = {c: '' for c in self.categories}
         for d in val_split:
             self.prompts[d['category']] += (                # type: ignore
-                'Q: ' + d['question'] + '\n' +              # type: ignore
-                self.form_options(d['options']) + '\n' +    # type: ignore
-                d['cot_content'] + '\n\n'                   # type: ignore
+            'Q: ' + d['question'] + '\n' +              # type: ignore
+            self.form_options(d['options']) + '\n' +    # type: ignore
+            d['cot_content'] + '\n\n'                   # type: ignore
             )
+
+        #** Clip dataset **#
+        clip_percentage = config['data_reduction']  # Default to 100% if not provided
+        if clip_percentage < 1.0:
+            clipped_data = []
+            for category in self.categories:
+            category_data = [entry for entry in self.dataset if entry['category'] == category] # type: ignore
+            clip_size = max(1, int(len(category_data) * clip_percentage))
+            clipped_data.extend(random.sample(category_data, clip_size))
+            self.dataset = clipped_data
             
         # src:      https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
         # example:  https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py

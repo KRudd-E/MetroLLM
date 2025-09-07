@@ -15,6 +15,8 @@ class MMLU_Evaluator:
         self.batch_size = config['batch_size']
         
         self.dataset = load_dataset("TIGER-Lab/MMLU-Pro", split=mmlu_subset)
+        # src: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
+        # example: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
 
     def evaluate(self):
         print("Evaluating.\n")
@@ -23,7 +25,7 @@ class MMLU_Evaluator:
         examples = list(self.dataset)
         prompts = [self.format_prompt(ex) for ex in examples]
         answers = [ex["answer"] for ex in examples]
-        num_choices = [len(ex["choices"]) for ex in examples]
+        num_choices = [len(ex["options"]) for ex in examples]
 
         all_predictions = []
         self.model.eval()
@@ -80,7 +82,7 @@ class MMLU_Evaluator:
         #** Get components of data **#
         context = example.get("context", "")
         question = example["question"]
-        choices = example["choices"] # i.e., options
+        choices = example["options"] 
 
         #** Format for use as prompt **#
         prompt = ""

@@ -50,7 +50,7 @@ class MMLU_Evaluator:
 
     def evaluate(self):
         if not self.config["run"]:
-            print("MMLU evaluation skipped.\n")
+            print("\nMMLU evaluation skipped.")
             return
 
         print(f"Evaluating on MMLU {self.eval_split} split with {len(self.dataset)} samples.\n")    # type: ignore
@@ -189,7 +189,7 @@ class Test_Set_Evaluator:
     def evaluate(self):
         
         if self.config['run'] == False:
-            print("\nTest Set evaluation skipped.\n")
+            print("Test Set evaluation skipped.\n")
             return
         
         print("Dataset:", self.dataset)
@@ -256,10 +256,10 @@ class Task_Evaluator:
 
 
     def evaluate(self):
-        print("Evaluating on specific tasks.\n")
-        print("Dataset:", self.dataset.head())
-        print("Dataset size:", len(self.dataset))
-        print("Data columns:", self.dataset.columns)
+        
+        if self.config['run'] == False:
+            print("Task evaluation skipped.\n")
+            return
 
         all_predicted = []
         all_actual = []
@@ -309,9 +309,11 @@ class Task_Evaluator:
                 all_predicted.append(vals['task'])
 
                 all_actual.append(batch.iloc[j]['Task'])
+                
+            torch.cuda.empty_cache()
 
 
-
+    
 
         # Save results to CSV
         results_df = pd.DataFrame({

@@ -101,9 +101,9 @@ eval:
     run: False
     
     data_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
-    batch_size: 8
+    batch_size: 2
     max_length: 8192
-    max_new_tokens: 128
+    max_new_tokens: 512
 
 
 

@@ -312,12 +312,12 @@ class Task_Evaluator:
                     if vals.get('task'):  # Check if 'task' key has a value
                         break
 
-
+                    tqdm.write('Retry!')
                     with torch.no_grad():
                         regenerated_output = self.model.generate(
                             input_ids=inputs['input_ids'][j].unsqueeze(0),
                             attention_mask=inputs['attention_mask'][j].unsqueeze(0),
-                            max_new_tokens=self.config["max_new_tokens"],
+                            max_new_tokens=self.config["max_new_tokens"] + 12,
                             do_sample=False,
                             pad_token_id=self.tokenizer.pad_token_id
                         )
@@ -325,6 +325,7 @@ class Task_Evaluator:
                             regenerated_output[0, inputs['input_ids'][j].shape[0]:],
                             skip_special_tokens=True
                         ).strip()
+                        
 
                 all_predicted.append(vals['task'])
                 all_actual.append(batch.iloc[j]['Task'])

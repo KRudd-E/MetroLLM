@@ -265,74 +265,58 @@ class Task_Evaluator:
         all_actual = []
         retriever = Retriever(self.config)
 
-        for i in tqdm(range(0, len(self.dataset), self.batch_size)):
+        for idx in tqdm(range(len(self.dataset))):
             
-            #** Prepare batch **#
-            batch = self.dataset.iloc[i:i+self.batch_size]
+            #** Prepare single entry **#
+            row = self.dataset.iloc[idx]
 
-            prompts = [self.config['task_prompt'].format(
+            prompt = self.config['task_prompt'].format(
                 task_list=self.config['task_list'],
-                txt=row['Text']) for _, row in batch.iterrows()]
+                txt=row['Text']
+            )
 
             inputs = self.tokenizer(
-                prompts,
+                [prompt],
                 return_tensors="pt",
                 padding=True,
                 truncation=True,
                 max_length=self.config["max_length"]
             ).to(self.device)
             
-            #** Generate outputs **#
-            with torch.no_grad():
-                outputs = self.model.generate(
-                    **inputs,
-                    max_new_tokens=self.config["max_new_tokens"],
-                    do_sample=False,
-                    pad_token_id=self.tokenizer.pad_token_id
-                )
-
-            #** Decode batch outputs **#
-            generated_texts = []
-            for j, output in enumerate(outputs):
-                input_length = inputs['input_ids'][j].shape[0]
-                generated_part = output[input_length:]
-                generated_text = self.tokenizer.decode(generated_part, skip_special_tokens=True)
-                generated_texts.append(generated_text.strip())
-
-            tqdm.write(f"Generated:\n{generated_texts}")
-            
-            #** Retrieve predicted tasks **#
-            for j, gen in enumerate(generated_texts):
-                while True:
-                    vals: dict = retriever.retrieve_multiple(
-                        names=['task'],
-                        options={'task': self.config['task_list']},
-                        response=gen,
+            i=1
+            while True:
+                
+                #** Generate output **#
+                with torch.no_grad():
+                    outputs = self.model.generate(
+                        **inputs,
+                        max_new_tokens=self.config["max_new_tokens"],
+                        do_sample=True,
+                        pad_token_id=self.tokenizer.pad_token_id
                     )
-                    if vals.get('task'):  # Check if 'task' key has a value
-                        break
 
-                    tqdm.write('Retry!')
-                    with torch.no_grad():
-                        regenerated_output = self.model.generate(
-                            input_ids=inputs['input_ids'][j].unsqueeze(0),
-                            attention_mask=inputs['attention_mask'][j].unsqueeze(0),
-                            max_new_tokens=self.config["max_new_tokens"] + 12,
-                            do_sample=True,
-                            pad_token_id=self.tokenizer.pad_token_id
-                        )
-                        gen = self.tokenizer.decode(
-                            regenerated_output[0, inputs['input_ids'][j].shape[0]:],
-                            skip_special_tokens=True
-                        ).strip()
+                #** Decode output **#
+                generated_text = self.tokenizer.decode(
+                    outputs[0, inputs['input_ids'].shape[1]:],
+                    skip_special_tokens=True
+                ).strip()
+
+                tqdm.write(f"Generated text (attempt {i}): {generated_text}")
+
+                vals: dict = retriever.retrieve_multiple(
+                    names=['task'],
+                    options={'task': self.config['task_list']},
+                    response=generated_text,
+                )
+                if vals.get('task'):  # Check if 'task' key has a value
+                    all_predicted.append(vals['task'])
+                    all_actual.append(row['Task'])
+                    break
+                
+                if i == 20:
+                    raise ValueError(f"Failed to extract task after 20 attempts. Last generated text: {generated_text}")
                         
-
-                all_predicted.append(vals['task'])
-                all_actual.append(batch.iloc[j]['Task'])
-                    
-            torch.cuda.empty_cache()
-
-
+                torch.cuda.empty_cache()
 
 
         # Save results to CSV

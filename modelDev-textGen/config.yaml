@@ -98,7 +98,7 @@ eval:
     batch_size: 8
 
   task_args:
-    run: False
+    run: True
     
     data_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
     batch_size: 2

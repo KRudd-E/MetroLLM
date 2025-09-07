@@ -50,7 +50,7 @@ class MMLU_Evaluator:
 
     def evaluate(self):
         if not self.config["run"]:
-            print("\nMMLU evaluation skipped.")
+            print("\nMMLU evaluation skipped.\n")
             return
 
         print(f"Evaluating on MMLU {self.eval_split} split with {len(self.dataset)} samples.\n")    # type: ignore
@@ -313,7 +313,7 @@ class Task_Evaluator:
             torch.cuda.empty_cache()
 
 
-    
+
 
         # Save results to CSV
         results_df = pd.DataFrame({

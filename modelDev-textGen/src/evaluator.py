@@ -290,7 +290,7 @@ class Task_Evaluator:
                 with torch.no_grad():
                     outputs = self.model.generate(
                         **inputs,
-                        max_new_tokens=self.config["max_new_tokens"],
+                        max_new_tokens=self.config["max_new_tokens"] + i*2,
                         do_sample=True,
                         pad_token_id=self.tokenizer.pad_token_id
                     )
@@ -308,11 +308,10 @@ class Task_Evaluator:
                     options={'task': self.config['task_list']},
                     response=generated_text,
                 )
-                if vals.get('task'):  # Check if 'task' key has a value
+                if vals.get('task') and len(vals['task']) < 3:
                     all_predicted.append(vals['task'])
                     all_actual.append(row['Task'])
                     break
-                
                 if i == 20:
                     raise ValueError(f"Failed to extract task after 20 attempts. Last generated text: {generated_text}")
                         

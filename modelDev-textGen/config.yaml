@@ -89,7 +89,7 @@ eval:
     run: False
     batch_size: 8
     max_length: 4096
-    max_new_tokens: 32
+    max_new_tokens: 2
     data_reduction: 0.1
     output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
 
@@ -103,7 +103,7 @@ eval:
     data_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
     batch_size: 2
     max_length: 8192
-    max_new_tokens: 20
+    max_new_tokens: 12
 
 
 
@@ -114,6 +114,7 @@ eval:
       {task_list}
 
       Return the task(s) in a JSON format, with the single key named 'task'. Do not include the section from the task list in the JSON dictionary.
+      Provide no additional information or CoT reasoning. 
 
       Case study text:
       {txt}

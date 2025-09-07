@@ -142,7 +142,7 @@ class DeepSeekWrapper:
             )
 
         
-        #self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
 
     def get_model(self):

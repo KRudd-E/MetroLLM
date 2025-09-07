@@ -12,7 +12,7 @@ class MMLU_Evaluator:
         self.model = model_wrapper.get_model()
         self.tokenizer = model_wrapper.get_tokenizer()
         self.device = model_wrapper.get_device()
-        self.batch_size = config["eval_args"]['batch_size']
+        self.batch_size = config['batch_size']
         
         self.dataset = load_dataset("TIGER-Lab/MMLU-Pro", split=mmlu_subset)
 
@@ -40,14 +40,14 @@ class MMLU_Evaluator:
                 return_tensors="pt",
                 padding=True,
                 truncation=True,
-                max_length=self.config["mmlu_eval_args"]["max_length"]
+                max_length=self.config["max_length"]
             ).to(self.device)
             
             #** Generate outputs **#
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
-                    max_new_tokens=self.config["mmlu_eval_args"]["batch_size"],
+                    max_new_tokens=self.config["batch_size"],
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
                 )
@@ -72,7 +72,7 @@ class MMLU_Evaluator:
         
         #** Print and save results **#
         print(results)
-        with open(self.config["mmlu_eval_args"]["output_dir"], "w") as f:
+        with open(self.config["output_dir"], "w") as f:
             json.dump(results, f, indent=4)
 
 

@@ -51,7 +51,7 @@ class MMLU_Evaluator:
         self.model.eval()
         self.model.to(self.device)
         
-        for entry in tqdm(self.dataset[self.eval_split]):
+        for entry in tqdm(self.dataset):
             
             #** Prepare input **#
             prefix = self.prompts[entry['category']]
@@ -211,8 +211,52 @@ class Task_Evaluator:
         self.device = model_wrapper.get_device()
         self.batch_size = config["task_eval_args"]['batch_size']
         
+        self.dataset = None
 
 
     def evaluate(self):
         print("Evaluating on specific tasks.\n")
-        pass
+        
+        
+        
+        
+        # all_predictions = []
+        # self.model.eval()
+        # self.model.to(self.device)
+        
+        # for i in tqdm(range(0, len(self.dataset), self.batch_size)):
+        #     batch = self.dataset[i:i+self.batch_size]
+
+        #     #** Prepare batch **#
+        #     input_prompt = self.config['task_prompt'].format(
+        #         task_list=self.config['task_list'],
+        #         txt=batch['input'] #??
+        #     )
+            
+        #     inputs = self.tokenizer(
+        #         input_prompt,
+        #         return_tensors="pt",
+        #         padding=True,
+        #         truncation=True,
+        #         max_length=self.config["max_length"]
+        #     ).to(self.device)
+
+        #     #** Generate outputs **#
+        #     with torch.no_grad():
+        #         outputs = self.model.generate(
+        #             **inputs,
+        #             max_new_tokens=self.config["max_length"],
+        #             do_sample=False,
+        #             pad_token_id=self.tokenizer.pad_token_id
+        #         )
+                
+        #         #** Decode and extract predictions **#
+        #         generated_texts = []
+        #         for j, output in enumerate(outputs):
+        #             input_length = inputs['input_ids'][j].shape[0]
+        #             generated_part = output[input_length:]
+        #             generated_text = self.tokenizer.decode(generated_part, skip_special_tokens=True)
+        #             generated_texts.append(generated_text.strip())
+                    
+        #         all_predictions.extend(generated_texts)
+        

@@ -1,7 +1,7 @@
 # File: src/models/model_wrapper.py
 from transformers import AutoTokenizer, AutoModelForCausalLM, \
     DataCollatorForLanguageModeling, BitsAndBytesConfig
-from peft import LoraConfig, get_peft_model, TaskType
+from peft import LoraConfig, get_peft_model, TaskType, PeftModel
 import torch
 import os
 
@@ -68,10 +68,8 @@ class DeepSeekWrapper:
             if hasattr(self.model, 'enable_input_require_grads'):
                 self.model.enable_input_require_grads() # type: ignore
             
-            #** Ensure model is in training mode **#
+            #** Ensure training mode & print parameters **#
             self.model.train()
-            
-            #** Print trainable parameters **#
             self.model.print_trainable_parameters()
             
             #** Tokenizer **#
@@ -94,48 +92,59 @@ class DeepSeekWrapper:
             )
         
         #***** Eval *****#
-        elif run == 'evaluate': 
-            # Check for distributed training through environment variables
-            is_distributed = ('RANK' in os.environ and 'WORLD_SIZE' in os.environ) or \
-                           (torch.distributed.is_available() and torch.distributed.is_initialized())
+        elif run == 'evaluate':
             
-            # Determine device map based on distributed training status
+            #** Map device(s) **#
+            is_distributed = ('RANK' in os.environ and 'WORLD_SIZE' in os.environ) or \
+                (torch.distributed.is_available() and torch.distributed.is_initialized())
+
             if torch.cuda.is_available():
                 if is_distributed:
-                    # In distributed training, use the local rank device
                     local_rank = int(os.environ.get("LOCAL_RANK", 0))
                     device_map = {"": local_rank}
                     print(f"Distributed evaluation. Using device {local_rank} for local rank {local_rank}")
                 else:
-                    # Single GPU training
                     device_map = {"": torch.cuda.current_device()}
                     print(f"Single GPU evaluation. Using device {torch.cuda.current_device()}")
             else:
                 device_map = {"": "cpu"}
-                print("Using CPU for evaluation.")
-                
-            self.model = AutoModelForCausalLM.from_pretrained(
-                config['model']['dir'], 
-                low_cpu_mem_usage=True, 
+                print("\nUsing CPU for evaluation!\n")
+
+
+            #** Base Model **#
+            base_model = AutoModelForCausalLM.from_pretrained(
+                config['model']['name'],
                 device_map=device_map,
                 torch_dtype=torch.bfloat16,
                 trust_remote_code=True,
+                low_cpu_mem_usage=True,
             )
+
+            #** Load Peft Model with Base Model & LoRA adapters **#
+            self.model = PeftModel.from_pretrained(
+                base_model,
+                model_id=config['model']['dir'],
+                device_map=device_map,
+            )
+
+            #** Tokenizer **#
             self.tokenizer = AutoTokenizer.from_pretrained(
-                config['model']['dir'], 
+                config['model']['name'],
                 trust_remote_code=True
             )
-            
-            # Add padding token if it doesn't exist
+
+            #** Ensure Padding Token  **#
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
-            self.model.config.pad_token_id = self.tokenizer.pad_token_id
-                
+            self.model.config.pad_token_id = self.tokenizer.pad_token_id # type: ignore
+
+            #** Data Collator **#
             self.data_collator = DataCollatorForLanguageModeling(
-                tokenizer=self.tokenizer, 
+                tokenizer=self.tokenizer,
                 mlm=False,
                 pad_to_multiple_of=8
             )
+
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         

@@ -38,31 +38,38 @@ class MMLU_Evaluator:
         # example:  https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
 
     def evaluate(self):
-        
-        if self.config['run'] == False:
-            print("MMLU evaluation skipped.\n"); return
+        if not self.config['run']:
+            print("MMLU evaluation skipped.\n")
+            return
         else:
             print("Evaluating on MMLU dataset.\n")
 
         per_category_accuracy = {c: [0, 0] for c in self.categories}
         success, fail = 0, 0
         answers = []
-        
-        self.model.eval()
-        self.model.to(self.device)
-        
-        for entry in tqdm(self.dataset):
 
-            #** Prepare input **#
-            prefix = self.prompts[entry['category']]
-            query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:'
+        self.model.eval()
+
+        print('----------------- Start Answering -------------------')
+        for i in tqdm(range(0, len(self.dataset), self.batch_size)): # type: ignore
+
+            # ** Batch prep **
+            batch_entries = self.dataset[i:i + self.batch_size] # type: ignore
+            batch_prompts = []
+            for entry in batch_entries:
+                prefix = self.prompts[entry['category']] # type: ignore
+                query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:' # type: ignore
+                batch_prompts.append(query)
 
             inputs = self.tokenizer(
-                query, return_tensors="pt", truncation=True,
+                batch_prompts,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
                 max_length=self.config["max_length"]
             ).to(self.device)
 
-            #** Generate output **#
+            # ** Generate outputs **
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
@@ -70,34 +77,39 @@ class MMLU_Evaluator:
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
                 )
-                gen = self.tokenizer.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True).strip()
 
-            entry['solution'] = gen
-            answers.append(entry)
-            
-            #** Extract prediction **#
-            prediction = self.get_prediction(gen, len(entry['options']))
-            if entry["answer"] == prediction:
-                success += 1
-                per_category_accuracy[entry['category']][0] += 1
-            else:
-                fail += 1
-                per_category_accuracy[entry['category']][1] += 1
+            # ** Decode batch outputs **
+            gen_texts = self.tokenizer.batch_decode(
+                outputs[:, inputs['input_ids'].shape[1]:],
+                skip_special_tokens=True
+            )
 
-            print("Overall accuracy:",success / (success + fail))
+            # ** Process predictions **
+            for entry, gen in zip(batch_entries, gen_texts):
+                gen = gen.strip()
+                entry['solution'] = gen
+                answers.append(entry)
 
+                prediction = self.get_prediction(gen, len(entry['options']))
+                if entry["answer"] == prediction:
+                    success += 1
+                    per_category_accuracy[entry['category']][0] += 1
+                else:
+                    fail += 1
+                    per_category_accuracy[entry['category']][1] += 1
 
-        #** Raw results **#
-        with open(os.path.join(self.config["output_dir"] + "MMLU_raw.json"), "w") as f:
+            print("Overall accuracy:", success / (success + fail))
+
+        # ** Save results **
+        with open(os.path.join(self.config["output_dir"], "MMLU_raw.json"), "w") as f:
             json.dump(answers, f, indent=2)
 
-        #** Save & Print per-category accuracy **#
         accuracies = {k: (v[0] / (v[0] + v[1]) if (v[0] + v[1]) > 0 else 0) for k, v in per_category_accuracy.items()}
-        with open(os.path.join(self.config["output_dir"] + "MMLU.json"), "w") as f:
+        with open(os.path.join(self.config["output_dir"], "MMLU.json"), "w") as f:
             json.dump(accuracies, f, indent=2)
         print("\nPer-category accuracies:\n", accuracies)
-        
-        
+            
+            
     @staticmethod
     def form_options(options: list):
         #** Format multiple-choice **#

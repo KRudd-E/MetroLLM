@@ -90,55 +90,49 @@ class DeepSeekWrapper:
                 pad_to_multiple_of=8,
                 return_tensors="pt"
             )
-        
+            
         #***** Eval *****#
         elif run == 'evaluate':
-            
-            #** Map device(s) **#
-            is_distributed = ('RANK' in os.environ and 'WORLD_SIZE' in os.environ) or \
-                (torch.distributed.is_available() and torch.distributed.is_initialized())
 
+            # ** Device map **
             if torch.cuda.is_available():
-                if is_distributed:
-                    local_rank = int(os.environ.get("LOCAL_RANK", 0))
-                    device_map = {"": local_rank}
-                    print(f"Distributed evaluation. Using device {local_rank} for local rank {local_rank}")
-                else:
-                    device_map = {"": torch.cuda.current_device()}
-                    print(f"Single GPU evaluation. Using device {torch.cuda.current_device()}")
+                device_map = "auto"
+                print(f"Evaluation using available GPU(s) with device_map={device_map}")
             else:
                 device_map = {"": "cpu"}
                 print("\nUsing CPU for evaluation!\n")
 
-
-            #** Base Model **#
+            # ** Base Model **
             base_model = AutoModelForCausalLM.from_pretrained(
                 config['model']['name'],
                 device_map=device_map,
-                dtype=torch.bfloat16,
+                torch_dtype=torch.float16,   # faster on A40
                 trust_remote_code=True,
                 low_cpu_mem_usage=True,
             )
 
-            #** Load Peft Model with Base Model & LoRA adapters **#
-            self.model = PeftModel.from_pretrained(
+            # ** Load Peft Model (LoRA) **
+            peft_model = PeftModel.from_pretrained(
                 base_model,
                 model_id=config['model']['dir'],
                 device_map=device_map,
             )
 
-            #** Tokenizer **#
+            # ** Merge LoRA into base weights for faster inference **
+            self.model = peft_model.merge_and_unload() # type: ignore
+
+            # ** Tokenizer **
             self.tokenizer = AutoTokenizer.from_pretrained(
                 config['model']['name'],
                 trust_remote_code=True
             )
 
-            #** Ensure Padding Token  **#
+            # ** Ensure Padding Token **
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
-            self.model.config.pad_token_id = self.tokenizer.pad_token_id # type: ignore
+            self.model.config.pad_token_id = self.tokenizer.pad_token_id  # type: ignore
 
-            #** Data Collator **#
+            # ** Data Collator **
             self.data_collator = DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer,
                 mlm=False,

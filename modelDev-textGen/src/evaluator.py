@@ -52,29 +52,29 @@ class MMLU_Evaluator:
         self.model.to(self.device)
         
         for entry in tqdm(self.dataset):
-            tqdm.write("DEBUG 1")
+
             #** Prepare input **#
             prefix = self.prompts[entry['category']]
             query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:'
-            tqdm.write("DEBUG 2")
+
             inputs = self.tokenizer(
                 query, return_tensors="pt", truncation=True,
                 max_length=self.config["max_length"]
             ).to(self.device)
-            tqdm.write("DEBUG 3")
+
             #** Generate output **#
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
-                    max_new_tokens=self.config["max_length"],
+                    max_new_tokens=self.config["max_new_tokens"],
                     do_sample=False,
                     pad_token_id=self.tokenizer.pad_token_id
                 )
                 gen = self.tokenizer.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True).strip()
-                tqdm.write("DEBUG 4")
+
             entry['solution'] = gen
             answers.append(entry)
-            tqdm.write("DEBUG 5")
+            
             #** Extract prediction **#
             prediction = self.get_prediction(gen, len(entry['options']))
             if entry["answer"] == prediction:
@@ -83,7 +83,7 @@ class MMLU_Evaluator:
             else:
                 fail += 1
                 per_category_accuracy[entry['category']][1] += 1
-            tqdm.write("DEBUG 6")
+
             print("Overall accuracy:",success / (success + fail))
 
 

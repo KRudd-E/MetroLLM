@@ -71,7 +71,7 @@ class MMLU_Evaluator:
         for i in tqdm(range(0, len(self.dataset), self.batch_size)):  # type: ignore
 
             # ** Batch prep **
-            batch = self.dataset.select(range(i, min(i + self.batch_size, len(self.dataset))))  # type: ignore
+            batch = self.dataset[i:min(i + self.batch_size, len(self.dataset))]  # type: ignore
             batch_entries = [dict(row) for row in batch]
             
             for entry in batch_entries:

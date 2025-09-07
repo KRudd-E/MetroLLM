@@ -18,9 +18,9 @@ class MMLU_Evaluator:
         self.device = model_wrapper.get_device()
         self.batch_size = config['batch_size']
         
-                # Load dataset and immediately convert to pandas
+        # Load dataset and immediately convert to pandas
         self.full_dataset = load_dataset("TIGER-Lab/MMLU-Pro")
-        self.dataset= self.full_dataset[mmlu_subset].to_pandas() # type: ignore
+        self.dataset = self.full_dataset[mmlu_subset].to_pandas() # type: ignore
         self.eval_split = mmlu_subset
 
         self.categories = [
@@ -29,17 +29,23 @@ class MMLU_Evaluator:
             "economics", "other", "psychology", "history"
         ]
 
+        # Reduce dataset size while maintaining category distribution
+        reduced_dfs = []
+        for category in self.categories:
+            category_df = self.dataset[self.dataset["category"] == category] # type: ignore
+            reduced_size = max(1, int(len(category_df) * self.config['data_reduction']))
+            reduced_dfs.append(category_df.sample(n=reduced_size, random_state=42))
+        self.dataset = pd.concat(reduced_dfs).reset_index(drop=True)
+
         # Build category-specific prompts from validation split
         val_df = self.full_dataset["validation"].to_pandas() # type: ignore
         self.prompts = {c: "" for c in self.categories}
         for _, row in val_df.iterrows():# type: ignore
             self.prompts[row["category"]] += (
-                f"Q: {row['question']}\n"
-                f"{self.form_options(row['options'])}\n"
-                f"{row['cot_content']}\n\n"
+            f"Q: {row['question']}\n"
+            f"{self.form_options(row['options'])}\n"
+            f"{row['cot_content']}\n\n"
             )
-
-            
         # src:      https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
         # example:  https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
 
@@ -129,22 +135,30 @@ class MMLU_Evaluator:
     @staticmethod
     def get_prediction(output, num_choices):
         
-        #** Look for "the answer is X" **#
-        pattern = r"answer is \(?([A-J])\)?"
-        match = re.search(pattern, output, flags=re.IGNORECASE)
-        if match:
-            return match.group(1).upper()
-        
-        #** Fallback: find 1st A, B, C ... **#
-        for char in output:
-            if char.upper() in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']:
-                return char.upper()
-        
-        #** Fail **#
-        tqdm.write("No valid answer found.")
-        return random.choice(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])
+        #** Standardize **#
+        out = output.strip().upper()
 
+        #** Look for patterns **#
+        patterns = [
+            r"ANSWER:? ?\(?([A-J])\)?",
+            r"OPTION:? ?\(?([A-J])\)?",
+            r"THE CORRECT ANSWER (?:IS|:) ?\(?([A-J])\)?",
+            r"\(([A-J])\)\s*(?:IS CORRECT|IS THE ANSWER)",
+        ]
+        for pat in patterns:
+            match = re.search(pat, out, flags=re.IGNORECASE)
+            if match:
+                return match.group(1).upper()
 
+        #** Fallback: look for first standalone letter **#
+        for char in out:
+            if char in list("ABCDEFGHIJ")[:num_choices]:
+                return char
+
+        #** Random **#
+        tqdm.write(f"No valid answer found in: {output[:100]}...")
+        return random.choice(list("ABCDEFGHIJ")[:num_choices])
+        
 
 
 class Test_Set_Evaluator:

@@ -86,17 +86,17 @@ eval:
 
 
   mmlu_args:
-    run: False
+    run: True
     batch_size: 8
     max_length: 1024
     output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
 
   test_set_args:
-    run: True
+    run: False
     batch_size: 8
 
   task_args:
-    run: True
+    run: False
     batch_size: 8
 
 

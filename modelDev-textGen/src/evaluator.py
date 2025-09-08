@@ -263,7 +263,6 @@ class Task_Evaluator:
         self.model = model_wrapper.get_model()
         self.tokenizer = model_wrapper.get_tokenizer()
         self.device = model_wrapper.get_device()
-        self.batch_size = config['batch_size']
         
         self.dataset = pd.read_csv(self.config['data_dir'])
 

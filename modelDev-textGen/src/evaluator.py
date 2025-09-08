@@ -29,11 +29,11 @@ class MMLU_Evaluator:
         val_split = self.full_dataset["validation"]
         self.prompts = {c: '' for c in self.categories}
         for d in val_split:
-        self.prompts[d['category']] += (                # type: ignore
-            'Q: ' + d['question'] + '\n' +              # type: ignore
-            self.form_options(d['options']) + '\n' +    # type: ignore
-            d['cot_content'] + '\n\n'                   # type: ignore
-            )
+            self.prompts[d['category']] += (                # type: ignore
+                'Q: ' + d['question'] + '\n' +              # type: ignore
+                self.form_options(d['options']) + '\n' +    # type: ignore
+                d['cot_content'] + '\n\n'                   # type: ignore
+                )
 
 
         #** Clip dataset **#

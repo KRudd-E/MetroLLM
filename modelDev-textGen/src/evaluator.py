@@ -22,17 +22,19 @@ class MMLU_Evaluator:
                    'biology', 'health', 'physics', 'business', 'philosophy', 
                    'economics', 'other', 'psychology', 'history']
 
+
         #** Per-category prompts **#
         self.prompts = {c: '' for c in self.categories}
         
         val_split = self.full_dataset["validation"]
         self.prompts = {c: '' for c in self.categories}
         for d in val_split:
-            self.prompts[d['category']] += (                # type: ignore
+        self.prompts[d['category']] += (                # type: ignore
             'Q: ' + d['question'] + '\n' +              # type: ignore
             self.form_options(d['options']) + '\n' +    # type: ignore
             d['cot_content'] + '\n\n'                   # type: ignore
             )
+
 
         #** Clip dataset **#
         clip_percentage = config['data_reduction']  # Default to 100% if not provided
@@ -61,12 +63,11 @@ class MMLU_Evaluator:
         batch_prompts = []
 
         self.model.eval()
-
         self.model.to(self.device)
 
         for i in tqdm(range(0, len(self.dataset), self.batch_size)):  # type: ignore
 
-            # ** Batch prep **
+            #** Batch prep **#
             batch = self.dataset[i:min(i + self.batch_size, len(self.dataset))]  # type: ignore
             batch_entries = [dict(row) for row in batch]
             
@@ -83,7 +84,7 @@ class MMLU_Evaluator:
                 max_length=self.config["max_length"]
             ).to(self.device)
 
-            # ** Generate outputs **
+            #** Generate outputs **#
             with torch.no_grad():
                 outputs = self.model.generate(
                     input_ids=inputs['input_ids'],
@@ -93,14 +94,19 @@ class MMLU_Evaluator:
                     pad_token_id=self.tokenizer.pad_token_id
                 )
 
-            # ** Decode batch outputs **
+            #** Decode batch outputs **#
             gen_texts = self.tokenizer.batch_decode(
                 outputs[:, inputs['input_ids'].shape[1]:],
                 skip_special_tokens=True
             )
 
-            # ** Process predictions **
+            #** Process predictions **#
             for entry, gen in zip(batch_entries, gen_texts):
+                
+                if self.config['print_generated']:
+                    prnt = gen.replace('\n', ' ')
+                    tqdm.write(f"Generated text: {prnt}")
+                
                 gen = gen.strip()
                 entry['solution'] = gen
                 answers.append(entry)
@@ -115,7 +121,7 @@ class MMLU_Evaluator:
 
             print("Overall accuracy:", success / (success + fail))
 
-        # ** Save results **
+        #** Save results **#
         with open(os.path.join(self.config["output_dir"], "MMLU_raw.json"), "w") as f:
             json.dump(answers, f, indent=2)
 
@@ -269,7 +275,7 @@ class Task_Evaluator:
 
         for idx in tqdm(range(len(self.dataset))):
             
-            #** Prepare single entry **#
+            #** Prepare input **#
             row = self.dataset.iloc[idx]
 
             prompt = self.config['task_prompt'].format(
@@ -285,9 +291,9 @@ class Task_Evaluator:
                 max_length=self.config["max_length"]
             ).to(self.device)
             
+            #** Loop until a valid output is found or max tries reached **#
             i=1
             while True:
-                
                 #** Generate output **#
                 with torch.no_grad():
                     outputs = self.model.generate(
@@ -303,14 +309,19 @@ class Task_Evaluator:
                     skip_special_tokens=True
                 ).strip()
                 
-                # prnt = generated_text.replace('\n', ' ')
-                # tqdm.write(f"Generated text (attempt {i}): {prnt}")
+                #** Print generated text **#
+                if self.config['print_generated']:
+                    prnt = generated_text.replace('\n', ' ')
+                    tqdm.write(f"Generated text (attempt {i}): {prnt}")
 
+                #** Retrieve task **#
                 vals: dict = retriever.retrieve_multiple(
                     names=['task'],
                     options={'task': self.config['task_list']},
                     response=generated_text,
                 )
+                
+                #** Check valid output and exit loop **#
                 if vals.get('task') and len(vals['task']) < 3:
                     all_predicted.append(vals['task'])
                     all_actual.append(row['Task'])
@@ -318,7 +329,8 @@ class Task_Evaluator:
                     all_ids.append(row['id'])
                     break
                 
-                i += 1
+                #** Check against max tries **#
+                
                 if i == self.config['max_tries']:
                     tqdm.write(f"Failed to extract task after 15 attempts  --   id: {row['id']}  name: {row['Name']}")
                     all_predicted.append('ERR')
@@ -326,11 +338,14 @@ class Task_Evaluator:
                     all_names.append(row['Name'])
                     all_ids.append(row['id'])
                     break
-                        
+                
+                i += 1
+            
+                      
             torch.cuda.empty_cache()
 
 
-        # Save results to CSV
+        #** Save results **#
         results_df = pd.DataFrame({
             'predicted_label': all_predicted,
             'actual_label': all_actual,
@@ -338,5 +353,5 @@ class Task_Evaluator:
             'id': all_ids
         })
         output_path = os.path.join(self.config['output_dir'] +  'task_eval_results.csv')
-        results_df.to_csv(output_path, index_label='id')
+        results_df.to_csv(output_path, index_label='id', index=False)
         print(f"Saved predictions and labels to {output_path}")

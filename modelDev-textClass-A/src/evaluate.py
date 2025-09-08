@@ -58,11 +58,11 @@ class Evaluator:
         print("First 5 prediction vectors (from model):\n", preds[:5])
 
         preds_probs = 1 / (1 + np.exp(-preds))
-        preds_classes_standard = (preds_probs >= self.config['model']['threshold']).astype(int)
+        preds_classes_standard = (preds_probs >= self.config['model']['standard_threshold']).astype(int)
         
         # Count-limited predictions
         preds_tensor = torch.tensor(preds)
-        preds_classes_limited = predict_with_count_limit(preds_tensor, self.config['model']['threshold'], self.config['model']['max_labels'])
+        preds_classes_limited = predict_with_count_limit(preds_tensor, self.config['model']['limited_threshold'], self.config['model']['max_labels'])
         preds_classes_limited = preds_classes_limited.numpy().astype(int)
 
         print(f"Predicted classes limited example: {preds_classes_limited[:5]}")

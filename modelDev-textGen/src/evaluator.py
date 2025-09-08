@@ -120,6 +120,7 @@ class MMLU_Evaluator:
                     per_category_accuracy[entry['category']][1] += 1
 
             print("Overall accuracy:", success / (success + fail))
+            torch.cuda.empty_cache()
 
         #** Save results **#
         with open(os.path.join(self.config["output_dir"], "MMLU_raw.json"), "w") as f:
@@ -140,7 +141,7 @@ class MMLU_Evaluator:
         return option_str
 
     @staticmethod
-    def get_prediction(output, num_choices):
+    def get_prediction(output: str, num_choices: int) -> str:
         
         #** Standardize **#
         out = output.strip().upper()
@@ -157,10 +158,16 @@ class MMLU_Evaluator:
             if match:
                 return match.group(1).upper()
 
-        #** Fallback: look for first standalone letter **#
-        for char in out:
-            if char in list("ABCDEFGHIJ")[:num_choices]:
-                return char
+        #** Fallback: look for LAST standalone letter **#
+        # for match in re.finditer(r'\b([A-J])\b', out):
+        #     last_match = match.group(1).upper()
+        # if 'last_match' in locals():
+        #     return last_match
+        
+        
+        # # for char in out:
+        # #     if char in list("ABCDEFGHIJ")[:num_choices]:
+        # #         return char
 
         #** Random **#
         tqdm.write(f"No valid answer found in: {output[:100]}...")

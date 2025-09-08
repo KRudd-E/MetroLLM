@@ -93,6 +93,8 @@ eval:
     data_reduction: 0.1
     output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
 
+    print_generated: True
+
   test_set_args:
     run: False
     batch_size: 8

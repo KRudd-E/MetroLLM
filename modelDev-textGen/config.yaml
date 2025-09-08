@@ -86,10 +86,10 @@ eval:
 
 
   mmlu_args:
-    run: True
-    batch_size: 8
+    run: False
+    batch_size: 4
     max_length: 4096
-    max_new_tokens: 2
+    max_new_tokens: 64
     data_reduction: 0.1
     output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
 
@@ -100,7 +100,7 @@ eval:
     batch_size: 8
 
   task_args:
-    run: False
+    run: True
     
     data_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
     max_length: 8192

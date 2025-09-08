@@ -104,8 +104,9 @@ eval:
     batch_size: 2
     max_length: 8192
     max_new_tokens: 20
+    max_tries: 10
 
-
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
 
     task_prompt: | 
       You are an information retrieval expert. You are analyzing a metrological case study. From the case study, identify **up to two** tasks from the proceeding task list which best represent the task that has been performed, the task that the technology enables, etc. Prefer selecting one task over two, only selecting two when no single task is descriptive enough.

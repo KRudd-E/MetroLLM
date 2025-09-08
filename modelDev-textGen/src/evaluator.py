@@ -263,6 +263,8 @@ class Task_Evaluator:
 
         all_predicted = []
         all_actual = []
+        all_names = []
+        all_ids = []
         retriever = Retriever(self.config)
 
         for idx in tqdm(range(len(self.dataset))):
@@ -301,8 +303,8 @@ class Task_Evaluator:
                     skip_special_tokens=True
                 ).strip()
                 
-                prnt = generated_text.replace('\n', ' ')
-                tqdm.write(f"Generated text (attempt {i}): {prnt}")
+                # prnt = generated_text.replace('\n', ' ')
+                # tqdm.write(f"Generated text (attempt {i}): {prnt}")
 
                 vals: dict = retriever.retrieve_multiple(
                     names=['task'],
@@ -312,13 +314,17 @@ class Task_Evaluator:
                 if vals.get('task') and len(vals['task']) < 3:
                     all_predicted.append(vals['task'])
                     all_actual.append(row['Task'])
+                    all_names.append(row['Name'])
+                    all_ids.append(row['id'])
                     break
                 
                 i += 1
-                if i == 15:
-                    tqdm.write(f"Failed to extract task after 15 attempts.")
+                if i == self.config['max_tries']:
+                    tqdm.write(f"Failed to extract task after 15 attempts  --   id: {row['id']}  name: {row['Name']}")
                     all_predicted.append('ERR')
                     all_actual.append(row['Task'])
+                    all_names.append(row['Name'])
+                    all_ids.append(row['id'])
                     break
                         
             torch.cuda.empty_cache()
@@ -327,8 +333,10 @@ class Task_Evaluator:
         # Save results to CSV
         results_df = pd.DataFrame({
             'predicted_label': all_predicted,
-            'actual_label': all_actual
+            'actual_label': all_actual,
+            'name': all_names,
+            'id': all_ids
         })
-        output_path = os.path.join(self.config.get('output_dir', '.'), 'task_eval_results.csv')
-        results_df.to_csv(output_path, index=False)
+        output_path = os.path.join(self.config['output_dir'] +  'task_eval_results.csv')
+        results_df.to_csv(output_path, index_label='id')
         print(f"Saved predictions and labels to {output_path}")

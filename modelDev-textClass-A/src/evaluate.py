@@ -93,4 +93,7 @@ class Evaluator:
         df.to_csv(csv_path, index=False)
 
         print(f"Saved predictions and labels to {csv_path}")
+        print(f"Average number of labels predicted (standard): {np.mean([len(p.nonzero()[0]) for p in preds_classes_standard]):.2f}")
+        print(f"Average number of labels predicted (limited): {np.mean([len(p.nonzero()[0]) for p in preds_classes_limited]):.2f}")
+        
         return preds_classes_standard, preds_classes_limited, labels

@@ -56,6 +56,7 @@ class MMLU_Evaluator:
             return
 
         print(f"Evaluating on MMLU {self.eval_split} split with {len(self.dataset)} samples.\n")    # type: ignore
+        print(f"Max new tokens: {self.config['max_new_tokens']}\n")
 
         per_category_accuracy = {c: [0, 0] for c in self.categories}
         success, fail = 0, 0

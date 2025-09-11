@@ -62,7 +62,7 @@ eval:
     checkpoint_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v10/checkpoint-427
     max_length: 8192
     standard_threshold: 0.75
-    limited_threshold: 0.70
+    limited_threshold: 0.73
     max_labels: 2
     count_penalty_weight: 0.0
   

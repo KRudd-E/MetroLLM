@@ -108,10 +108,16 @@ class MMLU_Evaluator:
                     tqdm.write(f"Generated text: {prnt}")
                 
                 gen = gen.strip()
+                entry['generated_text'] = gen
                 entry['solution'] = gen
+                
+                prediction = self.get_prediction(gen, len(entry['options']))
+                entry['predicted_answer'] = prediction
+                entry['correct_answer'] = entry["answer"]
+                entry['is_correct'] = (entry["answer"] == prediction)
+                
                 answers.append(entry)
 
-                prediction = self.get_prediction(gen, len(entry['options']))
                 if entry["answer"] == prediction:
                     success += 1
                     per_category_accuracy[entry['category']][0] += 1
@@ -159,15 +165,12 @@ class MMLU_Evaluator:
                 return match.group(1).upper()
 
         #** Fallback: look for LAST standalone letter **#
-        # for match in re.finditer(r'\b([A-J])\b', out):
-        #     last_match = match.group(1).upper()
-        # if 'last_match' in locals():
-        #     return last_match
-        
-        
-        # # for char in out:
-        # #     if char in list("ABCDEFGHIJ")[:num_choices]:
-        # #         return char
+        last_match = None
+        for match in re.finditer(r'\b([A-J])\b', out):
+            if match.group(1).upper() in list("ABCDEFGHIJ")[:num_choices]:
+                last_match = match.group(1).upper()
+        if last_match:
+            return last_match
 
         #** Random **#
         tqdm.write(f"No valid answer found in: {output[:100]}...")
@@ -183,6 +186,7 @@ class MMLU_Evaluator:
             return obj.tolist()
         else:
             return obj
+
 
 
 

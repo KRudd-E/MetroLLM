@@ -89,7 +89,7 @@ eval:
     run: True
     batch_size: 4
     max_length: 4096
-    max_new_tokens: 512
+    max_new_tokens: 128
     data_reduction: 0.3
     output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
 

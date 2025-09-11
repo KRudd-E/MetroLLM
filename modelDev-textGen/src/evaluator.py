@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from datasets import load_dataset
 from src.utils.retrieve import Retriever
+import gc
 
 class MMLU_Evaluator:
     def __init__(self, model_wrapper, config, mmlu_subset="test"):
@@ -61,7 +62,6 @@ class MMLU_Evaluator:
         per_category_accuracy = {c: [0, 0] for c in self.categories}
         success, fail = 0, 0
         answers = []
-        batch_prompts = []
 
         self.model.eval()
         self.model.to(self.device)
@@ -71,7 +71,8 @@ class MMLU_Evaluator:
             #** Batch prep **#
             batch = self.dataset[i:min(i + self.batch_size, len(self.dataset))]  # type: ignore
             batch_entries = [dict(row) for row in batch]
-            
+
+            batch_prompts = []  # Reset for each batch to avoid memory buildup
             for entry in batch_entries:
                 prefix = self.prompts[entry['category']]
                 query = prefix + 'Q: ' + entry['question'] + '\n' + self.form_options(entry['options']) + '\nAnswer:'
@@ -128,6 +129,8 @@ class MMLU_Evaluator:
 
             print("Overall accuracy:", success / (success + fail))
             torch.cuda.empty_cache()
+            del batch_prompts, batch_entries, inputs, outputs, gen_texts 
+            gc.collect()
 
         #** Save results **#
         with open(os.path.join(self.config["output_dir"], "MMLU_raw.json"), "w") as f:

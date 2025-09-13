@@ -31,7 +31,7 @@ class MMLU_Evaluator:
         ]
 
         #** Data reduction **#
-        clip_percentage = float(config.get("data_reduction", 1.0))
+        clip_percentage = self.config['data_reduction']
         if clip_percentage < 1.0:
             random.seed(config.get("seed", 42))
             clipped = []
@@ -84,7 +84,6 @@ class MMLU_Evaluator:
             return
 
         print(f"Evaluating on MMLU {self.eval_split} split with {len(self.dataset)} samples.\n")    # type: ignore
-        print(f"Max new tokens: {self.config['max_new_tokens']}\n")
 
         per_category_accuracy = {c: [0, 0] for c in self.categories}
         success, fail = 0, 0
@@ -114,23 +113,17 @@ class MMLU_Evaluator:
                 max_length=self.config["max_length"]
             ).to(self.device)
 
-            # temp debug.
-            if i == 0:
-                for j, p in enumerate(batch_prompts[:3]):
-                    toks = self.tokenizer(p, return_tensors="pt", truncation=False)
-                    tqdm.write(f"[DEBUG] prompt[{j}] token_count={toks['input_ids'].shape[1]} prompt_start={p[:300].replace(chr(10),' ')}")
-
 
             #** Generate outputs **#
             with torch.no_grad():
                 outputs = self.model.generate(
                     input_ids=inputs['input_ids'],
                     attention_mask=inputs['attention_mask'],
-                    max_new_tokens=self.config.get("max_new_tokens", 64),
+                    max_new_tokens=self.config["max_new_tokens"],
                     do_sample=False,
-                    early_stopping=True,
-                    repetition_penalty=1.15,
+                    repetition_penalty=1.2,
                     no_repeat_ngram_size=3,
+                    early_stopping=True,
                     pad_token_id=self.tokenizer.eos_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
                     #stopping_criteria=None 
@@ -166,7 +159,8 @@ class MMLU_Evaluator:
                     fail += 1
                     per_category_accuracy[entry['category']][1] += 1
 
-            print("Overall accuracy:", success / (success + fail))
+            tqdm.write(f"Overall accuracy: {success / (success + fail)}")
+            
             torch.cuda.empty_cache()
             del batch_prompts, batch_entries, inputs, outputs, gen_texts 
             gc.collect()

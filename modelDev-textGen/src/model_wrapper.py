@@ -1,4 +1,6 @@
 # File: src/models/model_wrapper.py
+# Model wrapper for loading and configuring the language model and tokenizer.
+
 from transformers import AutoTokenizer, AutoModelForCausalLM, \
     DataCollatorForLanguageModeling, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, TaskType, PeftModel
@@ -49,7 +51,7 @@ class DeepSeekWrapper:
                 # attn_implementation="flash_attention_2" if torch.cuda.is_available() else None,
             )
             
-            # Clear cache after model loading
+            #** Try to limit memory usage **#
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             
@@ -92,7 +94,8 @@ class DeepSeekWrapper:
                 pad_to_multiple_of=8,
                 return_tensors="pt"
             )
-            
+
+
         #***** Eval *****#
         elif run == 'evaluate':
 
@@ -142,7 +145,7 @@ class DeepSeekWrapper:
             )
 
         
-        
+    #**** Get functions ****#
     def get_model(self):
         return self.model
 

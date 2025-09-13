@@ -1,10 +1,13 @@
-import json, torch, os, re, random
-from tqdm import tqdm
+# evaluator.py
+# Evaluator classes for three cases: MMLU, post-training test set, and task classification.
+
+import json, torch, os, re, random, gc
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 from datasets import load_dataset
 from src.utils.retrieve import Retriever
-import gc
+
 
 class MMLU_Evaluator:
     def __init__(self, model_wrapper, config, mmlu_subset="test"):
@@ -38,7 +41,7 @@ class MMLU_Evaluator:
 
 
         #** Clip dataset **#
-        clip_percentage = config['data_reduction']  # Default to 100% if not provided
+        clip_percentage = config['data_reduction']
         if clip_percentage < 1.0:
             clipped_data = []
             for category in self.categories:
@@ -93,7 +96,9 @@ class MMLU_Evaluator:
                     attention_mask=inputs['attention_mask'],
                     max_new_tokens=self.config["max_new_tokens"],
                     do_sample=False,
-                    pad_token_id=self.tokenizer.pad_token_id
+                    pad_token_id=self.tokenizer.pad_token_id,
+                    eos_token_id=self.tokenizer.eos_token_id
+                    #stopping_criteria=None 
                 )
 
             #** Decode batch outputs **#
@@ -140,7 +145,8 @@ class MMLU_Evaluator:
         with open(os.path.join(self.config["output_dir"], "MMLU.json"), "w") as f:
             json.dump(accuracies, f, indent=2)
         print("\nPer-category accuracies:\n", accuracies)
-                
+
+
     @staticmethod
     def form_options(options: list):
         #** Format multiple-choice **#
@@ -149,6 +155,7 @@ class MMLU_Evaluator:
         for opt, o in zip(options, opts):
             option_str += f'({o}): {opt}\n'
         return option_str
+
 
     @staticmethod
     def get_prediction(output: str, num_choices: int) -> str:
@@ -179,19 +186,10 @@ class MMLU_Evaluator:
         #** Random **#
         tqdm.write(f"No valid answer found in: {output[:100]}...")
         return random.choice(list("ABCDEFGHIJ")[:num_choices])
-        
-    def _to_serializable(self, obj):
-        # Recursively convert numpy arrays to lists for JSON serialization
-        if isinstance(obj, dict):
-            return {k: self._to_serializable(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [self._to_serializable(v) for v in obj]
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        else:
-            return obj
 
 
+
+#*----------------------------------------------------------------------------*#
 
 
 class Test_Set_Evaluator:
@@ -261,7 +259,7 @@ class Test_Set_Evaluator:
         
 
 
-
+#*----------------------------------------------------------------------------*#
 
 
 class Task_Evaluator:

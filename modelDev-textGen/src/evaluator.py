@@ -11,45 +11,69 @@ from src.utils.retrieve import Retriever
 
 class MMLU_Evaluator:
     def __init__(self, model_wrapper, config, mmlu_subset="test"):
+        import random
+
         self.config = config
-        
         self.model = model_wrapper.get_model()
         self.tokenizer = model_wrapper.get_tokenizer()
         self.device = model_wrapper.get_device()
         self.batch_size = config['batch_size']
-        
+
+        #** Load MMLU dataset **#
         self.full_dataset = load_dataset("TIGER-Lab/MMLU-Pro")
-        self.dataset = self.full_dataset[mmlu_subset]
+        self.dataset = list(self.full_dataset[mmlu_subset])  # convert to list for sampling
         self.eval_split = mmlu_subset
 
-        self.categories = ['computer science', 'math', 'chemistry', 'engineering', 'law', 
-                   'biology', 'health', 'physics', 'business', 'philosophy', 
-                   'economics', 'other', 'psychology', 'history']
+        self.categories = [
+            "computer science", "math", "chemistry", "engineering", "law",
+            "biology", "health", "physics", "business", "philosophy",
+            "economics", "other", "psychology", "history"
+        ]
 
-
-        #** Per-category prompts **#
-        self.prompts = {c: '' for c in self.categories}
-        
-        val_split = self.full_dataset["validation"]
-        self.prompts = {c: '' for c in self.categories}
-        for d in val_split:
-            self.prompts[d['category']] += (                # type: ignore
-                'Q: ' + d['question'] + '\n' +              # type: ignore
-                self.form_options(d['options']) + '\n' +    # type: ignore
-                d['cot_content'] + '\n\n'                   # type: ignore
-                )
-
-
-        #** Clip dataset **#
-        clip_percentage = config['data_reduction']
+        #** Data reduction **#
+        clip_percentage = float(config.get("data_reduction", 1.0))
         if clip_percentage < 1.0:
-            clipped_data = []
-            for category in self.categories:
-                category_data = [entry for entry in self.dataset if entry['category'] == category] # type: ignore
-                clip_size = min(len(category_data), max(1, int(len(category_data) * clip_percentage)))
-                clipped_data.extend(random.sample(category_data, clip_size))
-                self.dataset = clipped_data
-                
+            random.seed(config.get("seed", 42))
+            clipped = []
+            for cat in self.categories:
+                cat_items = [x for x in self.dataset if x["category"] == cat]
+                if not cat_items:
+                    continue
+                clip_size = max(1, int(len(cat_items) * clip_percentage))
+                clipped.extend(random.sample(cat_items, clip_size))
+            self.dataset = clipped
+
+        #** Few-shot prompts **#
+        val_split = list(self.full_dataset["validation"])
+        few_shot_k = config.get("few_shot_k", 3)  # default: 3 shots
+        random.seed(config.get("seed", 42))
+
+        self.prompts = {}
+        for cat in self.categories:
+            val_items = [v for v in val_split if v["category"] == cat]
+            random.shuffle(val_items)
+            examples = val_items[:few_shot_k]
+
+            #** Build prompt **#
+            prompt = (
+                "You are a helpful multiple-choice assistant.\n"
+                "Answer with a single letter (A-J) and NOTHING ELSE — no explanation, no chain-of-thought.\n\n"
+            )
+
+            for ex in examples:
+                answer = ex["answer"]
+
+                if isinstance(answer, int):
+                    ans_letter = "ABCDEFGHIJ"[answer]
+                else:
+                    ans_letter = str(answer).strip().upper()
+
+                prompt += f"Q: {ex['question']}\n"
+                prompt += self.form_options(ex["options"])
+                prompt += f"A: ({ans_letter})\n\n"
+
+            self.prompts[cat] = prompt      
+            
         # src:      https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro
         # example:  https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/blob/main/run_gpt4o.py
 
@@ -71,6 +95,7 @@ class MMLU_Evaluator:
 
         for i in tqdm(range(0, len(self.dataset), self.batch_size)):  # type: ignore
 
+
             #** Batch prep **#
             batch = self.dataset[i:min(i + self.batch_size, len(self.dataset))]  # type: ignore
             batch_entries = [dict(row) for row in batch]
@@ -89,15 +114,25 @@ class MMLU_Evaluator:
                 max_length=self.config["max_length"]
             ).to(self.device)
 
+            # temp debug.
+            if i == 0:
+                for j, p in enumerate(batch_prompts[:3]):
+                    toks = self.tokenizer(p, return_tensors="pt", truncation=False)
+                    tqdm.write(f"[DEBUG] prompt[{j}] token_count={toks['input_ids'].shape[1]} prompt_start={p[:300].replace(chr(10),' ')}")
+
+
             #** Generate outputs **#
             with torch.no_grad():
                 outputs = self.model.generate(
                     input_ids=inputs['input_ids'],
                     attention_mask=inputs['attention_mask'],
-                    max_new_tokens=self.config["max_new_tokens"],
+                    max_new_tokens=self.config.get("max_new_tokens", 64),
                     do_sample=False,
-                    pad_token_id=self.tokenizer.pad_token_id,
-                    eos_token_id=self.tokenizer.eos_token_id
+                    early_stopping=True,
+                    repetition_penalty=1.15,
+                    no_repeat_ngram_size=3,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                    eos_token_id=self.tokenizer.eos_token_id,
                     #stopping_criteria=None 
                 )
 
@@ -108,13 +143,12 @@ class MMLU_Evaluator:
             )
 
             #** Process predictions **#
-            for entry, gen in zip(batch_entries, gen_texts):
+            for entry, raw_gen in zip(batch_entries, gen_texts):
                 
                 if self.config['print_generated']:
-                    prnt = gen.replace('\n', ' ')
-                    tqdm.write(f"Generated text: {prnt}")
-                
-                gen = gen.strip()
+                    tqdm.write(f"Generated: {raw_gen.replace(chr(10), ' ')}")
+                            
+                gen = raw_gen.strip()
                 entry['generated_text'] = gen
                 entry['solution'] = gen
                 
@@ -165,26 +199,30 @@ class MMLU_Evaluator:
 
         #** Look for patterns **#
         patterns = [
-            r"ANSWER:? ?\(?([A-J])\)?",
-            r"OPTION:? ?\(?([A-J])\)?",
+            r"THE ANSWER IS[:\s]*\(?([A-J])\)?",
             r"THE CORRECT ANSWER (?:IS|:) ?\(?([A-J])\)?",
-            r"\(([A-J])\)\s*(?:IS CORRECT|IS THE ANSWER)",
+            r"ANSWER[:\s]*\(?([A-J])\)?",
+            r"\(([A-J])\)\s*(?:IS CORRECT|IS THE ANSWER)?",  # e.g. (B) is correct
+            r"^\(?([A-J])\)?\s*$",                          # entire output is just "(B)" or "B"
+            r"^([A-J])[\.\:\)]\s",                          # starts with "A." or "A:"
         ]
+
         for pat in patterns:
-            match = re.search(pat, out, flags=re.IGNORECASE)
-            if match:
-                return match.group(1).upper()
+            matches = re.findall(pat, out, flags=re.IGNORECASE)
+            if matches:
+                # choose the last valid match (prefer the last explicit answer)
+                for m in reversed(matches):
+                    if m and m in list("ABCDEFGHIJ")[:num_choices]:
+                        return m
 
         #** Fallback: look for LAST standalone letter **#
-        last_match = None
-        for match in re.finditer(r'\b([A-J])\b', out):
-            if match.group(1).upper() in list("ABCDEFGHIJ")[:num_choices]:
-                last_match = match.group(1).upper()
-        if last_match:
-            return last_match
+        all_letters = [m.group(1).upper() for m in re.finditer(r'\b([A-J])\b', out)]
+        for c in reversed(all_letters):
+            if c in list("ABCDEFGHIJ")[:num_choices]:
+                return c
 
         #** Random **#
-        tqdm.write(f"No valid answer found in: {output[:100]}...")
+        tqdm.write(f"No valid answer found in generation: {output[:200]!r} ... falling back to random.")
         return random.choice(list("ABCDEFGHIJ")[:num_choices])
 
 

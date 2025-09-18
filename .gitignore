@@ -1,0 +1,9 @@
+data
+_misc
+**/results/
+*.pyc
+*.pyo
+*.pyd
+env/
+.DS_Store
+.env

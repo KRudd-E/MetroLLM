@@ -1,0 +1,129 @@
+# Directories
+input_dir  : /data/3-formatted/textClass/textClass-applicationsDB-test.csv
+output_dir : /modelDev-pureAPI/results/
+
+# AI
+model_source: OpenAI
+model: gpt-4.1
+
+# Terminal outputs
+terminal_outputs: False
+
+
+#**** Task ****#
+task_prompt: | 
+  You are an information retrieval expert. You are analyzing a metrological case study. From the case study, identify **up to two** tasks from the proceeding task list which best represent the task that has been performed, the task that the technology enables, etc. Prefer selecting one task over two, only selecting two when no single task is descriptive enough.
+
+  Task list:
+  {task_list}
+
+  Return the task(s) in a JSON format, with the single key named 'task'. Do not include the section from the task list in the JSON dictionary.
+
+  Case study text:
+  {txt}
+
+task_list:
+  - Inspection
+  - 3D modelling
+  - Reverse Engineering
+  - Alignment
+  - Calibration
+  - Automation
+  - Measuring Technology
+  - CAD compare
+  - Deformation
+  - 3D shape
+  - Testing & Quality
+  - Visualization Modelling & Data (Other)
+  - Monitoring & Tracking
+  - Specialized Measurement
+  - Build/set
+  - Assembly
+  - Robotics & Automation
+  - Tracking
+  - Strain/Stress
+  - CAD Comparison
+  - Engineering & Construction (Other)
+
+
+task_list_v2:
+  - Standard eng. tasks:
+    - Reverse engineering
+    - CAD comparison
+    - Certification
+    - Verification
+    - Inspection
+    - Build
+    - 3D modelling (shape, surface, etc.)
+    - 3D location (object, features, etc.)
+    - 3D animation (engineering)
+    - 3D/6D Single object tracking
+    - 3D/6D Multiple object tracking
+    - Sub-surface 
+    - Surface recording (form, feature, flaw)
+    - Surface roughness (surface texture)
+    - Gap & flush
+    - Pipework measurement
+    - Tube shape and size
+    - Cross Sections (profiles)
+    - Volume estimation
+  - Multiple component manufacturing:
+    - Assembly - large parts
+    - Assembly - small parts
+    - Alignment
+  - Movement/Deformation:
+    - Monitoring (buildings, large structures)
+    - Deformation measurement
+    - Strain & stress
+  - Production Lines: 
+    - Sample 3D checking
+    - Inline 3D checking
+    - Quality management (SPC, Predictive maintenance)
+  - Metrology:
+    - Metrology data management
+    - Metrology development
+    - Repeatability and reproducibility - R&R
+  - Real plus digital:
+    - Projected AR (onto object surface)
+    - AR - Augmented Reality
+    - VR - Virtual Reality
+  - Robots & Machines:
+    - Machine vision
+    - Machine Control (manufacturing)
+    - Calibration (robot, machine, CMM)
+    - On-machine Inspection
+  - Vehicles:
+    - Vehicle Guidance
+    - Spatial sensing for autonomous driving
+    - Crash testing
+  - Built environment / AEC:
+    - As-build recording (process plant, etc.)
+    - Indoor navigation
+    - Mobile mapping
+    - City modelling
+    - Machine control (construction)
+    - Drawings (plan, elevation, other)
+    - BIM (Building Information Management)
+  - Heritage recording:
+    - Historic buildings
+    - Museum artifacts
+    - Works of art (paintings...)
+    - Archeology & Anthropology finds
+    - Industrial artifacts
+  - Human, sport, and animal:
+    - Ball tracking
+    - Motion & gesture capture (MoCap)
+    - 3D animation (movies, sport, etc.)
+    - Guided surgery 
+    - Dental scanning
+  - Law enforcement:
+    - Crime-scene analysis (forensic analysis)
+    - Vehicle accident analysis
+  - Agriculture:
+    - Machine control (agricultural)
+    - Resource Monitoring
+  - Alternative & specialist:
+    - Underwater
+    - Trajectory measurement (military, scientific)
+    - NDT (Non-Destructive Testing)
+

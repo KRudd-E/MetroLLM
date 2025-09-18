@@ -1,0 +1,75 @@
+# config.yaml
+# Containing arguments for training and evaluation processes.
+
+config_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/config.yaml
+
+
+#*** Train ***#
+train:
+  data:
+    source_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-train.csv
+    task_col: Task
+    text_col: Text
+    class_no: 21
+  
+  model:
+    name: answerdotai/ModernBERT-large
+    max_length: 8192
+    threshold: 0.5
+    max_labels: 2
+    count_penalty_weight: 1.0
+    
+  training_args:
+    #*- Transformers Training Arguments -*#
+    output_dir                  : /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/
+    learning_rate               : 1e-5
+    per_device_train_batch_size : 8
+    per_device_eval_batch_size  : 8
+    gradient_accumulation_steps : 1
+    num_train_epochs            : 10
+    gradient_checkpointing      : True
+    warmup_ratio                : 0.05
+    weight_decay                : 0.01
+    eval_strategy               : "epoch"
+    save_strategy               : "epoch"
+    logging_strategy            : "epoch"
+    save_total_limit            : 8
+    metric_for_best_model       : "f1_micro"
+    load_best_model_at_end      : True
+    logging_dir                 : modelDev-textClass-A/results/
+    bf16                        : True
+    push_to_hub                 : False
+    save_safetensors            : True
+    max_grad_norm               : 1
+    lr_scheduler_type           : linear
+    label_smoothing_factor      : 0.1
+    
+    #*- Other -*#
+    dropout: 0.1
+    log_training_steps:   True
+
+
+
+#*** Eval ***#
+eval:
+  data: 
+    source_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
+    task_col: Task
+    text_col: Text
+    class_no: 21
+
+  model:
+    name: answerdotai/ModernBERT-large
+    checkpoint_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v10/checkpoint-427
+    max_length: 8192
+    standard_threshold: 0.76
+    limited_threshold: 0.75
+    max_labels: 2
+    count_penalty_weight: 0.0
+  
+  training_args:
+    dropout: 0.1
+    
+  evaluation_args:
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textClass-A/results/large_v10/checkpoint-427
+    batch_size: 1

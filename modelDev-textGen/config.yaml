@@ -1,0 +1,181 @@
+# config.yaml
+# Containing arguments for training and evaluation processes.
+
+config_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/config.yaml
+
+#**- Train -**#
+train:
+  data:
+    dir: "/gpfs01/home/efykr2/MetroLLM/data/3-formatted/textGen/textGen_train.csv"
+    task_col: "task"
+    input_col: "input"
+    output_col: "output"
+    max_seq_length: 8096
+    test_size: 0.1
+
+  model:
+    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+    # max_input_length: 2048
+    # max_target_length: 2048
+
+  lora:
+    rank: 16
+    alpha: 32
+    dropout: 0.1
+    target_modules: ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+
+  training_args:
+    output_dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/"
+
+    do_train: true
+    do_eval: true
+    evaluation_strategy: "steps"  
+    eval_steps: 50
+    save_strategy: "steps"
+    save_steps: 50
+    save_total_limit: 6
+    logging_strategy: "steps"
+    logging_steps: 50
+    logging_nan_inf_filter: true
+
+    learning_rate: 1e-4
+    per_device_train_batch_size: 1
+    per_device_eval_batch_size: 1
+    gradient_accumulation_steps: 4
+    eval_accumulation_steps: 1
+    num_train_epochs: 2
+    max_steps: -1     
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+    max_grad_norm: 1.0
+    lr_scheduler_type: "linear"    
+
+    bf16: true
+    gradient_checkpointing: true
+    dataloader_pin_memory: true     
+    group_by_length: true
+
+    load_best_model_at_end: True
+    metric_for_best_model: "eval_loss"
+    greater_is_better: False
+
+    label_smoothing_factor: 0.0
+
+    report_to: ["none"]
+    remove_unused_columns: true
+    ddp_find_unused_parameters: false
+    run_name: "deepseek-lora-finetune"
+    
+    
+    early_stopping_patience: 5
+    log_training_steps:   True
+    
+
+
+
+#**- Evaluation -**#
+eval:
+  data:
+    # Note: used for Test Set!
+    dir: "/gpfs01/home/efykr2/MetroLLM/data/3-formatted/textGen/textGen-applicationsDB-2_test.csv"
+    task_col: "task"
+    input_col: "input"
+    output_col: "output"
+    max_seq_length: 8192
+
+  model:
+    name: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+    dir: "/gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/checkpoint-750/" 
+
+
+
+  #* MMLU *#
+  mmlu_args:
+    run: False
+    batch_size: 2
+    max_length: 4096
+    max_new_tokens: 512
+    data_reduction: 0.012
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
+
+    print_generated: True
+
+  #* Test Set *#
+  test_set_args:
+    run: True
+    batch_size: 2
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
+    max_length: 4096
+    data_percentage: 0.2
+
+    max_new_tokens: 256
+    do_sample: False
+    temperature: 0.3
+    top_p: 0.97
+    top_k: 5
+    num_return_sequences: 1
+    early_stopping: True
+    repetition_penalty: 1.2
+    no_repeat_ngram_size: 3
+    num_beams: 5
+    return_dict_in_generate: True
+    remove_invalid_values: True
+    renormalize_logits: True
+
+  #* Tasks *#
+  task_args:
+    run: False
+    
+    data_dir: /gpfs01/home/efykr2/MetroLLM/data/3-formatted/textClass/textClass-applicationsDB-test.csv
+    max_length: 8192
+
+    max_new_tokens: 24
+    do_sample: True
+    max_tries: 15
+    print_generated: False
+    
+    output_dir: /gpfs01/home/efykr2/MetroLLM/modelDev-textGen/results/v1/
+
+    task_prompt: | 
+      You are an information retrieval expert. You are analyzing a case study from the field of 3D Measurement and Metrology. From the case study, identify one tasks from the proceeding task list which best represent the task that has been performed, the task that the technology enables, etc. You can select two task, but you are HIGHLY advised not to - you should select one task in every possible instance. Ensure this task is fully representative of the case study!
+
+      Task list:
+      {task_list}
+
+      IMPORTANT: Respond ONLY with a single valid JSON object and NOTHING ELSE. The JSON must be exactly of the form:
+      {format}
+      Do not include any explanation, headings, markdown, code fences, or any other text. Remember to return no more than two** tasks.
+
+      Case study text:
+      {txt}
+
+    task_list:
+      - Inspection
+      - 3D modelling
+      - Reverse Engineering
+      - Alignment
+      - Calibration
+      - Automation
+      - Measuring Technology
+      - CAD compare
+      - Deformation
+      - 3D shape
+      - Testing & Quality
+      - Visualization Modelling & Data (Other)
+      - Monitoring & Tracking
+      - Specialized Measurement
+      - Build/set
+      - Assembly
+      - Robotics & Automation
+      - Tracking
+      - Strain/Stress
+      - CAD Comparison
+      - Engineering & Construction (Other)
+
+
+
+
+
+    
+
+

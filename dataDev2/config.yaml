@@ -1,0 +1,446 @@
+# ****** Text Generation ****** #
+textGen:
+  
+  #****** ApplicationsDB ******#
+  applicationsDB: 
+
+    JSON_pairs:
+      enabled: True
+
+      source_dir: /data/3-formatted/textClass/textClass-applicationsDB.csv
+      output_dir: /data/3-formatted/textGen/textGen-applicationsDB-1.csv
+
+      input:
+        task: |
+          You are an information retrieval expert. You are analyzing a metrological case study. From the case study, identify **up to two** tasks from the proceeding task list which best represent the task that has been performed, the task that the technology enables, etc. Prefer selecting one task over two, only selecting two when no single task is descriptive enough.
+
+          Task list:
+            inspection
+            3D modelling
+            Reverse Engineering
+            Alignment
+            Calibration
+            Automation
+            Measuring Technology
+            CAD compare
+            Deformation
+            3D shape
+            Testing & Quality
+            Visualization Modelling & Data (Other)
+            Monitoring & Tracking
+            Specialized Measurement
+            Build/set
+            Assembly
+            Robotics & Automation
+            Tracking
+            Strain/Stress
+            CAD Comparison
+            Engineering & Construction (Other)
+
+          Return the task(s) in a JSON format, with the single key named 'task'.
+
+          Case study text:
+          {txt}
+
+        sector: |
+          You are an information retrieval expert. You are analyzing a case study. From the following case study text, identify the most applicable sector(s). These sector(s) should describe the broader area of industry/research that the study is within. Do not focus solely on the technology, but instead on the field in which the technology is intended to be used. Choose either one or two from the following list, only selecting two in the case where one does not fully encapsulate the sector. Only select general sectors like 'Engineering' and 'Engineering and General Manufacturing' if no other sectors are suitable - it is already assumed that this case study is within the realm of engineering, meaning that these sectors are final resorts.
+        
+          Sector list:
+            Automotive
+            Aerospace
+            Engineering
+            Heritage
+            Marine/Offshore
+            Castings and moulds
+            Diverse
+            Accelerator Lab
+            Autosport
+            Energy - wind
+            Robotics
+            Medicine
+            Astronomy
+            Power plant
+            Nuclear
+            Locomotive
+            Education
+            Construction
+            Machine Tool
+            Heritage - Marine/Offshore
+            Forensic
+            Energy
+            Astronomy + antenna
+            Heritage - military
+            Tunnel
+            Energy - hydro
+            Process plant
+            University
+            Sheet metal
+            Tooling
+            Consumer products
+            Furniture
+            Astronomy + Antenna
+            Paper mill
+            Agricultural machine
+            Defence
+            Telecoms
+            Tool & Die
+            Plastics
+            Construction machine
+            Research
+            Antenna
+            Tube manufacture
+            Aerospace + Defence
+            Food industry
+            Manufact. research
+            Energy - solar
+            Oil and gas
+            Electrical,2
+            Automotive - Heavy
+            Footware
+            Electronics
+            Steel
+            Gear transmissions
+            Automotive + Locomotive
+            Ventilation/aircon
+            NDT
+            Anthropology
+            Machine Shop
+            Rapid prototyping
+            Metal forming
+            Barcode readers
+            Medicine/bio
+            Heritage - industrial
+            Sports - prostheses
+            Living object model
+            Natural science
+            Energy - Wind
+            Automotive - heavy
+            Glass foundry
+            Heating and ventilation
+            Entertainment
+            Sports - field
+            Composite parts
+            Metal spinning
+            Baseplates
+            Pipe manufacture
+            Optics
+            Machine tool
+            Pigment
+            Bicycle makers
+            Castings and moulds - foam
+            Bridge
+            Heritage - bridge
+            City modelling
+            Carpeting
+            Theme park
+            Hydraulics repairs
+            Press manufacture
+            Service
+            Turnkey solutions
+            Electroforming
+            Water jet manufacture
+            Forging
+            Design and manufact.
+            Valve manufacture
+            Clamping systems
+            Compression equipment
+            Archaeology
+
+          Return the sector in a JSON format, with the key named 'sector'. 
+
+          Case study text:
+          {txt}
+
+        user: |
+          You are an information retrieval expert. You are analyzing a metrological case study. From the case study, identify the user - the entity from the case study which uses the technology/solution. Typically, this is the entity which directly uses & benefits from from the study, NOT the entity which develops the technology/solution.
+
+          Return your answer as JSON with the single key named 'user'.
+
+          Case study text:
+          {txt}
+
+      output:
+        task: |
+          JSON```€
+            task: {task}
+          £
+        sector: |
+          JSON```€
+            sector: {sector}
+          £
+        user: |
+          JSON```€
+            user: {user}
+          £
+
+
+    
+    general_pairs:
+      enabled: False
+
+      source_dir: /data/2-decomposed/applicationsDB/texts.csv
+      output_dir: /data/3-formatted/textGen/textGen-applicationsDB-2.csv
+      append_or_overwrite: append
+      
+      starting_file: Verisurf_moldmaking_article
+      ending_file: Viridian-Central_Scanning_COMET5T-SCAN_01-2012_en
+
+      model_source: OpenAI
+      model: gpt-4o-mini
+
+      window_size: 800
+      stride: 600
+      min_text_size: 200
+      
+      general_patterns: [wic, natural_questions, synth_cot_natural_questions, trivia_qa, math_dataset, aeslc, cnn_dailymail, multi_news, samsum, para_crawl, wmt16_translate, wmt14_enfr, word_segment, glue_mrpc, glue_qqp, imdb_reviews, paws_wiki, synth_cot_paws_wiki, copa, yelp_polarity_reviews, arc, opinion_abstracts_idebate, common_gen, synth_cot_common_gen, dart, mnli, qnli, wnli, snli, trec, stsb, piqa, openbookqa, lambada, cot_gsm8k, strategyqa, unified_qa_science_inst, bigbench:simple_arithmetic_json.gen.blueridge_vocab.0_shot.30_examples, bigbench:auto_debugging.gen.blueridge_vocab.0_shot.34_examples, bigbench:strategyqa.gen.blueridge_vocab.0_shot.1000_examples, bigbench:sufficient_information.gen.blueridge_vocab.0_shot.39_examples, t0_question_answer, t0_multiple_choice_separated_options, cot_stream_general_input_inversion, predict_next_turn_dialog_input_inversion, natinst_v2, cot_sensemaking, cot_ecqa, cot_strategyqa, cot_creak, stream_qed, stream_aqua, cot_esnli, cot_qasc]
+      # Note: CoT left out. See lines ~1500.
+
+      general_prompt: |
+        You are a data annotator creating high-quality training examples for fine tuning a Text Generation model (e.g., DeepSeek-R1). 
+
+        Using the following input-output structure, create a JSON object with key-value pairs (keys: {keys}). 
+        Use the provided text only as inspiration; your values should generalize beyond the specific extract.
+
+        Rules
+        - Use the text at most as a seed, limiting direct extracts to no more than two sentences. 
+        - Prioritize natural-sounding phrasing and linguistic nuance over verbatim copying.
+        - Ensure outputs are widely applicable to 3D metrology, with a focus on general principles, workflows, or terminology.
+        - Avoid project-specific or proprietary details unless they represent standard practices.
+        - Do not include instructions, formatting markers, or any part of the pattern text in the values.
+
+        Input-output structure:
+        {pattern}
+
+        Text:
+        {text}
+
+        Task: Generate the key-value pairs.
+
+      contextual_patterns: [rte, wsc, wsc273, record, gigaword, newsroom, xsum, squad_v1, squad_v2, drop, synth_cot_drop, quac, true_case, fix_punct, cosmos_qa, synth_cot_cosmos_qa, ag_news_subset, bool_q, synth_cot_bool_q, story_cloze, winogrande, synth_cot_winogrande, anli, synth_cot_anli, coqa, web_nlg_en, wiki_lingua_english_en, multirc, cb, cola, hellaswag]
+
+      contextual_prompt: |
+        You are a data annotator creating high-quality training examples for fine tuning a Text Generation model (e.g., DeepSeek-R1). 
+
+        Using the following input-output structure, create a JSON object with key-value pairs (keys: {keys}). 
+        When forming values, draw directly from the provided text extract whenever possible, rephrasing minimally for clarity.
+
+        Rules
+        - Prefer factual content explicitly present in the text. 
+        - If a key cannot be answered from the text, fill it with a general principle or neutral placeholder relevant to 3D metrology.
+        - Ensure outputs remain generalizable to the domain of 3D scanning, laser metrology, or dimensional measurement.
+        - Keep terminology precise, and use domain language where possible.
+        - Do not include instructions, formatting markers, or any part of the pattern text in the values.
+
+        Input-output structure:
+        {pattern}
+
+        Text:
+        {text}
+
+        Task: Generate the key-value pairs.
+
+
+      bad_files: [Bridge sculptures - ATOS TRITOP - Heritage, Space module thermal deformation - ESA - LISA - TRITOP, Falcon 20 NRC - ATOS TRITOP - RevEng, Ceramic castings - ATOS - RevEng, Windscreen wiper deformation - PONTOS, Deformation of car components - TRITOP, Cooling fan deformation - PONTOS, Formula 1 car deformation - TRITOP, Material testing - hi speed - ARAMIS PONTOS]
+
+  #****** CompaniesDB ******#
+  companiesDB:
+    # placeholder
+
+  #****** DefinitionsDB ******#
+  definitionsDB:
+    source_dir: /data/2-decomposed/definitionsDB/definitionsDB.csv
+    output_dir: /data/3-formatted/textGen/textGen-definitionsDB.csv
+
+    pairs_per_definition: 1
+
+    input:
+      0: Define {name}.
+      1: What does {name} mean?
+      2: Can you help me understand what {name} is?
+      3: Tell me about {name}.
+      4: I am struggling to understand {name}. Can you help?
+      5: I don't understand {name} – define it for me.
+      6: Please clarify what {name} means!
+      7: In simple terms, what is {name}?
+      8: Could you explain {name}?
+      9: I'd like to know the meaning of {name}.
+      
+    output:
+      0: Sure, here is a definition — {definition}
+      1: '{definition}'
+      2: Absolutely. {definition}
+      3: Yes, {definition}
+      4: '{name} can be defined as: {definition}'
+      5: In simple terms, {definition}
+      6: To clarify, {definition}
+      7: 'The definition of {name} is: {definition}'
+      8: Here's what it means — {definition}
+      9: Put simply, {definition}
+
+
+# ****** Text2Text Generation ****** #
+text2textGen:
+  
+  api_key:  # Leave empty for .env variable OPENAI_API_KEY
+
+  #****** ApplicationsDB ******#
+  applicationsDB:
+    source_dir: /data/2-decomposed/applicationsDB/
+    output_dir: /data/3-formatted/t2tGen/temp.csv
+    log_dir:    /data/3-formatted/t2tGen/logs/Alog.json
+
+    append_or_overwrite:  append 
+    starting_subfolder:   GOM 01
+    csv_header:           id,subdir,file,task,input,output
+
+    model_source: OpenAI
+    model:        gpt-4o-mini
+    
+    window_size:  1000
+    stride:       1200 
+    prompt: |
+      You are a data annotator creating high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
+
+      From the provided text, extract only factual, generalizable input/output pairs relevant to the domain of 3D metrology.
+
+      - Focus on general principles, technologies, workflows, or terminology in 3D scanning, laser metrology, and related measurement practices.
+      - Exclude specific project details, names, locations, company names, or proprietary outcomes unless they illustrate a widely used technique or standard.
+
+      Formatting Rules:
+      - Use the patterns below exactly.
+      - Replace curly brackets with the appropriate content.
+      - Do not add extra punctuation or numbering.
+      - Each output must be a full sentence.
+
+      {p1_in} => {p1_out}
+      {p2_in} => {p2_out}
+      {p3_in} => {p3_out}
+
+
+      Here is the text:
+      
+      {window}
+      
+
+      Task: Generate the training pairs.
+    
+  #****** CompaniesDB ******#
+  companiesDB:
+    # Placeholder
+
+  #****** DefinitionsDB ******#
+  definitionsDB:
+    source_dir: /data/2-decomposed/definitionsDB/definitionsDB.csv
+    output_dir: /data/3-formatted/t2tGen/t2tGen-definitionsDB.csv
+    log_dir:    /data/3-formatted/t2tGen/logs/Dlog.json
+    
+    append_or_overwrite:  overwrite
+    starting_definition:  
+    csv_header:           id,task,name,input,output
+    pairs_per_definition: 2
+
+    model_source: OpenAI
+    model:        gpt-4o-mini
+
+    prompt: |
+      You are a data annotator preparing high-quality training examples for fine-tuning a Text-to-Text generation model (e.g., FLAN-T5).
+
+      Given the following definition of {name}, create ONE input output pair. The input should in some distinct way ask for or question the given definition. The output should answer the question respectively, with large influence from the following definition. Ensure the pair is generalizable to the domain of 3D metrology and contains factual information ONLY. 
+
+      Use the following format exactly:
+      <input> => <output>
+
+      Here is the definition:
+      {definition}
+      
+
+      Generate ONE training pair.
+
+
+# ****** Text Classification ****** #
+textClass:
+  applicationsDB:
+    db_dir:     /data/2-decomposed/applicationsDB/
+    xlsx_dir:   /data/1-original/applicationsDB/LVM Applications Database - v7 copy.xlsx
+    sheet_name: Database
+    output_dir: /data/3-formatted/textClass/textClass-applicationsDB.csv
+
+    id_col:     0     # int for positional 
+    name_col:   File
+    sector_col: Sector
+    task_col1:  Task1
+    task_col2:  Task2
+
+    csv_header: id,name,subdir,file,sector,task1,task2
+    rows_to_remove: [43, 293, 470, 474, 475, 477, 481, 485, 489, 500, 508, 517, 562, 660]
+
+    task_map:
+      Inspect: [Inspection]
+      RevEng: [Reverse Engineering]
+      Align: [Alignment]
+      RevEng & Insp.: [Reverse Engineering, Inspection]
+      MeasTechnology: [Measuring Technology]
+      Align & Inspect: [Alignment, Inspection]
+      CAD comp & insp.: [CAD Comparison, Inspection]
+      Deformation + Strain: [Deformation, Strain/Stress]
+      Inspect in-process: [Inspection] #????
+      Dynamic tracking: [Tracking]
+      Strain & stress: [Strain/Stress]
+      Build & Inspect: [Build/set, Inspection]
+      Align & assemble: [Alignment, Assembly]
+      RevEng & insp.: [Reverse Engineering, Inspection]
+      Align & RevEng: [Alignment, Reverse Engineering]
+      Assembly & inspect: [Assembly, Inspection]
+      Automation + AR: [Automation, Visualization Modelling & Data (Other)]
+      Align & As-built: [Alignment, Build/set]
+      assembly: [Assembly]
+      Calibration & align: [Calibration, Alignment]
+      Align & 3D model: [Alignment, 3D modelling]
+      Inspect & adjust: [Inspection]
+      
+      Positioning: [Alignment]
+      Surface inspection: [Inspection]
+      
+      #GENERALIZATION:
+      Crash testing: [Testing & Quality]
+      Quality control: [Testing & Quality]
+      R&R: [Testing & Quality]
+      Certification: [Testing & Quality]
+
+      Monitoring: [Monitoring & Tracking]
+      Dynamic monitoring: [Monitoring & Tracking]
+      Guidance: [Monitoring & Tracking]
+      Trajectory meas: [Monitoring & Tracking]
+      Trajectory Measurement: [Monitoring & Tracking]
+      Marking locations: [Monitoring & Tracking]
+
+      Robot control: [Robotics & Automation]
+      Production line: [Robotics & Automation]
+      Process improvement: [Robotics & Automation]
+
+      3D animation: [Visualization Modelling & Data (Other)]
+      Cross sections: [Visualization Modelling & Data (Other)]
+      Augumented Reality: [Visualization Modelling & Data (Other)]
+      Augmented Reality: [Visualization Modelling & Data (Other)]
+      Gap and Flush: [Visualization Modelling & Data (Other)]
+      Data handling: [Visualization Modelling & Data (Other)]
+
+      Feature location: [Specialized Measurement]
+      Pipe meas: [Specialized Measurement]
+      Pipe Measurement: [Specialized Measurement]
+      Machine/Mill: [Specialized Measurement]
+      Machine/mill: [Specialized Measurement]
+      MeasManagement: [Specialized Measurement]
+
+      Construction plan: [Engineering & Construction (Other)]
+      Excavation: [Engineering & Construction (Other)]
+      Forming analysis: [Engineering & Construction (Other)]
+      Life cycle evaluation: [Engineering & Construction (Other)]
+      Mobile mapping: [Engineering & Construction (Other)]
+      
+
+  companiesDB:
+    # Placeholder
+  
+  definitionsDB:
+    # Placeholder

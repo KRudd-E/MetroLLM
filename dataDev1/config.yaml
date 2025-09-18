@@ -1,0 +1,20 @@
+#** Applications DB **#
+applications_db: 
+  data_path: /data/1-original/applicationsDB/
+  output_path: /data/2-decomposed/applicationsDB/
+  pdf-txt: True
+  pdf-img: False
+  starting_subfolder:
+  skip_existing: False
+  allow_empty_text_files: True
+  csv_output_path: /data/2-decomposed/applicationsDB/texts.csv
+  
+#** Companies DB **#
+companies_db: 
+  data_path: /data/1-original/companiesDB/
+  output_path: /data/2-decomposed/companiesDB/
+
+#** Definitions DB **#
+definitions_db: 
+  data_path: /data/1-original/definitionsDB/definitionsDB.docx
+  output_path: /data/2-decomposed/definitionsDB/definitionsDB.csv

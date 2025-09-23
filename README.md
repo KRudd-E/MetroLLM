@@ -1,6 +1,15 @@
 # MetroLLM: Case Study Classification & Generation Pipeline
 
-## Overview
+## Paper Abstract
+
+3D Measurement and Metrology supports crucial fields across manufacturing, engineering, and scientific research, yet the associated technical documentation is often verbose and inconsistently structured. The Explore 3D Metrology project aims to digitalize the industry by providing a variety of resources, including an applications database containing 2,183 case studies, application reports and user stores. This work analysed how technologies in Natural Language Processing can understand and categorise entries in this database. Three approaches were taken to automatically identify measurement tasks: (i) a transformer-based text classifier - 
+
+ModernBERT, (ii) a fine-tuned large language model - DeepSeek-R1 with LoRA adapters, and (iii) an API-hosted generative model to act as a baseline. Across recall, precision and F1-score, both generation approaches outperformed the classifier, whose performance was owed to label imbalance, noisy classification, and long inputs. The API-based model achieved the most reliable extractions, with a weighted F1-score of 0.518, while the locally fine-tuned generator produced a comparable 0.456 but suffered from complex outputs and occasional refusal to answer. These findings indicate that modern language models can generalise to 3D measure-
+ment and metrology data, but effective learning required a larger and more curated dataset. 
+
+Overall, prompt-driven text generation was identified as the most practical solution: it avoided retraining overheads, extended easily to new fields (e.g., sector or tolerance extraction), and integrated with existing infrastructure through a lightweight API. This work demonstrates the suitability of applying modern NLP to 3D measurement documentation and outlines a process for automated classification in the Explore 3DM applications database.
+
+## Code Overview
 
 MetroLLM is a modular pipeline for processing, formatting, and modeling case studies from the applications database, with support for definitions and company data. The project enables the transformation of raw documents (PDFs, Word files, websites) into structured datasets, which are then used to train and evaluate machine learning models for text classification, text generation, and text2text generation. The overarching aim is to classify case studies from the applications database.
 

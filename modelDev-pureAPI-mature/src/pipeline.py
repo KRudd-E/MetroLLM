@@ -3,6 +3,7 @@ from src.retrieve import Retriever
 from src.ai import AI_Assister
 
 import os
+import csv
 import pandas as pd
 from tqdm import tqdm
 from openpyxl import load_workbook
@@ -15,6 +16,8 @@ class Pipeline:
         self.starting_datetime = strftime("%Y-%m-%d %H-%M-%S")
         self.ai_assist = AI_Assister(self.config)
         self.retriever = Retriever(self.config)
+        self.csv_path = os.path.join(os.getcwd() + '/' + self.config['output_csv_dir'].replace('.csv', f'-{self.starting_datetime}.csv'))
+        self.csv_initialized = False
 
     
     def run(self):
@@ -49,7 +52,7 @@ class Pipeline:
                 'Tools and Methods', 'Environment Properties', 'Task Operation', \
                 'User', 'User branch location or group', \
                 'User partners', 'Info source', 'System source', \
-                'System type', 'Model'])
+                'System type', 'Model', 'New/Old'])
         id: int = self.config['beginning_id']
         
 
@@ -231,24 +234,42 @@ class Pipeline:
                 else:
                     user_model_dict: dict = {'user': '', 'user branch location or group': '', 'user partners': '', 'model': ''}
                 
+                #**** New/Old Case Study ****#
+                if self.config['if_ending']:
+                    new_old_dict: dict = {'new/old': 'New' if subdir_name.endswith(self.config['if_ending_word']) else 'Old'}
+                else:
+                    new_old_dict: dict = {'new/old': ''}
+                
+                
                 #**** Combine dictionaries ****#
                 info_dict: dict = level_name_dict | country_year_dict | sector_dict | task_dict |\
                     object_keywords_dict | measurement_metrics_dict | surface_interaction_and_measured_object_properties_dict |\
-                    tools_and_methods_dict | environment_and_task_operations_dict | user_model_dict
+                    tools_and_methods_dict | environment_and_task_operations_dict | user_model_dict | new_old_dict
                 
                 #**** Save info ****#
                 row: pd.Series = self.create_row(id, file_name, subdir_name, info_dict)
                 df = pd.concat([df, row.to_frame().T], ignore_index=True)
             
                 self.save_to_excel(row, file_name, id)
+                self.save_to_csv_iterative(row, id)
                 id += 1
                 
                 
-
-        # At end, save the DataFrame to a CSV file
-        df.to_csv(self.config['output_csv_dir'], index=False, quotechar='"', quoting=1)
-                    
-
+                                              
+    def save_to_csv_iterative(self, row: pd.Series, id: int) -> None:
+            """Saves the row to a CSV file iteratively, creating the file with headers on first call."""
+            try:
+                if not self.csv_initialized:
+                    with open(self.csv_path, mode='w', newline='', encoding='utf-8') as f:
+                        writer = csv.writer(f)
+                        writer.writerow(row.index.tolist())
+                    self.csv_initialized = True
+                with open(self.csv_path, mode='a', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(row.tolist())
+            except Exception as e:
+                tqdm.write(f"Error saving to CSV during id {id}: {e}")
+                exit(1)
 
     def create_row(self, id: int, file_name: str, subdir_name: str, info_vals: dict) -> pd.Series:
         """ Creates a row for the DataFrame with the given values. Prints to terminal if terminal_outputs is True.
@@ -284,6 +305,7 @@ class Pipeline:
             'User branch location or group': self.clean_value(info_vals.get('user branch location or group', '')),
             'User partners': self.clean_value(info_vals.get('user partners', '')),
             'Model': self.clean_value(info_vals.get('model', '')),
+            'New/Old': self.clean_value(info_vals.get('new/old', '')),
             # 'Info source': '',
             # 'System source': '',
             # 'System type': '',

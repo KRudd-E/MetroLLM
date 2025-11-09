@@ -1,15 +1,18 @@
 # Directories
 txt_grandparent_dir: /data/2-decomposed/applicationsDB/
-beginning_dir:
+beginning_dir: 
 ending_dir:
+subdir_ending_selection: 
 output_xlsx_dir: /data/1-original/applicationsDB/pureAPI-out.xlsx     #modelDev-pureAPI/results/out.xlsx
 output_csv_dir: modelDev-pureAPI-mature/results/out.csv
-subdir_ending_selection: VAR
-min_case_study_length: 30
+min_case_study_length: 20
+
+# If Ending - New/Old denotation
+if_ending: True
+if_ending_word: UNPROCESSED
 
 # File Setup
-beginning_id: 747
-
+beginning_id: 1
 
 # AI
 model_source: OpenAI
@@ -21,16 +24,16 @@ terminal_outputs: False
 
 
 # OPTIONS
-use_level_name: True
-use_country_year: False
-use_sector: False
-use_task: False
-use_object_keywords: False
-use_measurement_metrics: False
-use_surface_interaction_and_object_properties: False
-use_tools_and_methods: False
-use_environment_and_task_operations: False
-use_user_model: False
+use_level_name:     True
+use_country_year:   True
+use_sector:         True
+use_task:           True
+use_object_keywords:        True
+use_measurement_metrics:    True
+use_surface_interaction_and_object_properties:  True
+use_tools_and_methods:                          True
+use_environment_and_task_operations:            True
+use_user_model:                                 True
 
 
 #**** Diversity check ****#
@@ -46,10 +49,13 @@ diverse_check_prompt: |
 level_name_prompt: |
   You are an information retrieval expert. You are analyzing a metrological case study. Extract the following information:
   1. The title of the study/project. If a suitable title is present in the text, use this. If it is not entirely suitable or one is not present, suggest a short title using the text as inspiration (max 6 words). Do not end the name with 'study' or 'case study' and avoid using company names. 
-  2. The level of detail in the case study (1 = low, 2 = medium, 3 = high). Consider:
-    - Level 1: some detail, including descriptions, methods & results but only intended to act as an overview. 
-    - Level 2: moderate detail, including methods, challenges, and/or results, including enough information to repeat the experiment.
-    - Level 3: considerable detail, including comprehensive descriptions, data, and outcomes. This level of detail would be enough for someone to precisely repeat the same development/testing process. 
+  2. The level of detail surrounding the technology in the case study (1 = low, 2 = medium, 3 = high). The length of the text is not necessarily indicative of the level. Assign a level according to these definitions:
+
+    - Level 1 (Low detail): The case study gives only a **broad description** of what is being measured and the tool or method used. It may describe the context, task, or benefits in general terms, but avoids precise figures. Marketing-style content and padding are common. **No specific accuracies, tolerances, or quantitative performance metrics are given.** The text may still explain the working principle at a basic level, but lacks numerical or comparative evidence.  
+
+    - Level 2 (Medium detail): The case study provides **some specific technical or quantitative detail**, but not a complete technical breakdown. This can include: quoting accuracies/tolerances in broad ranges, discussing measurable improvements over previous methods, or mentioning financial or efficiency impacts. Enough detail is given to roughly understand and mimic the model, but some assumptions would still be required. **Numbers or comparisons are present, but not exhaustive.**  
+
+    - Level 3 (High detail): The case study provides **extensive, in-depth technical detail** that makes it highly instructional. It includes precise accuracies/tolerances, detailed comparisons with earlier techniques, quantified savings or efficiencies, and/or descriptions of instrument networks or setups. **Very little is left to interpretation—one could practically replicate the approach directly from the text.** Usually longer and more structured than levels 1 or 2.
 
   Return your answer as JSON with keys: 'name', 'level'.
 
@@ -633,12 +639,12 @@ task_operation_list:
 #**** Case Study Users ****#
 user_model_prompt: |
   You are an information retrieval expert. You are analyzing a metrological case study. Extract the following information:
-  1. User - the entity from the case study which uses the technology/solution. Typically, this is the entity which directly uses & benefits from from the study, NOT the entity which develops the technology/solution. Return an empty list if it is not clear.
+  1. User - the entity from the case study which uses the technology/solution. Typically, this is the entity which directly uses & benefits from from the study, NOT the entity which develops the technology/solution. Return an empty list if it is not clear or if the entity is general/non-specific.
   2. User branch location or group: {company}'s branch location for this case study, if it is explicitly stated. Return only a country/city if present. This is not synonymous with the location of the project. Return an empty list if it is not explicitly stated. 
   3. User partners - partners to {company} in this project, if explicitly stated. The partners are NOT the end users. Return an empty list if not explicitly stated. 
   4. Model - the model version of the technology or solution, if present. Return an empty list if not explicitly stated. 
 
-  Return your answer as JSON with keys: 'user', 'user branch location or group', 'user partners', 'model'. Return an empty list as value in the key-value pair when the desired information is missing. 
+  Return your answer as JSON with keys: 'user', 'user branch location or group', 'user partners', 'model'. Ensure your answers are concise and direct. Return an empty list as value in the key-value pair when the desired information is missing. 
 
   Case study text:
   {txt}
